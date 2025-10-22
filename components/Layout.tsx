@@ -1,11 +1,15 @@
+
 import React, { ReactNode } from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import Toast from './Toast';
+import SellerDetailModal from './SellerDetailModal'; // Import the new modal
 import { useToast } from '../hooks/useToast';
+import { useSeller } from '../hooks/useSeller'; // Import the new hook
 
 const Layout: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { toastMessage, hideToast } = useToast();
+  const { selectedSeller, hideSellerModal } = useSeller();
 
   return (
     <div className="flex flex-col min-h-screen bg-neutral-50">
@@ -14,6 +18,7 @@ const Layout: React.FC<{ children: ReactNode }> = ({ children }) => {
         {children}
       </main>
       {toastMessage && <Toast message={toastMessage} onClose={hideToast} />}
+      {selectedSeller && <SellerDetailModal seller={selectedSeller} onClose={hideSellerModal} />}
       <Footer />
     </div>
   );

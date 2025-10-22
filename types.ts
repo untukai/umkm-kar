@@ -6,7 +6,14 @@ export interface Product {
   category: string;
   description: string;
   stock: number;
-  seller: string;
+  sellerId: number; // Changed from seller: string
+}
+
+export interface Seller {
+  id: number;
+  name: string;
+  description: string;
+  rating: number;
 }
 
 export interface Category {

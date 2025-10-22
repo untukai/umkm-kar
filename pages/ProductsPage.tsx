@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
@@ -20,12 +21,16 @@ const ProductsPage: React.FC = () => {
     let filtered = [...products];
     const query = searchParams.get('q')?.toLowerCase() || '';
     const category = searchParams.get('category') || '';
+    const sellerId = searchParams.get('seller');
 
     if (query) {
       filtered = filtered.filter(p => p.name.toLowerCase().includes(query));
     }
     if (category) {
       filtered = filtered.filter(p => p.category.toLowerCase().replace(/\s/g, '-') === category);
+    }
+    if (sellerId) {
+      filtered = filtered.filter(p => p.sellerId === parseInt(sellerId));
     }
     
     if (aiRecommendedNames.length > 0) {
@@ -54,6 +59,7 @@ const ProductsPage: React.FC = () => {
       } else {
         prev.delete('category');
       }
+      prev.delete('seller'); // Clear seller filter when changing category
       return prev;
     });
   };

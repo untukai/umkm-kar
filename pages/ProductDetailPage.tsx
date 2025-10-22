@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { products } from '../data/dummyData';
+import { products, sellers } from '../data/dummyData'; // Import sellers
 import { useCart } from '../hooks/useCart';
 import { useToast } from '../hooks/useToast';
+import { useSeller } from '../hooks/useSeller'; // Import useSeller
 import Button from '../components/Button';
 import { generateProductDescription } from '../services/geminiService';
 import { XIcon } from '../components/Icons';
@@ -12,13 +12,15 @@ const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { addToCart } = useCart();
   const { showToast } = useToast();
+  const { showSellerModal } = useSeller();
+  
   const product = products.find(p => p.id === parseInt(id || ''));
+  const seller = product ? sellers.find(s => s.id === product.sellerId) : undefined;
 
   const [aiDescription, setAiDescription] = useState<string | null>(null);
   const [isLoadingDescription, setIsLoadingDescription] = useState<boolean>(true);
 
   // --- State untuk Galeri Gambar ---
-  // Di aplikasi nyata, URL gambar ini akan berasal dari data produk.
   const productImages = [
     `https://via.placeholder.com/600x600/E5E7EB/4B5563?text=Gambar+1`,
     `https://via.placeholder.com/600x600/E5E7EB/4B5563?text=Gambar+2`,
@@ -53,11 +55,17 @@ const ProductDetailPage: React.FC = () => {
       showToast(`'${product.name}' berhasil ditambahkan ke keranjang.`);
     }
   };
+  
+  const handleSellerClick = () => {
+    if (seller) {
+      showSellerModal(seller.id);
+    }
+  };
 
-  if (!product) {
+  if (!product || !seller) {
     return (
       <div className="text-center bg-white p-10 rounded-lg shadow-lg">
-        <h1 className="text-2xl font-bold">Produk tidak ditemukan</h1>
+        <h1 className="text-2xl font-bold">Produk atau Penjual tidak ditemukan</h1>
         <Link to="/products" className="text-primary hover:underline mt-4 inline-block">
           <Button>Kembali ke Halaman Produk</Button>
         </Link>
@@ -157,7 +165,9 @@ const ProductDetailPage: React.FC = () => {
           <h3 className="font-bold text-xl border-b pb-3 mb-4">Deskripsi Produk</h3>
           {renderDescription()}
           <div className="mt-6 border-t pt-4">
-               <p className="text-lg text-neutral-600">Penjual: <span className="font-semibold text-primary">{product.seller}</span></p>
+               <button onClick={handleSellerClick} className="text-lg text-neutral-600 hover:text-primary transition-colors">
+                 Penjual: <span className="font-semibold underline">{seller.name}</span>
+               </button>
           </div>
         </div>
       </div>
