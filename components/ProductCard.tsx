@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Product } from '../types';
 import Button from './Button';
 import { useCart } from '../hooks/useCart';
@@ -18,6 +18,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { showToast } = useToast();
   const { showSellerModal } = useSeller();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const navigate = useNavigate();
   
   const seller = sellers.find(s => s.id === product.sellerId);
   const isWishlisted = isInWishlist(product.id);
@@ -34,6 +35,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     e.preventDefault();
     addToCart(product);
     showToast(`'${product.name}' berhasil ditambahkan ke keranjang.`);
+  };
+
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    addToCart(product);
+    showToast(`'${product.name}' ditambahkan, lanjut ke checkout.`);
+    navigate('/checkout');
   };
 
   const handleSellerClick = (e: React.MouseEvent) => {
@@ -135,16 +143,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
       </Link>
       <div className="p-3 pt-0 mt-auto">
-        <div className="flex items-center gap-2">
-            <Button onClick={handleAddToCart} className="flex-grow !font-bold !text-sm">Tambah Keranjang</Button>
-            <button 
-                onClick={handleShare}
-                className="p-2 border border-neutral-300 rounded-lg text-neutral-600 hover:bg-neutral-100 hover:text-primary transition-colors flex-shrink-0"
-                aria-label="Bagikan produk"
-                title="Bagikan produk"
+        <div className="space-y-2">
+          <Button onClick={handleBuyNow} className="w-full !font-bold !text-sm">
+            Beli Sekarang
+          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={handleAddToCart} variant="outline" className="flex-grow !font-bold !text-sm">
+              Tambah Keranjang
+            </Button>
+            <button
+              onClick={handleShare}
+              className="p-2 border border-neutral-300 rounded-lg text-neutral-600 hover:bg-neutral-100 hover:text-primary transition-colors flex-shrink-0"
+              aria-label="Bagikan produk"
+              title="Bagikan produk"
             >
-                <ShareIcon className="w-5 h-5" />
+              <ShareIcon className="w-5 h-5" />
             </button>
+          </div>
         </div>
       </div>
     </div>
