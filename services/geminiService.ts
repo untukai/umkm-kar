@@ -58,13 +58,8 @@ export const generateProductDescription = async (product: Product): Promise<stri
     throw new Error("Gemini API key is not configured.");
   }
 
-  const prompt = `Anda adalah seorang copywriter marketing yang sangat kreatif untuk sebuah marketplace produk UMKM lokal bernama KODIK. 
-Tugas Anda adalah membuat deskripsi produk yang menarik, deskriptif, dan persuasif.
-
-Nama Produk: "${product.name}"
-Fitur Utama / Deskripsi Singkat: "${product.description}"
-
-Buatlah deskripsi yang lebih panjang (sekitar 3-4 paragraf) yang menggugah selera dan minat pembeli. Tonjolkan keunikan dan nilai dari produk ini sebagai produk lokal Karawang. Gunakan gaya bahasa yang ramah dan engaging. Jangan hanya mengulang fitur utama, tapi kembangkan menjadi cerita yang menarik.`;
+  const prompt = `Buat deskripsi produk untuk "${product.name}" dari UMKM Karawang. Info awal: "${product.description}".
+Berikan jawaban langsung ke inti. Gunakan bahasa alami seperti manusia berbicara. Batasi jawaban hanya 2 sampai 4 kalimat. Jangan pakai simbol atau tanda baca berlebihan, cukup yang perlu saja.`;
 
   try {
     const response = await ai.models.generateContent({

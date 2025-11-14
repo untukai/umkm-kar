@@ -1,112 +1,82 @@
-
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { articles as dummyArticles } from '../data/dummyData';
+import React, { useState } from 'react';
 import { Article } from '../types';
-import { generateArticle } from '../services/geminiService';
+import { articles as initialArticles } from '../data/dummyData';
+import ArticleCard from '../components/ArticleCard';
 import Button from '../components/Button';
+import Input from '../components/Input';
+import { generateArticle } from '../services/geminiService';
 
 const ArticlesPage: React.FC = () => {
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [articles, setArticles] = useState<Article[]>(initialArticles);
   const [topic, setTopic] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    try {
-      const storedArticles = localStorage.getItem('kodik-articles');
-      if (storedArticles) {
-        setArticles(JSON.parse(storedArticles));
-      } else {
-        setArticles(dummyArticles);
-      }
-    } catch (e) {
-      console.error("Failed to parse articles from localStorage", e);
-      setArticles(dummyArticles);
-    }
-  }, []);
-
-  const handleGenerateArticle = async () => {
+  const handleGenerateArticle = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!topic.trim()) {
       setError('Topik tidak boleh kosong.');
       return;
     }
+    
     setIsLoading(true);
-    setError('');
+    setError(null);
 
     try {
-      const generatedData = await generateArticle(topic);
+      const newArticleData = await generateArticle(topic);
       const newArticle: Article = {
-        id: Date.now(),
-        ...generatedData,
+        id: Math.max(0, ...articles.map(a => a.id)) + 1, // Simple ID generation
+        ...newArticleData,
       };
-      
-      const updatedArticles = [newArticle, ...articles];
-      setArticles(updatedArticles);
-      localStorage.setItem('kodik-articles', JSON.stringify(updatedArticles));
-      
-      setIsModalOpen(false);
-      setTopic('');
-    } catch (e) {
-      setError('Gagal membuat artikel. Coba lagi nanti.');
-      console.error(e);
+      setArticles(prevArticles => [newArticle, ...prevArticles]);
+      setTopic(''); // Clear input after success
+    } catch (err) {
+      console.error(err);
+      setError('Gagal membuat artikel. Silakan coba lagi.');
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   return (
-    <div className="bg-white p-6 rounded-lg shadow-lg">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-4">Artikel Lokal Karawang</h1>
-        <p className="text-gray-600 max-w-2xl mx-auto">
-          Jelajahi cerita, inovasi, dan budaya di balik produk-produk UMKM Karawang yang luar biasa.
+    <div className="space-y-10">
+      <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg">
+        <h1 className="text-3xl font-bold text-center">Inspirasi Lokal Karawang</h1>
+        <p className="text-center text-neutral-600 mt-2 max-w-2xl mx-auto">
+          Temukan cerita, inovasi, dan potensi UMKM di Karawang melalui artikel-artikel pilihan kami.
         </p>
-        <Button onClick={() => setIsModalOpen(true)} className="mt-6 !font-bold">
-          ✨ Buat Artikel Baru dengan AI
-        </Button>
       </div>
 
-      <div className="space-y-8">
-        {articles.map(article => (
-          <div key={article.id} className="flex flex-col md:flex-row items-start gap-6 border-b pb-8 last:border-b-0">
-            <div className="w-full md:w-1/3 h-48 bg-gray-200 rounded-lg flex-shrink-0 flex items-center justify-center">
-                <span className="text-neutral-500">Gambar Artikel</span>
-            </div>
-            <div className="flex-grow">
-              <h2 className="text-2xl font-bold text-gray-800">{article.title}</h2>
-              <p className="text-gray-600 mt-2">{article.summary}</p>
-              <Link to={`/articles/${article.id}`}>
-                <Button className="mt-4" variant="outline">Baca Selengkapnya</Button>
-              </Link>
-            </div>
+      <div className="bg-white p-6 rounded-lg shadow-lg border border-primary/20">
+        <h2 className="text-xl font-bold mb-4">Buat Artikel Baru dengan Bantuan AI</h2>
+        <form onSubmit={handleGenerateArticle} className="space-y-4">
+          <div>
+            <label htmlFor="topic" className="block text-sm font-medium text-neutral-700 mb-1">
+              Masukkan Topik Artikel
+            </label>
+            <Input 
+              id="topic"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="Contoh: Kisah sukses pengrajin batik Karawang"
+              disabled={isLoading}
+            />
           </div>
-        ))}
+          <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
+            {isLoading ? 'Sedang Membuat...' : 'Buat Artikel'}
+          </Button>
+          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+        </form>
       </div>
-      
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
-                <h2 className="text-2xl font-bold mb-2">Buat Artikel dengan AI</h2>
-                <p className="text-neutral-600 mb-4">Masukkan topik atau kata kunci, dan biarkan AI menulis artikel untuk Anda. Contoh: "Kisah sukses pengrajin anyaman bambu".</p>
-                <textarea
-                    value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
-                    className="w-full p-2 border rounded-md h-24 focus:ring-primary focus:border-primary"
-                    placeholder="Masukkan topik di sini..."
-                    disabled={isLoading}
-                />
-                <div className="flex justify-end gap-4 mt-4">
-                    <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={isLoading}>Batal</Button>
-                    <Button onClick={handleGenerateArticle} disabled={isLoading}>
-                        {isLoading ? 'Membuat Artikel...' : 'Buat Sekarang'}
-                    </Button>
-                </div>
-                {error && <p className="text-red-500 mt-2 text-sm">{error}</p>}
-            </div>
+
+      <div>
+        <h2 className="text-2xl font-bold mb-6">Semua Artikel</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {articles.map(article => (
+            <ArticleCard key={article.id} article={article} />
+          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 };

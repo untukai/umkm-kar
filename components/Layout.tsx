@@ -1,9 +1,9 @@
-
 import React, { ReactNode } from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import Toast from './Toast';
 import SellerDetailModal from './SellerDetailModal'; // Import the new modal
+import BackToTopButton from './BackToTopButton'; // Import the BackToTopButton
 import { useToast } from '../hooks/useToast';
 import { useSeller } from '../hooks/useSeller'; // Import the new hook
 
@@ -20,6 +20,7 @@ const Layout: React.FC<{ children: ReactNode }> = ({ children }) => {
       {toastMessage && <Toast message={toastMessage} onClose={hideToast} />}
       {selectedSeller && <SellerDetailModal seller={selectedSeller} onClose={hideSellerModal} />}
       <Footer />
+      <BackToTopButton />
     </div>
   );
 };

@@ -1,9 +1,10 @@
 
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Seller } from '../types';
-import { XIcon, StarIcon } from './Icons';
+import { XIcon, StarIcon, PhoneIcon, MailIcon } from './Icons';
 import Button from './Button';
+import { products } from '../data/dummyData';
 
 interface SellerDetailModalProps {
   seller: Seller;
@@ -32,7 +33,22 @@ const SellerDetailModal: React.FC<SellerDetailModalProps> = ({ seller, onClose }
   const handleViewProducts = () => {
     onClose();
     navigate(`/products?seller=${seller.id}`);
-  }
+  };
+  
+  const handleProductClick = (productId: number) => {
+    onClose(); // Close modal before navigating
+    navigate(`/products/${productId}`);
+  };
+
+  const sellerProducts = products.filter(p => p.sellerId === seller.id).slice(0, 3);
+  
+  const formatRupiah = (number: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0
+    }).format(number);
+  };
 
   return (
     <div
@@ -43,10 +59,10 @@ const SellerDetailModal: React.FC<SellerDetailModalProps> = ({ seller, onClose }
       aria-labelledby="seller-modal-title"
     >
       <div
-        className="bg-white rounded-lg shadow-xl w-full max-w-md mx-auto transform transition-transform duration-300 animate-fade-in-up"
+        className="bg-white rounded-lg shadow-xl w-full max-w-md mx-auto transform transition-transform duration-300 animate-fade-in-up flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6 relative">
+        <div className="p-4 sm:p-6 relative border-b">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 text-neutral-500 hover:text-neutral-800 transition-colors"
@@ -56,21 +72,68 @@ const SellerDetailModal: React.FC<SellerDetailModalProps> = ({ seller, onClose }
           </button>
           
           <div className="flex flex-col items-center text-center">
-            <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mb-4">
-              <span className="text-4xl font-bold text-primary">{seller.name.charAt(0)}</span>
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary/20 flex items-center justify-center mb-4">
+              <span className="text-3xl sm:text-4xl font-bold text-primary">{seller.name.charAt(0)}</span>
             </div>
-            <h2 id="seller-modal-title" className="text-2xl font-bold text-neutral-800">{seller.name}</h2>
+            <h2 id="seller-modal-title" className="text-xl sm:text-2xl font-bold text-neutral-800">{seller.name}</h2>
             <div className="mt-2">
               <StarRating rating={seller.rating} />
             </div>
-            <p className="text-neutral-600 mt-4 text-sm leading-relaxed">{seller.description}</p>
           </div>
+        </div>
 
-          <div className="mt-6">
-            <Button onClick={handleViewProducts} className="w-full !font-bold">
-              Lihat Semua Produk Penjual
-            </Button>
-          </div>
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-6">
+            <div>
+                 <h3 className="font-bold text-neutral-800 mb-2">Tentang Penjual</h3>
+                 <p className="text-neutral-600 text-sm leading-relaxed">{seller.description}</p>
+            </div>
+            
+            {(seller.phone || seller.email) && (
+              <div>
+                <h3 className="font-bold text-neutral-800 mb-3">Informasi Kontak</h3>
+                <div className="space-y-2 text-sm">
+                  {seller.phone && (
+                    <div className="flex items-center text-neutral-600">
+                      <PhoneIcon className="w-4 h-4 mr-2.5 flex-shrink-0 text-neutral-400" />
+                      <a href={`tel:${seller.phone}`} className="hover:text-primary hover:underline">{seller.phone}</a>
+                    </div>
+                  )}
+                  {seller.email && (
+                    <div className="flex items-center text-neutral-600">
+                      <MailIcon className="w-4 h-4 mr-2.5 flex-shrink-0 text-neutral-400" />
+                       <a href={`mailto:${seller.email}`} className="hover:text-primary hover:underline">{seller.email}</a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {sellerProducts.length > 0 && (
+              <div>
+                <h3 className="font-bold text-neutral-800 mb-3">Produk Unggulan</h3>
+                <div className="space-y-3">
+                  {sellerProducts.map(product => (
+                    <div 
+                      key={product.id}
+                      onClick={() => handleProductClick(product.id)}
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-neutral-100 cursor-pointer transition-colors"
+                    >
+                       <img src={product.imageUrl} alt={product.name} className="w-12 h-12 bg-neutral-200 rounded-md flex-shrink-0 object-cover" />
+                       <div className="flex-1">
+                          <p className="text-sm font-semibold text-neutral-700 leading-tight">{product.name}</p>
+                          <p className="text-sm font-bold text-primary">{formatRupiah(product.price)}</p>
+                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+        </div>
+
+        <div className="p-4 sm:p-6 mt-auto border-t">
+          <Button onClick={handleViewProducts} className="w-full !font-bold">
+            Lihat Semua Produk Penjual
+          </Button>
         </div>
       </div>
     </div>

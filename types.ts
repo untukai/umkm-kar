@@ -7,6 +7,8 @@ export interface Product {
   description: string;
   stock: number;
   sellerId: number; // Changed from seller: string
+  discount?: number; // Percentage off
+  imageUrl: string;
 }
 
 export interface Seller {
@@ -14,6 +16,8 @@ export interface Seller {
   name: string;
   description: string;
   rating: number;
+  phone?: string;
+  email?: string;
 }
 
 export interface Category {

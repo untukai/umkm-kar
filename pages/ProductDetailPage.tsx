@@ -1,18 +1,22 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { products, sellers } from '../data/dummyData'; // Import sellers
 import { useCart } from '../hooks/useCart';
 import { useToast } from '../hooks/useToast';
-import { useSeller } from '../hooks/useSeller'; // Import useSeller
+import { useSeller } from '../hooks/useSeller';
+import { useWishlist } from '../hooks/useWishlist'; // Import useWishlist
 import Button from '../components/Button';
+import ProductCard from '../components/ProductCard'; // Import ProductCard
 import { generateProductDescription } from '../services/geminiService';
-import { XIcon } from '../components/Icons';
+import { XIcon, HeartIcon } from '../components/Icons'; // Import HeartIcon
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { addToCart } = useCart();
   const { showToast } = useToast();
   const { showSellerModal } = useSeller();
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   
   const product = products.find(p => p.id === parseInt(id || ''));
   const seller = product ? sellers.find(s => s.id === product.sellerId) : undefined;
@@ -21,12 +25,19 @@ const ProductDetailPage: React.FC = () => {
   const [isLoadingDescription, setIsLoadingDescription] = useState<boolean>(true);
 
   // --- State untuk Galeri Gambar ---
-  const productImages = [
-    `https://via.placeholder.com/600x600/E5E7EB/4B5563?text=Gambar+1`,
-    `https://via.placeholder.com/600x600/E5E7EB/4B5563?text=Gambar+2`,
-    `https://via.placeholder.com/600x600/E5E7EB/4B5563?text=Gambar+3`,
-    `https://via.placeholder.com/600x600/E5E7EB/4B5563?text=Gambar+4`,
-  ];
+  const productImages = product
+    ? [
+        product.imageUrl.replace(/(\?text=.*)/, `?text=${encodeURIComponent(product.name)}`),
+        product.imageUrl.replace(/(\?text=.*)/, `?text=${encodeURIComponent(product.name)}+2`),
+        product.imageUrl.replace(/(\?text=.*)/, `?text=${encodeURIComponent(product.name)}+3`),
+        product.imageUrl.replace(/(\?text=.*)/, `?text=${encodeURIComponent(product.name)}+4`),
+      ]
+    : [
+        `https://via.placeholder.com/600x600/E5E7EB/4B5563?text=Gambar+1`,
+        `https://via.placeholder.com/600x600/E5E7EB/4B5563?text=Gambar+2`,
+        `https://via.placeholder.com/600x600/E5E7EB/4B5563?text=Gambar+3`,
+        `https://via.placeholder.com/600x600/E5E7EB/4B5563?text=Gambar+4`,
+      ];
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
   // --- Akhir State untuk Galeri Gambar ---
@@ -35,6 +46,7 @@ const ProductDetailPage: React.FC = () => {
     if (product) {
       setIsLoadingDescription(true);
       setAiDescription(null);
+      setSelectedImageIndex(0); // Reset image on product change
       
       generateProductDescription(product)
         .then(description => {
@@ -49,6 +61,8 @@ const ProductDetailPage: React.FC = () => {
     }
   }, [product]);
 
+  const isWishlisted = product ? isInWishlist(product.id) : false;
+
   const handleAddToCart = () => {
     if (product) {
       addToCart(product);
@@ -59,6 +73,17 @@ const ProductDetailPage: React.FC = () => {
   const handleSellerClick = () => {
     if (seller) {
       showSellerModal(seller.id);
+    }
+  };
+  
+  const handleWishlistToggle = () => {
+    if (!product) return;
+    if (isWishlisted) {
+      removeFromWishlist(product.id);
+      showToast(`'${product.name}' dihapus dari wishlist.`);
+    } else {
+      addToWishlist(product);
+      showToast(`'${product.name}' ditambahkan ke wishlist.`);
     }
   };
 
@@ -72,6 +97,21 @@ const ProductDetailPage: React.FC = () => {
       </div>
     );
   }
+
+  // Logic to find related products
+  let relatedProducts = products
+    .filter(p => p.sellerId === product.sellerId && p.id !== product.id);
+  
+  let relatedProductsTitle = "Produk Lain dari Penjual Ini";
+
+  // Fallback to category if seller has no other products
+  if (relatedProducts.length === 0) {
+    relatedProducts = products
+      .filter(p => p.category === product.category && p.id !== product.id);
+    relatedProductsTitle = "Produk Serupa Lainnya";
+  }
+
+  const displayedRelatedProducts = relatedProducts.slice(0, 4);
 
   const formatRupiah = (number: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -142,20 +182,29 @@ const ProductDetailPage: React.FC = () => {
             
             {/* Kanan: Detail dan Aksi */}
             <div className="flex flex-col">
-              <h1 className="text-3xl font-bold text-neutral-900">{product.name}</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-neutral-900">{product.name}</h1>
               <p className="text-lg text-neutral-500 mt-2">
                 Kategori: <span className="font-semibold text-primary">{product.category}</span>
               </p>
-              <p className="text-4xl font-bold text-neutral-800 my-6">{formatRupiah(product.price)}</p>
+              <p className="text-3xl md:text-4xl font-bold text-neutral-800 my-6">{formatRupiah(product.price)}</p>
 
               <div className="mt-auto border rounded-lg p-6 shadow-sm bg-neutral-50">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="font-semibold">Atur Jumlah</h3>
                     <p className="text-sm text-neutral-600">Stok: <span className="font-bold">{product.stock}</span></p>
                   </div>
-                  <Button onClick={handleAddToCart} disabled={product.stock === 0} className="w-full !text-lg !py-3 !font-bold">
-                    {product.stock > 0 ? '+ Keranjang' : 'Stok Habis'}
-                  </Button>
+                  <div className="flex items-center gap-3">
+                    <Button onClick={handleAddToCart} disabled={product.stock === 0} className="w-full !text-base sm:!text-lg !py-3 !font-bold">
+                      {product.stock > 0 ? '+ Keranjang' : 'Stok Habis'}
+                    </Button>
+                    <button 
+                      onClick={handleWishlistToggle} 
+                      className={`p-3 rounded-lg border-2 transition-colors ${isWishlisted ? 'bg-red-500 border-red-500 text-white' : 'bg-transparent border-neutral-300 text-neutral-500 hover:border-red-500 hover:text-red-500'}`}
+                      aria-label="Tambah ke wishlist"
+                    >
+                      <HeartIcon className="w-6 h-6" fill={isWishlisted ? 'currentColor' : 'none'} />
+                    </button>
+                  </div>
               </div>
             </div>
           </div>
@@ -170,6 +219,18 @@ const ProductDetailPage: React.FC = () => {
                </button>
           </div>
         </div>
+        
+        {/* Related Products Section */}
+        {displayedRelatedProducts.length > 0 && (
+          <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg">
+            <h3 className="font-bold text-xl mb-4">{relatedProductsTitle}</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+              {displayedRelatedProducts.map(relatedProduct => (
+                <ProductCard key={relatedProduct.id} product={relatedProduct} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal Zoom Gambar */}

@@ -28,11 +28,11 @@ const HomePage: React.FC = () => {
 
       <section>
         <h2 className="text-2xl font-bold mb-6">Kategori Pilihan</h2>
-        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        <div className="grid grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4">
           {categories.map((category) => (
-            <Link key={category.id} to={`/products?category=${category.id}`} className="block p-4 bg-white border border-neutral-200 rounded-lg text-center hover:shadow-lg hover:border-primary transition-all duration-300 transform hover:-translate-y-1">
-              <span className="text-4xl">{categoryIcons[category.name] || '🛍️'}</span>
-              <h3 className="font-semibold mt-2 text-sm text-neutral-600">{category.name}</h3>
+            <Link key={category.id} to={`/products?category=${category.id}`} className="block p-3 sm:p-4 bg-white border border-neutral-200 rounded-lg text-center hover:shadow-lg hover:border-primary transition-all duration-300 transform hover:-translate-y-1">
+              <span className="text-3xl sm:text-4xl">{categoryIcons[category.name] || '🛍️'}</span>
+              <h3 className="font-semibold mt-2 text-xs sm:text-sm text-neutral-600">{category.name}</h3>
             </Link>
           ))}
         </div>
@@ -48,7 +48,7 @@ const HomePage: React.FC = () => {
         <div className="relative">
           <div className="flex space-x-4 overflow-x-auto pb-4 scroll-snap-x-mandatory scrollbar-hide">
             {featuredProducts.map((product) => (
-              <div key={product.id} className="scroll-snap-center flex-shrink-0 w-[45vw] sm:w-1/3 md:w-1/4 lg:w-1/5">
+              <div key={product.id} className="scroll-snap-center flex-shrink-0 w-40 sm:w-48 md:w-1/4">
                 <ProductCard product={product} />
               </div>
             ))}

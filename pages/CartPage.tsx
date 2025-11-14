@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../hooks/useCart';
@@ -33,7 +34,7 @@ const CartPage: React.FC = () => {
               
               {/* Item Info */}
               <div className="flex items-center gap-4 flex-grow">
-                <div className="w-20 h-20 bg-neutral-200 rounded-md flex-shrink-0"></div>
+                <img src={item.product.imageUrl} alt={item.product.name} className="w-20 h-20 bg-neutral-200 rounded-md flex-shrink-0 object-cover" />
                 <div className="flex-grow">
                   <h2 className="font-semibold text-base sm:text-lg text-neutral-800">{item.product.name}</h2>
                   <p className="text-primary font-bold mt-1">{formatRupiah(item.product.price)}</p>
