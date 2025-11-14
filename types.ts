@@ -8,7 +8,7 @@ export interface Product {
   stock: number;
   sellerId: number; // Changed from seller: string
   discount?: number; // Percentage off
-  imageUrl: string;
+  imageUrls: string[];
 }
 
 export interface Seller {

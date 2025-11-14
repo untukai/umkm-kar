@@ -122,12 +122,7 @@ const ProductDetailPage: React.FC = () => {
     );
   }
 
-  const productImages = [
-    product.imageUrl.replace(/(\?text=.*)/, `?text=${encodeURIComponent(product.name)}`),
-    product.imageUrl.replace(/(\?text=.*)/, `?text=${encodeURIComponent(product.name)}+2`),
-    product.imageUrl.replace(/(\?text=.*)/, `?text=${encodeURIComponent(product.name)}+3`),
-    product.imageUrl.replace(/(\?text=.*)/, `?text=${encodeURIComponent(product.name)}+4`),
-  ];
+  const productImages = product.imageUrls;
 
   let relatedProducts = products
     .filter(p => p.sellerId === product.sellerId && p.id !== product.id);

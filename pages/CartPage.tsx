@@ -39,7 +39,7 @@ const CartPage: React.FC = () => {
               
               {/* Item Info */}
               <div className="flex items-center gap-4 flex-grow">
-                <img src={item.product.imageUrl} alt={item.product.name} className="w-20 h-20 bg-neutral-200 rounded-md flex-shrink-0 object-cover" />
+                <img src={item.product.imageUrls[0]} alt={item.product.name} className="w-20 h-20 bg-neutral-200 rounded-md flex-shrink-0 object-cover" />
                 <div className="flex-grow">
                   <h2 className="font-semibold text-base sm:text-lg text-neutral-800">{item.product.name}</h2>
                   {item.product.discount ? (

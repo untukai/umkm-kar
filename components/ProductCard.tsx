@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Product } from '../types';
@@ -24,6 +25,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   
   const seller = sellers.find(s => s.id === product.sellerId);
   const isWishlisted = isInWishlist(product.id);
+  const imageUrl = product.imageUrls?.[0]; // Safely access the first image URL
 
   // Calculate average rating
   const productReviews = reviews.filter(r => r.productId === product.id);
@@ -85,7 +87,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const discountedPrice = product.discount ? product.price * (1 - product.discount / 100) : product.price;
 
   return (
-    <div className="bg-white rounded-lg overflow-hidden transition-shadow duration-300 border border-neutral-200 hover:shadow-xl flex flex-col relative">
+    <div className="bg-white rounded-lg overflow-hidden transition-shadow duration-300 border border-neutral-200 hover:shadow-xl flex flex-col relative h-full">
       {product.discount && (
         <div className="absolute top-2 left-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md">
           -{product.discount}%
@@ -100,8 +102,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </button>
 
       <Link to={`/products/${product.id}`} className="block flex-grow">
-        <div className="w-full aspect-square bg-neutral-200">
-          <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+        <div className="w-full aspect-square bg-neutral-200 flex items-center justify-center">
+          {imageUrl ? (
+            <img src={imageUrl} alt={product.name} className="w-full h-full object-cover" loading="lazy" />
+          ) : (
+            <StoreIcon className="w-12 h-12 text-neutral-400" />
+          )}
         </div>
         <div className="p-3">
           <h3 className="text-sm font-normal text-neutral-700 h-10 overflow-hidden">{product.name}</h3>

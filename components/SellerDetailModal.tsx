@@ -118,7 +118,7 @@ const SellerDetailModal: React.FC<SellerDetailModalProps> = ({ seller, onClose }
                       onClick={() => handleProductClick(product.id)}
                       className="flex items-center gap-3 p-2 rounded-lg hover:bg-neutral-100 cursor-pointer transition-colors"
                     >
-                       <img src={product.imageUrl} alt={product.name} className="w-12 h-12 bg-neutral-200 rounded-md flex-shrink-0 object-cover" />
+                       <img src={product.imageUrls[0]} alt={product.name} className="w-12 h-12 bg-neutral-200 rounded-md flex-shrink-0 object-cover" />
                        <div className="flex-1">
                           <p className="text-sm font-semibold text-neutral-700 leading-tight">{product.name}</p>
                           <p className="text-sm font-bold text-primary">{formatRupiah(product.price)}</p>
