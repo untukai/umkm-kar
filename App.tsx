@@ -3,7 +3,7 @@ import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
-import { ToastProvider } from './context/ToastContext';
+import { NotificationProvider } from './context/NotificationContext';
 import { SellerProvider } from './context/SellerContext';
 import { WishlistProvider } from './context/WishlistContext'; // Import WishlistProvider
 import Layout from './components/Layout';
@@ -23,7 +23,7 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <CartProvider>
-        <ToastProvider>
+        <NotificationProvider>
           <SellerProvider>
             <WishlistProvider>
               <HashRouter>
@@ -45,7 +45,7 @@ const App: React.FC = () => {
               </HashRouter>
             </WishlistProvider>
           </SellerProvider>
-        </ToastProvider>
+        </NotificationProvider>
       </CartProvider>
     </AuthProvider>
   );

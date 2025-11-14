@@ -29,7 +29,12 @@ const CartPage: React.FC = () => {
       <h1 className="text-3xl font-bold mb-6">Keranjang Belanja</h1>
       <div className="flex flex-col lg:flex-row lg:items-start gap-8">
         <div className="flex-grow bg-white p-4 sm:p-6 rounded-lg shadow-lg space-y-6">
-          {cartItems.map(item => (
+          {cartItems.map(item => {
+            const itemPrice = item.product.discount
+              ? item.product.price * (1 - item.product.discount / 100)
+              : item.product.price;
+              
+            return (
             <div key={item.product.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-6 last:border-b-0">
               
               {/* Item Info */}
@@ -37,7 +42,14 @@ const CartPage: React.FC = () => {
                 <img src={item.product.imageUrl} alt={item.product.name} className="w-20 h-20 bg-neutral-200 rounded-md flex-shrink-0 object-cover" />
                 <div className="flex-grow">
                   <h2 className="font-semibold text-base sm:text-lg text-neutral-800">{item.product.name}</h2>
-                  <p className="text-primary font-bold mt-1">{formatRupiah(item.product.price)}</p>
+                  {item.product.discount ? (
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <p className="text-primary font-bold">{formatRupiah(itemPrice)}</p>
+                      <p className="text-xs text-neutral-500 line-through">{formatRupiah(item.product.price)}</p>
+                    </div>
+                  ) : (
+                    <p className="text-primary font-bold mt-1">{formatRupiah(item.product.price)}</p>
+                  )}
                 </div>
               </div>
               
@@ -53,14 +65,14 @@ const CartPage: React.FC = () => {
                   </button>
                 </div>
                 
-                <p className="font-bold w-24 sm:w-28 text-right text-neutral-800">{formatRupiah(item.product.price * item.quantity)}</p>
+                <p className="font-bold w-24 sm:w-28 text-right text-neutral-800">{formatRupiah(itemPrice * item.quantity)}</p>
                 
                 <button onClick={() => removeFromCart(item.product.id)} className="text-neutral-500 hover:text-red-500 p-1">
                   <TrashIcon className="w-5 h-5"/>
                 </button>
               </div>
             </div>
-          ))}
+          )})}
         </div>
         <div className="w-full lg:w-1/3">
           <div className="bg-white p-6 rounded-lg shadow-lg border sticky top-24">

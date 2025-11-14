@@ -1,53 +1,50 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { products, sellers } from '../data/dummyData'; // Import sellers
+import { products, sellers, reviews as initialReviews } from '../data/dummyData';
 import { useCart } from '../hooks/useCart';
-import { useToast } from '../hooks/useToast';
+import { useNotification } from '../hooks/useNotification';
 import { useSeller } from '../hooks/useSeller';
-import { useWishlist } from '../hooks/useWishlist'; // Import useWishlist
+import { useWishlist } from '../hooks/useWishlist';
+import { useAuth } from '../hooks/useAuth';
 import Button from '../components/Button';
-import ProductCard from '../components/ProductCard'; // Import ProductCard
+import ProductCard from '../components/ProductCard';
+import StarRating from '../components/StarRating';
 import { generateProductDescription } from '../services/geminiService';
-import { XIcon, HeartIcon } from '../components/Icons'; // Import HeartIcon
+import { XIcon, HeartIcon, UserIcon } from '../components/Icons';
+import { Review } from '../types';
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { addToCart } = useCart();
-  const { showToast } = useToast();
+  const { showNotification } = useNotification();
   const { showSellerModal } = useSeller();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const { user, isAuthenticated } = useAuth();
   
   const product = products.find(p => p.id === parseInt(id || ''));
   const seller = product ? sellers.find(s => s.id === product.sellerId) : undefined;
 
   const [aiDescription, setAiDescription] = useState<string | null>(null);
   const [isLoadingDescription, setIsLoadingDescription] = useState<boolean>(true);
+  
+  // --- State untuk Ulasan ---
+  const [productReviews, setProductReviews] = useState<Review[]>([]);
+  const [newRating, setNewRating] = useState(0);
+  const [newComment, setNewComment] = useState("");
 
-  // --- State untuk Galeri Gambar ---
-  const productImages = product
-    ? [
-        product.imageUrl.replace(/(\?text=.*)/, `?text=${encodeURIComponent(product.name)}`),
-        product.imageUrl.replace(/(\?text=.*)/, `?text=${encodeURIComponent(product.name)}+2`),
-        product.imageUrl.replace(/(\?text=.*)/, `?text=${encodeURIComponent(product.name)}+3`),
-        product.imageUrl.replace(/(\?text=.*)/, `?text=${encodeURIComponent(product.name)}+4`),
-      ]
-    : [
-        `https://via.placeholder.com/600x600/E5E7EB/4B5563?text=Gambar+1`,
-        `https://via.placeholder.com/600x600/E5E7EB/4B5563?text=Gambar+2`,
-        `https://via.placeholder.com/600x600/E5E7EB/4B5563?text=Gambar+3`,
-        `https://via.placeholder.com/600x600/E5E7EB/4B5563?text=Gambar+4`,
-      ];
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
-  // --- Akhir State untuk Galeri Gambar ---
 
   useEffect(() => {
     if (product) {
       setIsLoadingDescription(true);
       setAiDescription(null);
-      setSelectedImageIndex(0); // Reset image on product change
+      setSelectedImageIndex(0);
       
+      // Load reviews for the product
+      setProductReviews(initialReviews.filter(r => r.productId === product.id));
+
       generateProductDescription(product)
         .then(description => {
           setAiDescription(description);
@@ -66,7 +63,7 @@ const ProductDetailPage: React.FC = () => {
   const handleAddToCart = () => {
     if (product) {
       addToCart(product);
-      showToast(`'${product.name}' berhasil ditambahkan ke keranjang.`);
+      showNotification('Berhasil', `'${product.name}' ditambahkan ke keranjang.`);
     }
   };
   
@@ -80,11 +77,38 @@ const ProductDetailPage: React.FC = () => {
     if (!product) return;
     if (isWishlisted) {
       removeFromWishlist(product.id);
-      showToast(`'${product.name}' dihapus dari wishlist.`);
+      showNotification('Wishlist', `'${product.name}' dihapus dari wishlist.`);
     } else {
       addToWishlist(product);
-      showToast(`'${product.name}' ditambahkan ke wishlist.`);
+      showNotification('Wishlist', `'${product.name}' ditambahkan ke wishlist.`);
     }
+  };
+
+  const handleReviewSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newRating === 0) {
+      showNotification("Peringatan", "Harap berikan peringkat bintang.", 'error');
+      return;
+    }
+    if (!user) {
+        showNotification("Peringatan", "Anda harus masuk untuk memberikan ulasan.", 'error');
+        return;
+    }
+
+    const newReview: Review = {
+        id: new Date().getTime(), // simple unique id
+        productId: product!.id,
+        userEmail: user.email,
+        userName: user.email.split('@')[0], // simple username from email
+        rating: newRating,
+        comment: newComment,
+        date: new Date().toISOString(),
+    };
+
+    setProductReviews(prevReviews => [newReview, ...prevReviews]);
+    setNewRating(0);
+    setNewComment("");
+    showNotification("Berhasil", "Ulasan berhasil dikirim. Terima kasih!");
   };
 
   if (!product || !seller) {
@@ -98,13 +122,18 @@ const ProductDetailPage: React.FC = () => {
     );
   }
 
-  // Logic to find related products
+  const productImages = [
+    product.imageUrl.replace(/(\?text=.*)/, `?text=${encodeURIComponent(product.name)}`),
+    product.imageUrl.replace(/(\?text=.*)/, `?text=${encodeURIComponent(product.name)}+2`),
+    product.imageUrl.replace(/(\?text=.*)/, `?text=${encodeURIComponent(product.name)}+3`),
+    product.imageUrl.replace(/(\?text=.*)/, `?text=${encodeURIComponent(product.name)}+4`),
+  ];
+
   let relatedProducts = products
     .filter(p => p.sellerId === product.sellerId && p.id !== product.id);
   
   let relatedProductsTitle = "Produk Lain dari Penjual Ini";
 
-  // Fallback to category if seller has no other products
   if (relatedProducts.length === 0) {
     relatedProducts = products
       .filter(p => p.category === product.category && p.id !== product.id);
@@ -121,6 +150,12 @@ const ProductDetailPage: React.FC = () => {
     }).format(number);
   };
   
+  const avgRating = productReviews.length > 0
+    ? productReviews.reduce((sum, review) => sum + review.rating, 0) / productReviews.length
+    : 0;
+
+  const discountedPrice = product.discount ? product.price * (1 - product.discount / 100) : product.price;
+
   const renderDescription = () => {
     if (isLoadingDescription) {
       return (
@@ -155,7 +190,6 @@ const ProductDetailPage: React.FC = () => {
       <div className="space-y-8">
         <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-            {/* Kiri: Galeri Gambar */}
             <div>
               <div 
                 className="w-full aspect-square bg-neutral-100 rounded-lg flex items-center justify-center overflow-hidden cursor-zoom-in group"
@@ -180,13 +214,42 @@ const ProductDetailPage: React.FC = () => {
               </div>
             </div>
             
-            {/* Kanan: Detail dan Aksi */}
             <div className="flex flex-col">
-              <h1 className="text-2xl md:text-3xl font-bold text-neutral-900">{product.name}</h1>
-              <p className="text-lg text-neutral-500 mt-2">
-                Kategori: <span className="font-semibold text-primary">{product.category}</span>
-              </p>
-              <p className="text-3xl md:text-4xl font-bold text-neutral-800 my-6">{formatRupiah(product.price)}</p>
+              <div className="flex items-center gap-3 flex-wrap mb-2">
+                <h1 className="text-2xl md:text-3xl font-bold text-neutral-900">{product.name}</h1>
+                {product.discount && (
+                  <span className="bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full">
+                    DISKON {product.discount}%
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-4 text-sm text-neutral-600">
+                {productReviews.length > 0 && (
+                    <div className="flex items-center gap-2">
+                        <span className="font-bold text-lg text-neutral-800">{avgRating.toFixed(1)}</span>
+                        <StarRating rating={avgRating} />
+                        <span className="text-neutral-500">({productReviews.length} ulasan)</span>
+                    </div>
+                )}
+                <div className="border-l h-5"></div>
+                <span>Kategori: <span className="font-semibold text-primary">{product.category}</span></span>
+              </div>
+              <div className="my-6">
+                {product.discount ? (
+                  <div className="flex items-baseline gap-3">
+                    <p className="text-3xl md:text-4xl font-bold text-red-600">
+                      {formatRupiah(discountedPrice)}
+                    </p>
+                    <p className="text-xl md:text-2xl text-neutral-500 line-through">
+                      {formatRupiah(product.price)}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-3xl md:text-4xl font-bold text-neutral-800">
+                    {formatRupiah(product.price)}
+                  </p>
+                )}
+              </div>
 
               <div className="mt-auto border rounded-lg p-6 shadow-sm bg-neutral-50">
                   <div className="flex justify-between items-center mb-4">
@@ -219,8 +282,64 @@ const ProductDetailPage: React.FC = () => {
                </button>
           </div>
         </div>
+
+        {/* Review Section */}
+        <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg">
+          <h3 className="font-bold text-xl mb-4">Ulasan Produk ({productReviews.length})</h3>
+          
+          {/* Review Submission Form */}
+          <div className="mb-8 border-b pb-8">
+            {isAuthenticated ? (
+              <form onSubmit={handleReviewSubmit} className="space-y-4">
+                <h4 className="font-semibold">Tulis Ulasan Anda</h4>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Peringkat Anda</label>
+                  <StarRating rating={newRating} onRatingChange={setNewRating} />
+                </div>
+                <div>
+                  <label htmlFor="comment" className="block text-sm font-medium text-neutral-700 mb-1">Ulasan Anda</label>
+                  <textarea
+                    id="comment"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    rows={4}
+                    placeholder={`Bagaimana pendapat Anda tentang ${product.name}?`}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  ></textarea>
+                </div>
+                <Button type="submit">Kirim Ulasan</Button>
+              </form>
+            ) : (
+              <div className="text-center p-4 border rounded-lg bg-neutral-50">
+                <p>Silakan <Link to="/login" className="text-primary font-semibold hover:underline">masuk</Link> untuk menulis ulasan.</p>
+              </div>
+            )}
+          </div>
+          
+          {/* Review List */}
+          <div className="space-y-6">
+            {productReviews.length > 0 ? (
+              productReviews.map(review => (
+                <div key={review.id} className="flex gap-4">
+                  <div className="w-10 h-10 rounded-full bg-neutral-200 flex items-center justify-center flex-shrink-0">
+                    <UserIcon className="w-6 h-6 text-neutral-500" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="font-semibold">{review.userName}</p>
+                      <p className="text-xs text-neutral-500">{new Date(review.date).toLocaleDateString('id-ID')}</p>
+                    </div>
+                    <StarRating rating={review.rating} />
+                    <p className="text-neutral-700 mt-2">{review.comment}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-neutral-500 text-center py-4">Belum ada ulasan untuk produk ini.</p>
+            )}
+          </div>
+        </div>
         
-        {/* Related Products Section */}
         {displayedRelatedProducts.length > 0 && (
           <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg">
             <h3 className="font-bold text-xl mb-4">{relatedProductsTitle}</h3>
@@ -233,7 +352,6 @@ const ProductDetailPage: React.FC = () => {
         )}
       </div>
 
-      {/* Modal Zoom Gambar */}
       {isZoomModalOpen && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4 animate-fade-in"

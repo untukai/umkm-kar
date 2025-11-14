@@ -1,8 +1,11 @@
+
+
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
-import CategorySidebar from '../components/CategorySidebar';
-import { products, categories, sellers } from '../data/dummyData';
+import FilterSidebar from '../components/CategorySidebar';
+import SkeletonProductCard from '../components/SkeletonProductCard'; // Import skeleton
+import { products, categories } from '../data/dummyData';
 import { Product } from '../types';
 import { getAIRecommendations } from '../services/geminiService';
 
@@ -15,14 +18,12 @@ const ProductsPage: React.FC = () => {
 
   const query = searchParams.get('q');
   const categoryId = searchParams.get('category');
-  const sellerId = searchParams.get('seller');
 
   const selectedCategory = categories.find(c => c.id === categoryId);
-  const selectedSeller = sellers.find(s => s.id === parseInt(sellerId || ''));
 
   // This effect handles all product filtering and AI logic
   useEffect(() => {
-    // 1. Base filtering by category or seller (provides context for AI)
+    // 1. Base filtering by category (provides context for AI)
     let baseProducts = [...products];
     if (categoryId) {
       const categoryName = categories.find(c => c.id === categoryId)?.name;
@@ -30,10 +31,7 @@ const ProductsPage: React.FC = () => {
         baseProducts = baseProducts.filter(p => p.category === categoryName);
       }
     }
-    if (sellerId) {
-      baseProducts = baseProducts.filter(p => p.sellerId === parseInt(sellerId));
-    }
-
+    
     // 2. Final filtering for display, adding the text search query
     let finalProductsForDisplay = [...baseProducts];
     if (query) {
@@ -70,14 +68,13 @@ const ProductsPage: React.FC = () => {
         setError(null);
     }
 
-  }, [query, categoryId, sellerId, selectedCategory]);
+  }, [query, categoryId, selectedCategory]);
 
   // Derive display lists from state
   const baseProducts = products.filter(p => {
     const categoryName = categories.find(c => c.id === categoryId)?.name;
     const categoryMatch = !categoryId || p.category === categoryName;
-    const sellerMatch = !sellerId || p.sellerId === parseInt(sellerId);
-    return categoryMatch && sellerMatch;
+    return categoryMatch;
   });
 
   const aiRecommendedProducts = baseProducts.filter(p => aiRecommendedProductNames.includes(p.name));
@@ -88,14 +85,17 @@ const ProductsPage: React.FC = () => {
 
   const pageTitle = () => {
     if (query) return `Hasil pencarian untuk "${query}"`;
-    if (selectedCategory) return `Kategori: ${selectedCategory.name}`;
-    if (selectedSeller) return `Produk dari ${selectedSeller.name}`;
+    
+    if (selectedCategory) {
+        return `Kategori: ${selectedCategory.name}`;
+    }
+    
     return 'Semua Produk';
   };
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 items-start">
-      <CategorySidebar categories={categories} />
+      <FilterSidebar categories={categories} />
       <div className="flex-1 w-full min-w-0">
         <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
           <h1 className="text-3xl font-bold">{pageTitle()}</h1>
@@ -103,14 +103,21 @@ const ProductsPage: React.FC = () => {
         </div>
         
         {isLoadingRecommendations && (
-          <div className="text-center py-6 mb-8 bg-white rounded-lg shadow-sm">
-              <p className="text-primary font-semibold animate-pulse">✨ AI sedang mencari produk terbaik untuk Anda...</p>
+           <div className="mb-12">
+            <h2 className="text-xl font-bold mb-4 text-neutral-800">
+                ✨ AI sedang mencari produk terbaik...
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                {[...Array(4)].map((_, index) => (
+                    <SkeletonProductCard key={index} />
+                ))}
+            </div>
           </div>
         )}
 
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
         
-        {aiRecommendedProducts.length > 0 && (
+        {!isLoadingRecommendations && aiRecommendedProducts.length > 0 && (
           <div className="mb-12">
             <h2 className="text-xl font-bold mb-4">Rekomendasi AI Untuk Anda</h2>
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">

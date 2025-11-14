@@ -1,8 +1,9 @@
 
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Seller } from '../types';
-import { XIcon, StarIcon, PhoneIcon, MailIcon } from './Icons';
+import { XIcon, StarIcon, PhoneIcon, MailIcon, StoreIcon, CheckCircleIcon } from './Icons';
 import Button from './Button';
 import { products } from '../data/dummyData';
 
@@ -29,11 +30,6 @@ const StarRating: React.FC<{ rating: number }> = ({ rating }) => {
 
 const SellerDetailModal: React.FC<SellerDetailModalProps> = ({ seller, onClose }) => {
   const navigate = useNavigate();
-
-  const handleViewProducts = () => {
-    onClose();
-    navigate(`/products?seller=${seller.id}`);
-  };
   
   const handleProductClick = (productId: number) => {
     onClose(); // Close modal before navigating
@@ -72,12 +68,16 @@ const SellerDetailModal: React.FC<SellerDetailModalProps> = ({ seller, onClose }
           </button>
           
           <div className="flex flex-col items-center text-center">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary/20 flex items-center justify-center mb-4">
-              <span className="text-3xl sm:text-4xl font-bold text-primary">{seller.name.charAt(0)}</span>
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <StoreIcon className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
             </div>
             <h2 id="seller-modal-title" className="text-xl sm:text-2xl font-bold text-neutral-800">{seller.name}</h2>
-            <div className="mt-2">
-              <StarRating rating={seller.rating} />
+            <div className="flex items-center gap-4 mt-3">
+                <StarRating rating={seller.rating} />
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-100 px-2.5 py-1 rounded-full">
+                    <CheckCircleIcon className="w-4 h-4" />
+                    <span>Terverifikasi</span>
+                </div>
             </div>
           </div>
         </div>
@@ -128,12 +128,6 @@ const SellerDetailModal: React.FC<SellerDetailModalProps> = ({ seller, onClose }
                 </div>
               </div>
             )}
-        </div>
-
-        <div className="p-4 sm:p-6 mt-auto border-t">
-          <Button onClick={handleViewProducts} className="w-full !font-bold">
-            Lihat Semua Produk Penjual
-          </Button>
         </div>
       </div>
     </div>

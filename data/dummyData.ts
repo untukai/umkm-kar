@@ -1,5 +1,5 @@
 
-import { Product, Category, Article, Seller } from '../types';
+import { Product, Category, Article, Seller, Review } from '../types';
 
 export const categories: Category[] = [
   { id: 'kuliner', name: 'Kuliner' },
@@ -43,4 +43,13 @@ export const articles: Article[] = [
   { id: 1, title: 'Inovasi UMKM Karawang di Era Digital', summary: 'Melihat bagaimana para pelaku UMKM lokal beradaptasi dengan teknologi...', content: 'Konten lengkap artikel Inovasi UMKM Karawang.' },
   { id: 2, title: 'Mengenal Batik Khas Karawang', summary: 'Setiap goresan canting pada batik Karawang memiliki makna tersendiri...', content: 'Konten lengkap artikel Batik Khas Karawang.' },
   { id: 3, title: 'Potensi Pertanian Organik di Karawang', summary: 'Karawang, lumbung padi nasional, kini mulai merambah pertanian organik...', content: 'Konten lengkap artikel Potensi Pertanian Organik.' }
+];
+
+export const reviews: Review[] = [
+  { id: 1, productId: 1, userName: 'Budi Santoso', userEmail: 'budi@example.com', rating: 5, comment: 'Serabinya juara! Saus kinca duriannya bikin nagih. Wajib coba!', date: '2024-05-20T10:00:00Z' },
+  { id: 2, productId: 1, userName: 'Citra Lestari', userEmail: 'citra@example.com', rating: 4, comment: 'Enak banget, tapi antrenya lumayan. Mungkin bisa diperbaiki sistem pemesanannya.', date: '2024-05-19T14:30:00Z' },
+  { id: 3, productId: 2, userName: 'Agus Wijaya', userEmail: 'agus@example.com', rating: 5, comment: 'Kain batiknya halus, motifnya juga unik dan khas Karawang. Bangga pakai produk lokal!', date: '2024-05-18T09:15:00Z' },
+  { id: 4, productId: 4, userName: 'Dewi Anggraini', userEmail: 'dewi@example.com', rating: 5, comment: 'Berasnya pulen dan wangi. Sehat karena organik. Keluarga jadi suka makan di rumah.', date: '2024-05-21T11:00:00Z' },
+  { id: 5, productId: 4, userName: 'Eko Prasetyo', userEmail: 'eko@example.com', rating: 5, comment: 'Pengiriman cepat, kualitas berasnya konsisten. Sudah langganan di sini.', date: '2024-05-15T18:00:00Z' },
+  { id: 6, productId: 1, userName: 'Fitriani', userEmail: 'fitri@example.com', rating: 5, comment: 'The best serabi in town!', date: '2024-05-22T08:45:00Z' },
 ];

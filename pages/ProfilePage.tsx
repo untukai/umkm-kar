@@ -120,26 +120,31 @@ const ProfilePage: React.FC = () => {
                 </div>
               </button>
               {expandedOrderId === order.id && (
-                <div id={`order-details-${order.id}`} className="p-4 bg-white border-t animate-fade-in">
-                  <h3 className="font-bold text-lg mb-4">Detail Pesanan</h3>
+                <div id={`order-details-${order.id}`} className="p-4 sm:p-6 bg-white border-t animate-fade-in">
                   <OrderStatusTracker currentStatus={order.status} />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                    <div className="border-t pt-4">
-                        <h4 className="font-semibold text-neutral-700 mb-2">Alamat Pengiriman</h4>
-                        <div className="text-sm text-neutral-600">
+                  <div className="border-t mt-6 pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                      {/* Kolom 1: Alamat Pengiriman */}
+                      <div>
+                        <h4 className="font-semibold text-neutral-800 mb-2">Alamat Pengiriman</h4>
+                        <div className="text-sm text-neutral-600 space-y-1">
                           <p className="font-bold">{order.shippingAddress.name}</p>
                           <p>{order.shippingAddress.address}</p>
                           <p>{order.shippingAddress.phone}</p>
                         </div>
-                    </div>
-                    <div className="border-t pt-4">
-                       <h4 className="font-semibold text-neutral-700 mb-2">Barang Pesanan</h4>
-                       <ul className="list-disc list-inside text-sm text-neutral-600">
-                        {order.items.map(item => (
-                            <li key={item.product.id}>{item.product.name} <span className="font-semibold">(x{item.quantity})</span></li>
-                        ))}
-                       </ul>
+                      </div>
+                      {/* Kolom 2: Barang Pesanan */}
+                      <div>
+                        <h4 className="font-semibold text-neutral-800 mb-2">Barang Pesanan</h4>
+                        <ul className="space-y-2">
+                          {order.items.map(item => (
+                            <li key={item.product.id} className="text-sm text-neutral-600 flex justify-between">
+                              <span className="pr-2">{item.product.name} <span className="text-neutral-500">(x{item.quantity})</span></span>
+                              <span className="font-semibold text-neutral-700 whitespace-nowrap">{formatRupiah(item.product.price * item.quantity)}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </div>

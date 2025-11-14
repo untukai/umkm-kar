@@ -1,13 +1,15 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Product } from '../types';
 import Button from './Button';
 import { useCart } from '../hooks/useCart';
-import { useToast } from '../hooks/useToast';
+import { useNotification } from '../hooks/useNotification';
 import { useSeller } from '../hooks/useSeller';
-import { useWishlist } from '../hooks/useWishlist'; // Import useWishlist
-import { sellers } from '../data/dummyData';
-import { StoreIcon, HeartIcon, ShareIcon } from './Icons'; // Import ShareIcon
+import { useWishlist } from '../hooks/useWishlist';
+import { sellers, reviews } from '../data/dummyData';
+import { StoreIcon, HeartIcon, ShareIcon } from './Icons';
+import StarRating from './StarRating'; // Import StarRating
 
 interface ProductCardProps {
   product: Product;
@@ -15,13 +17,19 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
-  const { showToast } = useToast();
+  const { showNotification } = useNotification();
   const { showSellerModal } = useSeller();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const navigate = useNavigate();
   
   const seller = sellers.find(s => s.id === product.sellerId);
   const isWishlisted = isInWishlist(product.id);
+
+  // Calculate average rating
+  const productReviews = reviews.filter(r => r.productId === product.id);
+  const avgRating = productReviews.length > 0
+    ? productReviews.reduce((sum, review) => sum + review.rating, 0) / productReviews.length
+    : 0;
 
   const formatRupiah = (number: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -34,13 +42,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     addToCart(product);
-    showToast(`'${product.name}' berhasil ditambahkan ke keranjang.`);
+    showNotification('Berhasil', `'${product.name}' ditambahkan ke keranjang.`);
   };
 
   const handleBuyNow = (e: React.MouseEvent) => {
     e.preventDefault();
     addToCart(product);
-    showToast(`'${product.name}' ditambahkan, lanjut ke checkout.`);
+    showNotification('Berhasil', `'${product.name}' ditambahkan ke keranjang.`);
     navigate('/checkout');
   };
 
@@ -54,48 +62,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     e.stopPropagation();
     if (isWishlisted) {
       removeFromWishlist(product.id);
-      showToast(`'${product.name}' dihapus dari wishlist.`);
+      showNotification('Wishlist', `'${product.name}' dihapus dari wishlist.`);
     } else {
       addToWishlist(product);
-      showToast(`'${product.name}' ditambahkan ke wishlist.`);
+      showNotification('Wishlist', `'${product.name}' ditambahkan ke wishlist.`);
     }
   };
 
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Improved URL generation to be more robust. It takes the current URL,
-    // removes any existing hash, and appends the correct product hash path.
-    const productUrl = `${window.location.href.split('#')[0]}#/products/${product.id}`;
-
-    // Use modern clipboard API if available and in a secure context
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(productUrl)
-        .then(() => showToast('Tautan produk berhasil disalin!'))
-        .catch(err => {
-          console.error('Async clipboard copy failed:', err);
-          showToast('Gagal menyalin tautan.');
-        });
+    const productUrl = `${window.location.origin}${window.location.pathname}#/products/${product.id}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(productUrl).then(() => {
+        showNotification('Berhasil Disalin', 'Tautan produk berhasil disalin!');
+      });
     } else {
-      // Fallback for older browsers or non-secure contexts
-      try {
-        const textArea = document.createElement('textarea');
-        textArea.value = productUrl;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-9999px';
-        document.body.appendChild(textArea);
-        textArea.select();
-        const successful = document.execCommand('copy');
-        document.body.removeChild(textArea);
-        if (successful) {
-          showToast('Tautan produk berhasil disalin!');
-        } else {
-          showToast('Gagal menyalin tautan.');
-        }
-      } catch (err) {
-        console.error('Fallback copy failed:', err);
-        showToast('Gagal menyalin tautan.');
-      }
+      showNotification('Gagal', 'Gagal menyalin tautan.', 'error');
     }
   };
 
@@ -117,29 +100,41 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </button>
 
       <Link to={`/products/${product.id}`} className="block flex-grow">
-        <div className="w-full h-48 bg-neutral-200">
+        <div className="w-full aspect-square bg-neutral-200">
           <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
         </div>
         <div className="p-3">
           <h3 className="text-sm font-normal text-neutral-700 h-10 overflow-hidden">{product.name}</h3>
-          <div className="mt-2 h-12 flex flex-col justify-center">
+          <div className="mt-2 h-12 flex items-center">
             {product.discount ? (
-              <div>
-                <p className="text-sm text-neutral-500 line-through">
-                  {formatRupiah(product.price)}
-                </p>
+              <div className="flex items-baseline gap-2 flex-wrap">
                 <p className="text-base sm:text-lg font-bold text-red-600">
                   {formatRupiah(discountedPrice)}
+                </p>
+                <p className="text-sm text-neutral-500 line-through">
+                  {formatRupiah(product.price)}
                 </p>
               </div>
             ) : (
               <p className="text-base sm:text-lg font-bold text-neutral-900">{formatRupiah(product.price)}</p>
             )}
           </div>
-          <button onClick={handleSellerClick} className="flex items-center text-xs text-neutral-500 mt-2 hover:text-primary transition-colors w-full text-left">
+          <div className="flex items-center text-xs text-neutral-500 mt-2 w-full text-left">
             <StoreIcon className="w-3 h-3 mr-1.5 flex-shrink-0" />
             <span className="truncate">{seller?.name || 'Penjual tidak ditemukan'}</span>
+          </div>
+          <button
+              onClick={handleSellerClick}
+              className="text-xs font-semibold text-primary hover:underline mt-1 w-full text-left"
+          >
+              Lihat Penjual
           </button>
+          {productReviews.length > 0 && (
+            <div className="flex items-center gap-1 mt-1">
+                <StarRating rating={avgRating} />
+                <span className="text-xs text-neutral-500">({productReviews.length})</span>
+            </div>
+          )}
         </div>
       </Link>
       <div className="p-3 pt-0 mt-auto">
@@ -155,7 +150,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               onClick={handleShare}
               className="p-2 border border-neutral-300 rounded-lg text-neutral-600 hover:bg-neutral-100 hover:text-primary transition-colors flex-shrink-0"
               aria-label="Bagikan produk"
-              title="Bagikan produk"
+              title="Bagikan Produk"
             >
               <ShareIcon className="w-5 h-5" />
             </button>

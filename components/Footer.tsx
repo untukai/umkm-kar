@@ -1,7 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useNotification } from '../hooks/useNotification';
 
 const Footer: React.FC = () => {
+  const { showNotification } = useNotification();
+
+  const handleComingSoon = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    showNotification('Segera Hadir', 'Halaman ini sedang dalam pengembangan.');
+  };
+
   return (
     <footer className="bg-white border-t mt-12">
       <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
@@ -16,15 +24,15 @@ const Footer: React.FC = () => {
               <li><Link to="/products" className="text-neutral-600 hover:text-primary">Produk</Link></li>
               <li><Link to="/articles" className="text-neutral-600 hover:text-primary">Artikel</Link></li>
               <li><Link to="/collaboration" className="text-neutral-600 hover:text-primary">Kolaborasi</Link></li>
-              <li><a href="#" className="text-neutral-600 hover:text-primary">Tentang Kami</a></li>
+              <li><a href="#" onClick={handleComingSoon} className="text-neutral-600 hover:text-primary">Tentang Kami</a></li>
             </ul>
           </div>
           <div className="col-span-1">
             <h4 className="font-semibold text-neutral-800">Bantuan</h4>
             <ul className="mt-4 space-y-2">
-              <li><a href="#" className="text-neutral-600 hover:text-primary">Hubungi Kami</a></li>
-              <li><a href="#" className="text-neutral-600 hover:text-primary">Kebijakan Privasi</a></li>
-              <li><a href="#" className="text-neutral-600 hover:text-primary">Syarat & Ketentuan</a></li>
+              <li><a href="#" onClick={handleComingSoon} className="text-neutral-600 hover:text-primary">Hubungi Kami</a></li>
+              <li><a href="#" onClick={handleComingSoon} className="text-neutral-600 hover:text-primary">Kebijakan Privasi</a></li>
+              <li><a href="#" onClick={handleComingSoon} className="text-neutral-600 hover:text-primary">Syarat & Ketentuan</a></li>
             </ul>
           </div>
         </div>

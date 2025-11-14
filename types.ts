@@ -53,3 +53,13 @@ export interface Order {
 export interface User {
   email: string;
 }
+
+export interface Review {
+  id: number;
+  productId: number;
+  userName: string;
+  userEmail: string;
+  rating: number; // 1 to 5
+  comment: string;
+  date: string; // ISO 8601 format
+}
