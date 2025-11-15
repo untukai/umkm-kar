@@ -8,14 +8,9 @@ import { useNotification } from '../hooks/useNotification';
 import { useFollow } from '../hooks/useFollow';
 import Button from '../components/Button';
 import { ShoppingCartIcon, XIcon, ShareIcon, StoreIcon, EyeIcon, HeartIcon } from '../components/Icons';
+import signalingService from '../services/signalingService';
 
 let heartCounter = 0;
-
-interface LiveState {
-  sessionId: number;
-  status: 'live' | 'ended';
-  pinnedProductId: number | null;
-}
 
 const LiveDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,84 +20,155 @@ const LiveDetailPage: React.FC = () => {
   const { isFollowing, followSeller, unfollowSeller } = useFollow();
   const navigate = useNavigate();
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  const session = liveSessions.find(s => s.id === parseInt(id || ''));
-  const seller = session ? sellers.find(s => s.id === session.sellerId) : null;
-  const sessionProducts = session ? products.filter(p => session.productIds.includes(p.id)) : [];
   
-  const currentSeller = user ? sellers.find(s => s.email === user.email) : null;
-  const isHost = session?.status === 'live' && currentSeller?.id === seller?.id;
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+
+  const session = useMemo(() => liveSessions.find(s => s.id === parseInt(id || '')), [id]);
+  const seller = useMemo(() => session ? sellers.find(s => s.id === session.sellerId) : null, [session]);
+  const sessionProducts = useMemo(() => session ? products.filter(p => session.productIds.includes(p.id)) : [], [session]);
+  
+  const currentSeller = useMemo(() => user ? sellers.find(s => s.email === user.email) : null, [user]);
+  const isHost = useMemo(() => session?.status === 'live' && currentSeller?.id === seller?.id, [session, currentSeller, seller]);
 
   const [chatMessages, setChatMessages] = useState<LiveChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [showEndLiveModal, setShowEndLiveModal] = useState(false);
-  
-  const [liveState, setLiveState] = useState<LiveState | null>(null);
+  const [pinnedProductId, setPinnedProductId] = useState<number | null>(null);
 
-  // State for realistic simulation
   const [likes, setLikes] = useState(session?.likes || 0);
   const [viewers, setViewers] = useState(session?.viewers || 0);
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number }[]>([]);
+  const [isSessionEnded, setIsSessionEnded] = useState(false);
+  
+  const pinnedProduct = useMemo(() => {
+    if (!pinnedProductId) return null;
+    return products.find(p => p.id === pinnedProductId) || null;
+  }, [pinnedProductId]);
 
-  // Effect to listen to localStorage for real-time simulation
   useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'kodik-live-session') {
-        try {
-          const newState = event.newValue ? JSON.parse(event.newValue) : null;
-          if ((newState && newState.sessionId === parseInt(id || '')) || !newState) {
-            setLiveState(newState);
-          }
-        } catch (e) {
-          console.error("Failed to parse live session state from localStorage", e);
-          setLiveState(null);
+    if (!session || !id) return;
+
+    const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+    const createPeerConnection = () => {
+        if (peerConnectionRef.current) return;
+        
+        const pc = new RTCPeerConnection(configuration);
+
+        pc.onicecandidate = (event) => {
+            if (event.candidate) {
+                signalingService.sendMessage({ type: 'ice-candidate', payload: event.candidate, sessionId: id });
+            }
+        };
+
+        if (!isHost) {
+            pc.ontrack = (event) => {
+                const stream = new MediaStream();
+                event.streams[0].getTracks().forEach(track => stream.addTrack(track));
+                setRemoteStream(stream);
+                if (videoRef.current) {
+                    videoRef.current.srcObject = stream;
+                    videoRef.current.play().catch(e => console.error("Remote stream play failed", e));
+                }
+            };
         }
-      }
+
+        peerConnectionRef.current = pc;
     };
 
-    // Initial load from localStorage
-    try {
-      const storedState = localStorage.getItem('kodik-live-session');
-      if (storedState) {
-        const parsedState = JSON.parse(storedState);
-        if (parsedState.sessionId === parseInt(id || '')) {
-          setLiveState(parsedState);
+    const handleSignalingMessage = async (message: any) => {
+        if (message.sessionId !== id) return;
+
+        if (!peerConnectionRef.current) createPeerConnection();
+        const pc = peerConnectionRef.current!;
+
+        try {
+            if (message.type === 'offer' && !isHost) {
+                await pc.setRemoteDescription(new RTCSessionDescription(message.payload));
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+                signalingService.sendMessage({ type: 'answer', payload: answer, sessionId: id });
+            } else if (message.type === 'answer' && isHost) {
+                await pc.setRemoteDescription(new RTCSessionDescription(message.payload));
+            } else if (message.type === 'ice-candidate') {
+                await pc.addIceCandidate(new RTCIceCandidate(message.payload));
+            } else if (message.type === 'pin-product') {
+                setPinnedProductId(message.payload.productId);
+            } else if (message.type === 'unpin-product') {
+                setPinnedProductId(null);
+            } else if (message.type === 'end-session') {
+                setIsSessionEnded(true);
+                if (peerConnectionRef.current) {
+                    peerConnectionRef.current.close();
+                    peerConnectionRef.current = null;
+                }
+                setTimeout(() => navigate('/live'), 3000);
+            }
+        } catch (error) {
+            console.error("Error handling signaling message:", error);
         }
-      }
-    } catch (e) {
-      console.error("Failed to parse initial live session state", e);
-    }
+    };
     
-    window.addEventListener('storage', handleStorageChange);
+    signalingService.connect(id);
+    signalingService.onMessage(handleSignalingMessage);
+
+    const startBroadcast = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            localStreamRef.current = stream;
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                videoRef.current.muted = true;
+                videoRef.current.play().catch(e => console.error("Local stream play failed", e));
+            }
+            createPeerConnection();
+            stream.getTracks().forEach(track => peerConnectionRef.current!.addTrack(track, stream));
+            
+            const offer = await peerConnectionRef.current!.createOffer();
+            await peerConnectionRef.current!.setLocalDescription(offer);
+            signalingService.sendMessage({ type: 'offer', payload: offer, sessionId: id });
+
+        } catch (err) {
+            console.error("Failed to get media stream:", err);
+            showNotification('Gagal Memuat Kamera', 'Tidak bisa mengakses kamera.', 'error');
+            navigate('/seller/live');
+        }
+    };
+    
+    if (session.status === 'live') {
+      if (isHost) {
+        startBroadcast();
+      } else {
+        createPeerConnection();
+      }
+    } else {
+        if (videoRef.current) {
+            videoRef.current.src = 'https://videos.pexels.com/video-files/855352/855352-hd_720_1366_25fps.mp4';
+            videoRef.current.muted = false;
+            videoRef.current.loop = true;
+            videoRef.current.play().catch(e => console.error("Replay autoplay failed", e));
+        }
+    }
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+        if (localStreamRef.current) {
+            localStreamRef.current.getTracks().forEach(track => track.stop());
+            localStreamRef.current = null;
+        }
+        if (peerConnectionRef.current) {
+            peerConnectionRef.current.close();
+            peerConnectionRef.current = null;
+        }
+        signalingService.disconnect();
     };
-  }, [id]);
-
-  // Redirect if session has ended
-  useEffect(() => {
-    if (session?.status === 'live' && liveState === null && !isHost) {
-      showNotification('Info', 'Siaran langsung telah berakhir.', 'error');
-      navigate('/live');
-    }
-  }, [liveState, session, navigate, showNotification, isHost]);
-
-
-  // Derive pinned product from the synchronized liveState
-  const pinnedProduct = useMemo(() => {
-    if (!liveState?.pinnedProductId) return null;
-    return products.find(p => p.id === liveState.pinnedProductId) || null;
-  }, [liveState]);
+  }, [id, session, isHost, navigate, showNotification]);
 
   const sampleChats: Omit<LiveChatMessage, 'id'>[] = [
-    { userName: 'Andi', text: 'Keren banget produknya!' },
-    { userName: 'Sari', text: 'Diskonnya sampai kapan kak?' },
-    { userName: 'Rina', text: 'Baru join, lagi bahas apa nih?' },
-    { userName: 'Budi', text: '💚', isGift: true, giftIcon: '💚' },
-    { userName: 'Joko', text: 'Pengirimannya aman kan?' },
-    { userName: 'Wati', text: 'Langsung checkout ah! 👍' },
+    { userName: 'Andi', text: 'Keren banget produknya!' }, { userName: 'Sari', text: 'Diskonnya sampai kapan kak?' }, { userName: 'Rina', text: 'Baru join, lagi bahas apa nih?' }, { userName: 'Budi', text: '💚', isGift: true, giftIcon: '💚' }, { userName: 'Joko', text: 'Pengirimannya aman kan?' }, { userName: 'Wati', text: 'Langsung checkout ah! 👍' },
   ];
 
   useEffect(() => {
@@ -119,26 +185,6 @@ const LiveDetailPage: React.FC = () => {
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMessages]);
 
-  useEffect(() => {
-    if (!session || !seller || !videoRef.current) return;
-    const videoEl = videoRef.current;
-    let stream: MediaStream | null = null;
-    videoEl.pause(); videoEl.src = ''; videoEl.srcObject = null;
-    
-    if (session.status === 'live') {
-      if (isHost) {
-        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-          .then(mediaStream => { stream = mediaStream; videoEl.srcObject = mediaStream; videoEl.muted = true; videoEl.play().catch(e => console.error("Host autoplay failed", e)); })
-          .catch(err => { console.error("Failed to get camera stream:", err); showNotification('Gagal Memuat Kamera', 'Tidak bisa mengakses kamera. Pastikan Anda telah memberikan izin.', 'error'); navigate('/seller/live'); });
-      } else {
-        videoEl.src = 'https://videos.pexels.com/video-files/855352/855352-hd_720_1366_25fps.mp4'; videoEl.muted = false; videoEl.loop = true; videoEl.play().catch(e => console.error("Buyer autoplay failed", e));
-      }
-    } else {
-      videoEl.src = 'https://videos.pexels.com/video-files/855352/855352-hd_720_1366_25fps.mp4'; videoEl.muted = false; videoEl.loop = true; videoEl.play().catch(e => console.error("Replay autoplay failed", e));
-    }
-    return () => { if (stream) { stream.getTracks().forEach(track => track.stop()); } };
-  }, [session, seller, isHost, navigate, showNotification]);
-
   const handleSendMessage = (e: React.FormEvent) => { e.preventDefault(); if (!newMessage.trim()) return; if (!isAuthenticated) { showNotification('Gagal', 'Anda harus masuk untuk mengirim komentar.', 'error', { label: 'Masuk', path: '/login' }); return; } const msg: LiveChatMessage = { id: Date.now(), userName: 'Anda', text: newMessage }; setChatMessages(prev => [...prev, msg]); setNewMessage(''); };
   const handleAddToCart = (product: Product) => { addToCart(product); showNotification('Berhasil', `'${product.name}' ditambahkan ke keranjang.`, 'success', { label: 'Lihat Keranjang', path: '/cart' }); };
   const handleCloseClick = () => { if (isHost) { setShowEndLiveModal(true); } else { navigate('/live'); } };
@@ -146,19 +192,15 @@ const LiveDetailPage: React.FC = () => {
   const handleAddHeart = () => { setLikes(l => l + 1); const newHeart = { id: heartCounter++, x: Math.random() * 50 + 25 }; setFloatingHearts(prev => [...prev, newHeart]); setTimeout(() => setFloatingHearts(prev => prev.filter(h => h.id !== newHeart.id)), 2000); };
 
   const handlePinProduct = (productId: number) => {
-    if (!isHost || !liveState) return;
-    const newState = { ...liveState, pinnedProductId: productId };
-    setLiveState(newState);
-    localStorage.setItem('kodik-live-session', JSON.stringify(newState));
-  };
-
-  const handleUnpinProduct = () => {
-    if (!isHost || !liveState) return;
-    const newState = { ...liveState, pinnedProductId: null };
-    setLiveState(newState);
-    localStorage.setItem('kodik-live-session', JSON.stringify(newState));
+    if (!isHost || !id) return;
+    signalingService.sendMessage({ type: 'pin-product', payload: { productId }, sessionId: id });
   };
   
+  const handleUnpinProduct = () => {
+    if (!isHost || !id) return;
+    signalingService.sendMessage({ type: 'unpin-product', sessionId: id });
+  };
+
   if (!session || !seller) { return <div className="h-screen w-screen flex flex-col items-center justify-center bg-neutral-100 text-center p-4"><h1 className="text-2xl font-bold">Sesi live tidak ditemukan.</h1><Button onClick={() => navigate('/live')} className="mt-4">Kembali ke Live</Button></div>; }
 
   const following = isFollowing(seller.id);
@@ -173,15 +215,15 @@ const LiveDetailPage: React.FC = () => {
         <p className="text-xs font-bold mb-2">Sematkan Produk</p>
         <div className="max-h-24 overflow-y-auto space-y-1 pr-1 scrollbar-hide">
           {sessionProducts.map(product => (
-            <div key={product.id} className={`flex items-center gap-2 p-1 rounded-md text-xs transition-colors ${liveState?.pinnedProductId === product.id ? 'bg-primary/80' : 'bg-black/30'}`}>
+            <div key={product.id} className={`flex items-center gap-2 p-1 rounded-md text-xs transition-colors ${pinnedProductId === product.id ? 'bg-primary/80' : 'bg-black/30'}`}>
               <img src={product.imageUrls[0]} alt={product.name} className="w-8 h-8 rounded object-cover flex-shrink-0" />
               <p className="flex-1 truncate">{product.name}</p>
               <button
                 onClick={() => handlePinProduct(product.id)}
                 className="bg-white/20 hover:bg-white/40 px-2 py-1 rounded-md text-xs font-semibold disabled:opacity-50"
-                disabled={liveState?.pinnedProductId === product.id}
+                disabled={pinnedProductId === product.id}
               >
-                {liveState?.pinnedProductId === product.id ? 'Tersemat' : 'Pin'}
+                {pinnedProductId === product.id ? 'Tersemat' : 'Pin'}
               </button>
             </div>
           ))}
@@ -205,7 +247,13 @@ const LiveDetailPage: React.FC = () => {
 
   return (
     <div className="h-screen w-screen bg-black text-white relative flex flex-col font-sans overflow-hidden">
-      <video ref={videoRef} autoPlay playsInline controls={session.status === 'replay'} muted={isHost || session.status !== 'replay'} className="absolute inset-0 w-full h-full object-cover z-0" style={{ transform: isHost ? 'scaleX(-1)' : 'none' }} poster={session.thumbnailUrl} />
+      <video ref={videoRef} autoPlay playsInline controls={session.status === 'replay'} className="absolute inset-0 w-full h-full object-cover z-0" style={{ transform: isHost ? 'scaleX(-1)' : 'none' }} poster={session.thumbnailUrl} />
+       {isSessionEnded && (
+        <div className="absolute inset-0 bg-black/70 z-30 flex flex-col items-center justify-center text-center p-4 animate-fade-in">
+          <h2 className="text-2xl font-bold">Siaran Langsung Telah Berakhir</h2>
+          <p className="mt-2 text-neutral-300">Terima kasih telah menonton. Anda akan diarahkan kembali.</p>
+        </div>
+      )}
       <div className="absolute bottom-20 right-4 h-64 w-20 pointer-events-none z-20">
         {floatingHearts.map(heart => (<div key={heart.id} className="absolute bottom-0 animate-float-up" style={{ left: `${heart.x}%` }}><HeartIcon className="w-8 h-8 text-red-500" fill="currentColor" style={{ filter: `hue-rotate(${Math.random() * 360}deg)` }} /></div>))}
       </div>

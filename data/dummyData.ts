@@ -1,6 +1,5 @@
-
-
 import { Product, Category, Article, Seller, Review, Order, Post, LiveSession, VirtualGift, Conversation, ChatMessage, FinancialTransaction, Promotion, Comment, Influencer } from '../types';
+import signalingService from '../services/signalingService';
 
 export const categories: Category[] = [
   { id: 'kuliner', name: 'Kuliner' },
@@ -233,11 +232,6 @@ export const addLiveSession = (session: Omit<LiveSession, 'id' | 'status'>): Liv
     status: 'live',
   };
   liveSessions.unshift(newSession);
-  localStorage.setItem('kodik-live-session', JSON.stringify({
-    sessionId: newSession.id,
-    status: 'live',
-    pinnedProductId: newSession.productIds[0] || null,
-  }));
   return newSession;
 };
 
@@ -245,10 +239,8 @@ export const endLiveSession = (sessionId: number): boolean => {
   const sessionIndex = liveSessions.findIndex(s => s.id === sessionId);
   if (sessionIndex !== -1) {
     liveSessions[sessionIndex].status = 'replay';
-    const liveState = JSON.parse(localStorage.getItem('kodik-live-session') || '{}');
-    if (liveState.sessionId === sessionId) {
-      localStorage.removeItem('kodik-live-session');
-    }
+    // Notify all viewers that the session has ended
+    signalingService.sendMessage({ type: 'end-session', sessionId: sessionId.toString() });
     return true;
   }
   return false;
