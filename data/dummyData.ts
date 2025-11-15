@@ -1,6 +1,6 @@
 
 
-import { Product, Category, Article, Seller, Review, Order, Post, LiveSession, VirtualGift, Conversation, ChatMessage, FinancialTransaction, Promotion } from '../types';
+import { Product, Category, Article, Seller, Review, Order, Post, LiveSession, VirtualGift, Conversation, ChatMessage, FinancialTransaction, Promotion, Comment } from '../types';
 
 export const categories: Category[] = [
   { id: 'kuliner', name: 'Kuliner' },
@@ -35,7 +35,7 @@ export const updateSellerDetails = (sellerId: number, newDetails: Partial<Seller
 };
 
 export let products: Product[] = [
-  { id: 1, name: 'Serabi Hijau Khas Karawang', price: 15000, category: 'Kuliner', description: 'Serabi hijau otentik dengan saus kinca durian.', stock: 50, sellerId: 1, discount: 10, imageUrls: ['https://images.unsplash.com/photo-1563889958723-5a507119999a?w=600&h=600&fit=crop', 'https://images.unsplash.com/photo-1598103366923-387b92f44146?w=600&h=600&fit=crop'], status: 'aktif' },
+  { id: 1, name: 'Serabi Hijau Khas Karawang', price: 15000, category: 'Kuliner', description: 'Serabi hijau otentik dengan saus kinca durian.', stock: 50, sellerId: 1, discount: 10, imageUrls: ['https://images.unsplash.com/photo-1563889958723-5a507119999a?w=600&h=600&fit=crop', 'https://images.unsplash.com/photo-1598103366923-3cec45511c34?w=600&h=600&fit=crop'], status: 'aktif' },
   { id: 2, name: 'Batik Karawang Motif Padi', price: 250000, category: 'Fashion', description: 'Kain batik tulis dengan motif padi khas lumbung padi Jawa Barat.', stock: 20, sellerId: 2, imageUrls: ['https://images.unsplash.com/photo-1622542910436-15772a153257?w=600&h=600&fit=crop', 'https://images.unsplash.com/photo-1583311833017-11202e2e935b?w=600&h=600&fit=crop'], status: 'aktif' },
   { id: 3, name: 'Anyaman Bambu Hias', price: 75000, category: 'Kerajinan', description: 'Hiasan dinding dari anyaman bambu asli Karawang.', stock: 0, sellerId: 3, discount: 25, imageUrls: ['https://images.unsplash.com/photo-1618221628462-b75b0a373523?w=600&h=600&fit=crop'], status: 'habis stok' },
   { id: 4, name: 'Beras Pandan Wangi Organik', price: 80000, category: 'Pertanian', description: 'Beras organik 5kg, pulen dan wangi alami.', stock: 100, sellerId: 4, imageUrls: ['https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a7?w=600&h=600&fit=crop', 'https://images.unsplash.com/photo-1586201375823-3cec45511c34?w=600&h=600&fit=crop'], status: 'aktif' },
@@ -56,9 +56,30 @@ export const addProduct = (product: Omit<Product, 'id' | 'status'>) => {
 };
 
 export const articles: Article[] = [
-  { id: 1, title: 'Inovasi UMKM Karawang di Era Digital', summary: 'Melihat bagaimana para pelaku UMKM lokal beradaptasi dengan teknologi...', content: 'Konten lengkap artikel Inovasi UMKM Karawang.' },
-  { id: 2, title: 'Mengenal Batik Khas Karawang', summary: 'Setiap goresan canting pada batik Karawang memiliki makna tersendiri...', content: 'Konten lengkap artikel Batik Khas Karawang.' },
-  { id: 3, title: 'Potensi Pertanian Organik di Karawang', summary: 'Karawang, lumbung padi nasional, kini mulai merambah pertanian organik...', content: 'Konten lengkap artikel Potensi Pertanian Organik.' }
+  { 
+    id: 1, 
+    title: 'Inovasi UMKM Karawang di Era Digital: Kunci Sukses Bertahan dan Berkembang', 
+    summary: 'Di tengah gempuran persaingan global, UMKM Karawang menunjukkan taringnya dengan adopsi teknologi digital yang kreatif dan efektif.', 
+    author: 'Tim KODIK News',
+    publishDate: '2024-07-25T10:00:00Z',
+    content: `Karawang, yang dikenal sebagai lumbung padi nasional dan kota industri, kini menyaksikan gelombang baru transformasi ekonomi di tingkat akar rumput. Para pelaku Usaha Mikro, Kecil, dan Menengah (UMKM) tidak lagi hanya mengandalkan etalase fisik. Mereka kini merambah dunia digital untuk menjangkau pasar yang lebih luas dan meningkatkan efisiensi operasional.\n\nSalah satu contohnya adalah Ibu Entin, pemilik 'Dodol Ibu Entin' yang legendaris. Jika dulu pemasarannya hanya dari mulut ke mulut dan terbatas di sekitar toko, kini produknya bisa dipesan oleh pelanggan di seluruh Indonesia melalui platform KODIK. "Awalnya saya gaptek, tapi setelah dibantu anak saya dan tim KODIK, ternyata jualan online itu membuka pintu rezeki yang tidak terduga. Omzet saya naik hampir 80%," ujarnya sambil tersenyum.\n\nKisah sukses tidak hanya datang dari sektor kuliner. 'Batik Jaya', pengrajin batik tulis khas Karawang, juga merasakan dampak positif digitalisasi. Melalui sesi live shopping di KODIK, mereka dapat menceritakan filosofi di balik setiap motif batik, menciptakan koneksi emosional dengan pembeli. "Live shopping itu seperti membuka workshop kami untuk semua orang. Pembeli jadi lebih menghargai proses dan nilai dari sehelai kain batik," tutur Bapak Agus, sang pemilik.\n\nTransformasi ini bukan tanpa tantangan. Keterbatasan literasi digital, modal untuk perangkat, dan persaingan di pasar online yang ketat menjadi beberapa kendala utama. Namun, dengan semangat kolaborasi antara pemerintah daerah, komunitas, dan platform seperti KODIK, para pelaku UMKM Karawang perlahan tapi pasti berhasil mengatasi rintangan tersebut, membuktikan bahwa inovasi adalah kunci untuk tidak hanya bertahan, tetapi juga berkembang di era digital.` 
+  },
+  { 
+    id: 2, 
+    title: 'Mengenal Batik Khas Karawang: Goresan Canting Penuh Makna dan Sejarah', 
+    summary: 'Lebih dari sekadar kain, setiap motif batik Karawang menyimpan cerita tentang kekayaan alam, budaya, dan kearifan lokal.', 
+    author: 'Budaya Karawang',
+    publishDate: '2024-07-22T14:30:00Z',
+    content: `Ketika berbicara tentang batik, banyak yang langsung teringat pada kota-kota seperti Pekalongan, Solo, atau Yogyakarta. Namun, Karawang juga memiliki warisan budaya batik yang tak kalah kaya dan unik. Batik Karawang, atau yang sering disebut Batik Tarawang, memiliki ciri khas pada motif-motifnya yang terinspirasi dari lingkungan agraris dan maritim.\n\nSalah satu motif yang paling ikonik adalah motif 'padi'. Sebagai lumbung padi nasional, motif ini merepresentasikan kemakmuran, kesuburan, dan rasa syukur masyarakat Karawang. Goresan bulir-bulir padi yang merunduk menjadi pengingat akan filosofi hidup untuk tetap rendah hati meskipun memiliki banyak kelebihan.\n\nSelain motif padi, ada pula motif 'Citarum' yang menggambarkan aliran sungai terbesar di Jawa Barat yang melintasi Karawang. Motif ini melambangkan kehidupan yang terus mengalir, dinamis, dan memberikan manfaat bagi sekitarnya. Palet warna batik Karawang juga cenderung lebih berani, seringkali menggunakan warna-warna cerah seperti hijau, kuning, dan merah, yang mencerminkan semangat masyarakatnya yang ekspresif.\n\nProses pembuatannya pun masih banyak yang mempertahankan teknik batik tulis tradisional. Para pengrajin dengan telaten menggoreskan canting berisi malam panas di atas kain, sebuah proses yang membutuhkan kesabaran, ketelitian, dan jiwa seni yang tinggi. Dengan membeli sehelai batik Karawang, kita tidak hanya mendapatkan produk fashion, tetapi juga turut serta melestarikan sebuah mahakarya budaya yang sarat akan nilai dan sejarah.` 
+  },
+  { 
+    id: 3, 
+    title: 'Potensi Pertanian Organik di Karawang: Peluang Emas Menuju Pasar Modern', 
+    summary: 'Beralih dari pertanian konvensional, para petani muda di Karawang mulai melirik pertanian organik sebagai solusi untuk keberlanjutan dan peningkatan nilai jual produk.', 
+    author: 'Agro Inspirasi',
+    publishDate: '2024-07-20T09:00:00Z',
+    content: `Sebagai salah satu sentra produksi beras terbesar di Indonesia, Karawang memiliki potensi luar biasa dalam pengembangan sektor pertanian. Kini, sebuah tren positif mulai berkembang di kalangan petani, khususnya generasi muda: peralihan ke sistem pertanian organik.\n\nPertanian organik menawarkan berbagai keuntungan jangka panjang, baik bagi lingkungan maupun bagi petani itu sendiri. Dengan tidak menggunakan pestisida dan pupuk kimia, kesuburan tanah dapat terjaga secara alami, menghasilkan ekosistem yang lebih seimbang. Dari sisi ekonomi, produk organik memiliki nilai jual yang lebih tinggi di pasaran karena permintaan dari konsumen sadar kesehatan yang terus meningkat.\n\n'Tani Sejahtera', salah satu kelompok tani di Karawang yang menjadi pelopor pertanian organik, telah membuktikannya. "Awalnya banyak yang ragu, karena masa transisi ke organik itu butuh waktu dan hasil panen sempat sedikit menurun. Tapi setelah tanahnya pulih, hasilnya luar biasa. Beras kami lebih pulen, lebih wangi, dan harganya bisa dua kali lipat dari beras biasa," ungkap Kang Asep, ketua kelompok tani.\n\nPlatform digital seperti KODIK memainkan peran penting dalam menghubungkan petani organik dengan konsumen akhir. Melalui KODIK, 'Tani Sejahtera' dapat menjual produk mereka langsung ke konsumen di perkotaan, memotong rantai pasok yang panjang dan memastikan petani mendapatkan harga yang lebih adil. Ini adalah langkah strategis untuk menjadikan Karawang tidak hanya sebagai lumbung padi nasional, tetapi juga sebagai pusat pertanian organik modern yang berkelanjutan.` 
+  }
 ];
 
 export const reviews: Review[] = [
@@ -150,6 +171,7 @@ export let posts: Post[] = [
     comments: [
       { id: 1, userName: 'Budi Santoso', userEmail: 'budi@example.com', text: 'Langganan tiap pagi nih!' },
       { id: 2, userName: 'Citra Lestari', userEmail: 'citra@example.com', text: 'Kincanya emang juara! 👍' },
+      { id: 4, parentId: 1, userName: 'UMKM Serabi Maknyus', userEmail: 'penjual@example.com', text: 'Terima kasih Kak Budi! 🙏' }
     ]
   },
   {
@@ -184,6 +206,16 @@ export const addPost = (post: Omit<Post, 'id' | 'likes' | 'comments' | 'timestam
     timestamp: new Date().toISOString()
   };
   posts.unshift(newPost); // Add to the beginning of the array
+};
+
+export const addComment = (postId: number, comment: Omit<Comment, 'id'>) => {
+    const postIndex = posts.findIndex(p => p.id === postId);
+    if (postIndex !== -1) {
+        const post = posts[postIndex];
+        const newId = Math.max(0, ...post.comments.map(c => c.id)) + 1;
+        const newComment: Comment = { id: newId, ...comment };
+        post.comments.push(newComment);
+    }
 };
 
 export let liveSessions: LiveSession[] = [

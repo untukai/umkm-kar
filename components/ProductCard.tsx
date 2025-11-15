@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Product } from '../types';
@@ -44,14 +42,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     addToCart(product);
-    showNotification('Berhasil', `'${product.name}' ditambahkan ke keranjang.`);
+    showNotification(
+      'Berhasil',
+      `'${product.name}' ditambahkan ke keranjang.`,
+      'success',
+      { label: 'Lihat Keranjang', path: '/cart' }
+    );
   };
 
   const handleBuyNow = (e: React.MouseEvent) => {
     e.preventDefault();
     addToCart(product);
-    showNotification('Berhasil', `'${product.name}' ditambahkan ke keranjang.`);
-    navigate('/checkout');
+    showNotification('Berhasil', `'${product.name}' ditambahkan, Anda akan diarahkan ke checkout.`);
+    setTimeout(() => {
+      navigate('/checkout');
+    }, 1500);
   };
 
   const handleSellerClick = (e: React.MouseEvent) => {
@@ -64,10 +69,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     e.stopPropagation();
     if (isWishlisted) {
       removeFromWishlist(product.id);
-      showNotification('Wishlist', `'${product.name}' dihapus dari wishlist.`);
     } else {
       addToWishlist(product);
-      showNotification('Wishlist', `'${product.name}' ditambahkan ke wishlist.`);
+      showNotification(
+        'Ditambahkan ke Wishlist',
+        `'${product.name}' berhasil disimpan.`,
+        'success',
+        { label: 'Lihat Wishlist', path: '/wishlist' }
+      );
     }
   };
 

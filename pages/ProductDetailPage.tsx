@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { products, sellers, reviews as initialReviews } from '../data/dummyData';
@@ -65,15 +63,22 @@ const ProductDetailPage: React.FC = () => {
   const handleAddToCart = () => {
     if (product) {
       addToCart(product);
-      showNotification('Berhasil', `'${product.name}' ditambahkan ke keranjang.`);
+      showNotification(
+        'Berhasil',
+        `'${product.name}' ditambahkan ke keranjang.`,
+        'success',
+        { label: 'Lihat Keranjang', path: '/cart' }
+      );
     }
   };
 
   const handleBuyNow = () => {
     if (product) {
       addToCart(product);
-      showNotification('Berhasil', `'${product.name}' ditambahkan ke keranjang.`);
-      navigate('/checkout');
+      showNotification('Berhasil', `'${product.name}' ditambahkan, Anda akan diarahkan ke checkout.`);
+      setTimeout(() => {
+        navigate('/checkout');
+      }, 1500);
     }
   };
   
@@ -87,10 +92,14 @@ const ProductDetailPage: React.FC = () => {
     if (!product) return;
     if (isWishlisted) {
       removeFromWishlist(product.id);
-      showNotification('Wishlist', `'${product.name}' dihapus dari wishlist.`);
     } else {
       addToWishlist(product);
-      showNotification('Wishlist', `'${product.name}' ditambahkan ke wishlist.`);
+      showNotification(
+        'Ditambahkan ke Wishlist',
+        `'${product.name}' berhasil disimpan.`,
+        'success',
+        { label: 'Lihat Wishlist', path: '/wishlist' }
+      );
     }
   };
 

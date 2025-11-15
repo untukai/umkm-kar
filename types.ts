@@ -31,6 +31,8 @@ export interface Article {
   title: string;
   summary: string;
   content: string;
+  author: string;
+  publishDate: string; // ISO 8601 format
 }
 
 export interface CartItem {
@@ -70,6 +72,7 @@ export interface Review {
 
 export interface Comment {
   id: number;
+  parentId?: number | null;
   userName: string;
   userEmail: string;
   text: string;

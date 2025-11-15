@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { liveSessions, sellers, products, virtualGifts, endLiveSession } from '../data/dummyData';
@@ -81,7 +79,12 @@ const LiveDetailPage: React.FC = () => {
   
   const handleAddToCart = (product: Product) => {
     addToCart(product);
-    showNotification('Berhasil', `'${product.name}' ditambahkan ke keranjang.`);
+    showNotification(
+      'Berhasil',
+      `'${product.name}' ditambahkan ke keranjang.`,
+      'success',
+      { label: 'Lihat Keranjang', path: '/cart' }
+    );
   };
 
   const handleEndLive = () => {

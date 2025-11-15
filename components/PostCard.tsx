@@ -1,11 +1,14 @@
 
+
 import React, { useState } from 'react';
 import { Post, Comment } from '../types';
-import { sellers } from '../data/dummyData';
+// FIX: Import `posts` as `initialPosts` to access the global posts array.
+import { sellers, addComment, posts as initialPosts } from '../data/dummyData';
 import { useAuth } from '../hooks/useAuth';
-import Button from './Button';
-import Input from './Input';
-import { ThumbUpIcon, ChatBubbleIcon, StoreIcon, UserIcon } from './Icons';
+import { HeartIcon, ChatBubbleIcon, StoreIcon, ShareIcon } from './Icons';
+import CommentItem from './CommentItem';
+import CommentForm from './CommentForm';
+import { useNotification } from '../hooks/useNotification';
 
 interface PostCardProps {
     post: Post;
@@ -13,10 +16,12 @@ interface PostCardProps {
 
 const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
     const { user } = useAuth();
+    const { showNotification } = useNotification();
     const [post, setPost] = useState(initialPost);
+    const [comments, setComments] = useState<Comment[]>(initialPost.comments);
     const [isLiked, setIsLiked] = useState(false);
     const [showComments, setShowComments] = useState(false);
-    const [newComment, setNewComment] = useState('');
+    const [replyingTo, setReplyingTo] = useState<number | null>(null);
 
     const seller = sellers.find(s => s.id === post.sellerId);
 
@@ -45,26 +50,41 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
         }));
         setIsLiked(!isLiked);
     };
-    
-    const handleCommentSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newComment.trim() || !user) return;
 
-        const comment: Comment = {
-            id: Date.now(),
+    const handleShare = () => {
+        const postUrl = `${window.location.origin}${window.location.pathname}#/feed`;
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(postUrl).then(() => {
+                showNotification('Berhasil Disalin', 'Tautan ke Feed berhasil disalin!');
+            });
+        } else {
+            showNotification('Gagal', 'Gagal menyalin tautan.', 'error');
+        }
+    };
+    
+    const handleCommentSubmit = (text: string, parentId: number | null = null) => {
+        if (!user) return;
+
+        const newCommentData: Omit<Comment, 'id'> = {
+            parentId: parentId || undefined,
             userName: user.email.split('@')[0],
             userEmail: user.email,
-            text: newComment,
+            text: text,
         };
+
+        addComment(post.id, newCommentData);
+
+        // FIX: Use `initialPosts` (the imported global `posts` array) to get the updated comments.
+        const updatedPostComments = initialPosts.find(p => p.id === post.id)!.comments;
+        const addedComment = updatedPostComments[updatedPostComments.length - 1];
         
-        setPost(prevPost => ({
-            ...prevPost,
-            comments: [...prevPost.comments, comment],
-        }));
-        setNewComment('');
+        setComments(prev => [...prev, addedComment]);
+        setReplyingTo(null);
     };
 
     if (!seller) return null;
+
+    const topLevelComments = comments.filter(c => !c.parentId);
 
     return (
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -90,48 +110,49 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
             <div className="p-4">
                 <div className="flex justify-between text-sm text-neutral-600">
                     <span>{post.likes} Suka</span>
-                    <span>{post.comments.length} Komentar</span>
+                    <span>{comments.length} Komentar</span>
                 </div>
                 <div className="border-t my-2"></div>
-                <div className="grid grid-cols-2 gap-1">
-                    <button onClick={handleLike} className={`flex items-center justify-center gap-2 p-2 rounded-lg transition-colors font-semibold ${isLiked ? 'text-primary bg-primary/10' : 'text-neutral-600 hover:bg-neutral-100'}`}>
-                        <ThumbUpIcon className="w-5 h-5" />
+                <div className="grid grid-cols-3 gap-1">
+                    <button onClick={handleLike} className={`flex items-center justify-center gap-2 p-2 rounded-lg transition-colors font-semibold ${isLiked ? 'text-red-500 bg-red-50' : 'text-neutral-600 hover:bg-neutral-100'}`}>
+                        <HeartIcon className="w-5 h-5" fill={isLiked ? 'currentColor' : 'none'} />
                         <span>Suka</span>
                     </button>
                     <button onClick={() => setShowComments(!showComments)} className="flex items-center justify-center gap-2 p-2 rounded-lg hover:bg-neutral-100 text-neutral-600 font-semibold">
                         <ChatBubbleIcon className="w-5 h-5" />
                         <span>Komentar</span>
                     </button>
+                     <button onClick={handleShare} className="flex items-center justify-center gap-2 p-2 rounded-lg hover:bg-neutral-100 text-neutral-600 font-semibold transition-colors">
+                        <ShareIcon className="w-5 h-5" />
+                        <span>Bagikan</span>
+                    </button>
                 </div>
             </div>
             
             {showComments && (
                 <div className="p-4 border-t bg-neutral-50 animate-fade-in">
-                    <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
-                        {post.comments.map(comment => (
-                             <div key={comment.id} className="flex gap-3 items-start">
-                                <div className="w-8 h-8 rounded-full bg-neutral-200 flex items-center justify-center flex-shrink-0">
-                                    <UserIcon className="w-5 h-5 text-neutral-500" />
-                                </div>
-                                <div>
-                                    <p className="font-semibold text-sm">{comment.userName}</p>
-                                    <p className="text-sm bg-neutral-200 p-2 rounded-lg mt-1 inline-block">{comment.text}</p>
-                                </div>
-                            </div>
-                        ))}
-                         {post.comments.length === 0 && <p className="text-sm text-neutral-500 text-center">Belum ada komentar.</p>}
+                    <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                        {topLevelComments.length > 0 ? (
+                            topLevelComments.map(comment => (
+                                <CommentItem
+                                    key={comment.id}
+                                    comment={comment}
+                                    allComments={comments}
+                                    onReply={setReplyingTo}
+                                    activeReplyId={replyingTo}
+                                    onSubmitReply={handleCommentSubmit}
+                                    onCancelReply={() => setReplyingTo(null)}
+                                />
+                            ))
+                        ) : (
+                            <p className="text-sm text-neutral-500 text-center py-4">Jadilah yang pertama berkomentar.</p>
+                        )}
                     </div>
                     {user && (
-                         <form onSubmit={handleCommentSubmit} className="mt-4 flex items-center gap-2">
-                            <Input 
-                                type="text"
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                                placeholder="Tulis komentar..."
-                                className="flex-1"
-                            />
-                            <Button type="submit" disabled={!newComment.trim()}>Kirim</Button>
-                        </form>
+                         <CommentForm 
+                            onSubmit={(text) => handleCommentSubmit(text, null)}
+                            placeholder="Tulis komentar publik..."
+                         />
                     )}
                 </div>
             )}

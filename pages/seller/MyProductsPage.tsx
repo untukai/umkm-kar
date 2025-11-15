@@ -82,7 +82,7 @@ const MyProductsPage: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Link to={`/seller/products/edit/${product.id}`} className="text-primary hover:text-primary-dark">
+                    <Link to={`/seller/products/edit/${product.id}`} className="font-semibold bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md transition-colors text-sm">
                       Edit
                     </Link>
                   </td>

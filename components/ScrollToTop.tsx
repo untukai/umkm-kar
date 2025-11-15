@@ -6,8 +6,11 @@ const ScrollToTop = () => {
   const { pathname, search } = useLocation();
 
   useEffect(() => {
-    // Scroll to top on route change or search param change
-    window.scrollTo(0, 0);
+    // Scroll to top on route change or search param change with a smooth behavior
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
   }, [pathname, search]); // Add search to the dependency array
 
   return null;
