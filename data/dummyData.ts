@@ -1,6 +1,6 @@
 
 
-import { Product, Category, Article, Seller, Review, Order, Post, LiveSession, VirtualGift, Conversation, ChatMessage, FinancialTransaction, Promotion, Comment } from '../types';
+import { Product, Category, Article, Seller, Review, Order, Post, LiveSession, VirtualGift, Conversation, ChatMessage, FinancialTransaction, Promotion, Comment, Influencer } from '../types';
 
 export const categories: Category[] = [
   { id: 'kuliner', name: 'Kuliner' },
@@ -233,6 +233,11 @@ export const addLiveSession = (session: Omit<LiveSession, 'id' | 'status'>): Liv
     status: 'live',
   };
   liveSessions.unshift(newSession);
+  localStorage.setItem('kodik-live-session', JSON.stringify({
+    sessionId: newSession.id,
+    status: 'live',
+    pinnedProductId: newSession.productIds[0] || null,
+  }));
   return newSession;
 };
 
@@ -240,6 +245,10 @@ export const endLiveSession = (sessionId: number): boolean => {
   const sessionIndex = liveSessions.findIndex(s => s.id === sessionId);
   if (sessionIndex !== -1) {
     liveSessions[sessionIndex].status = 'replay';
+    const liveState = JSON.parse(localStorage.getItem('kodik-live-session') || '{}');
+    if (liveState.sessionId === sessionId) {
+      localStorage.removeItem('kodik-live-session');
+    }
     return true;
   }
   return false;
@@ -329,3 +338,14 @@ export const addPromotion = (promo: Omit<Promotion, 'id' | 'status'>) => {
   };
   promotions.unshift(newPromo);
 };
+
+export const influencers: Influencer[] = [
+  { id: 1, name: 'Karawang Foodie', category: 'Kuliner', followers: { instagram: 25400, tiktok: 55100 }, bio: 'Menjelajahi semua rasa otentik Karawang!' },
+  { id: 2, name: 'Gaya Lokal KRW', category: 'Fashion', followers: { instagram: 12100, tiktok: 8200 }, bio: 'Tampil gaya dengan brand lokal Karawang.' },
+  { id: 3, name: 'Crafty Hands ID', category: 'Kerajinan', followers: { instagram: 8500, tiktok: 15600 }, bio: 'DIY & review kerajinan tangan unik dan estetik.' },
+  { id: 4, name: 'Tani Muda Digital', category: 'Pertanian', followers: { instagram: 18000, tiktok: 32000 }, bio: 'Inovasi pertanian dari lahan Karawang.' },
+  { id: 5, name: 'Dapur Neng Cici', category: 'Kuliner', followers: { instagram: 48000, tiktok: 120000 }, bio: 'Resep masakan rumahan khas Karawang yang bikin nagih.' },
+  { id: 6, name: 'OOTD Karawang', category: 'Fashion', followers: { instagram: 5200, tiktok: 9800 }, bio: 'Inspirasi outfit harian dari sudut kota Karawang.' },
+  { id: 7, name: 'Karawang Tech', category: 'Teknologi', followers: { instagram: 2200, tiktok: 3100 }, bio: 'Review gadget dan inovasi teknologi lokal.' },
+  { id: 8, name: 'Jelajah Jasa KRW', category: 'Jasa', followers: { instagram: 6100, tiktok: 4500 }, bio: 'Rekomendasi jasa terbaik di sekitar Karawang.' },
+];

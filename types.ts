@@ -153,3 +153,15 @@ export interface Promotion {
   endDate: string;
   status: 'Aktif' | 'Kadaluarsa' | 'Akan Datang';
 }
+
+export interface Influencer {
+  id: number;
+  name: string;
+  category: string;
+  followers: {
+    instagram: number;
+    tiktok: number;
+  };
+  bio: string;
+  profileImageUrl?: string;
+}

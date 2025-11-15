@@ -38,6 +38,7 @@ import SellerPromoPage from './pages/seller/SellerPromoPage';
 import SellerReviewsPage from './pages/seller/SellerReviewsPage';
 import SellerAnalyticsPage from './pages/seller/SellerAnalyticsPage';
 import SellerSettingsPage from './pages/seller/SellerSettingsPage';
+import SellerCollaborationPage from './pages/seller/SellerCollaborationPage';
 
 const App: React.FC = () => {
   return (
@@ -83,6 +84,7 @@ const App: React.FC = () => {
                         <Route path="reviews" element={<SellerReviewsPage />} />
                         <Route path="analytics" element={<SellerAnalyticsPage />} />
                         <Route path="settings" element={<SellerSettingsPage />} />
+                        <Route path="collaboration" element={<SellerCollaborationPage />} />
                       </Route>
                     </Route>
 

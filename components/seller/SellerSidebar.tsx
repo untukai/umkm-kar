@@ -13,6 +13,7 @@ import {
   StarIcon,
   ChartPieIcon,
   CogIcon,
+  UserPlusIcon,
 } from '../Icons';
 
 const navLinks = [
@@ -26,6 +27,7 @@ const navLinks = [
 const mainToolsLinks = [
     { name: 'Keuangan', path: 'finance', icon: CurrencyDollarIcon },
     { name: 'Promo & Marketing', path: 'promo', icon: TagIcon },
+    { name: 'Kolaborasi', path: 'collaboration', icon: UserPlusIcon },
     { name: 'Rating & Ulasan', path: 'reviews', icon: StarIcon },
 ];
 
@@ -38,11 +40,12 @@ const SellerSidebar: React.FC = () => {
   const activeLinkClass = 'bg-primary text-white';
   const defaultLinkClass = 'text-neutral-700 hover:bg-neutral-100';
 
-  const renderLinks = (links: typeof navLinks) => (
+  const renderLinks = (links: typeof navLinks | typeof mainToolsLinks) => (
     links.map((link) => (
       <NavLink
         key={link.name}
         to={link.path}
+        // @ts-ignore
         end={link.end}
         className={({ isActive }) =>
           `flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-md transition-colors text-sm font-medium ${
