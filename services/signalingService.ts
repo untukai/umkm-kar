@@ -36,7 +36,7 @@ const signalingService = {
         const message = JSON.parse(event.data);
         
         // **CRITICAL**: Ignore messages sent by ourselves (echoed back by the public server).
-        if (message.peerId === peerId) {
+        if (message.fromPeerId === peerId) {
           return;
         }
         
@@ -69,9 +69,9 @@ const signalingService = {
         return;
     }
     if (socket && socket.readyState === WebSocket.OPEN) {
-      // **CRITICAL**: Attach the peerId to every outgoing message.
-      const messageWithPeerId = { ...message, peerId };
-      socket.send(JSON.stringify(messageWithPeerId));
+      // **CRITICAL**: Attach the sender's peerId to every outgoing message.
+      const messageWithSender = { ...message, fromPeerId: peerId };
+      socket.send(JSON.stringify(messageWithSender));
     } else {
       console.error('Signaling service is not connected.');
     }
@@ -79,6 +79,10 @@ const signalingService = {
 
   onMessage: (callback: (message: any) => void) => {
     onMessageCallback = callback;
+  },
+  
+  getPeerId: (): string | null => {
+    return peerId;
   },
   
   disconnect: () => {

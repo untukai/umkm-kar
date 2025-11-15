@@ -22,7 +22,8 @@ const LiveDetailPage: React.FC = () => {
   const chatEndRef = useRef<HTMLDivElement>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
-  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  // Host manages multiple connections; Viewer only manages one.
+  const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const localStreamRef = useRef<MediaStream | null>(null);
   
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
@@ -53,63 +54,95 @@ const LiveDetailPage: React.FC = () => {
     if (!session || !id) return;
 
     const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+    
+    // Function to create a peer connection for a specific viewer
+    const createPeerConnectionForViewer = async (viewerId: string) => {
+        if (!localStreamRef.current) {
+            console.error("Host stream not ready.");
+            return;
+        }
 
-    const createPeerConnection = () => {
-        if (peerConnectionRef.current) return;
-        
         const pc = new RTCPeerConnection(configuration);
+        peerConnectionsRef.current.set(viewerId, pc);
 
         pc.onicecandidate = (event) => {
             if (event.candidate) {
-                signalingService.sendMessage({ type: 'ice-candidate', payload: event.candidate, sessionId: id });
+                signalingService.sendMessage({ type: 'ice-candidate', payload: event.candidate, sessionId: id, targetPeerId: viewerId });
             }
         };
 
-        if (!isHost) {
-            pc.ontrack = (event) => {
-                const stream = new MediaStream();
-                event.streams[0].getTracks().forEach(track => stream.addTrack(track));
-                setRemoteStream(stream);
-                if (videoRef.current) {
-                    videoRef.current.srcObject = stream;
-                    videoRef.current.play().catch(e => console.error("Remote stream play failed", e));
-                }
-            };
-        }
-
-        peerConnectionRef.current = pc;
+        localStreamRef.current.getTracks().forEach(track => pc.addTrack(track, localStreamRef.current!));
+        
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        signalingService.sendMessage({ type: 'offer', payload: offer, sessionId: id, targetPeerId: viewerId });
     };
+
 
     const handleSignalingMessage = async (message: any) => {
         if (message.sessionId !== id) return;
 
-        if (!peerConnectionRef.current) createPeerConnection();
-        const pc = peerConnectionRef.current!;
+        const fromPeerId = message.fromPeerId;
+        const targetPeerId = message.targetPeerId;
+        const myPeerId = signalingService.getPeerId();
 
         try {
-            if (message.type === 'offer' && !isHost) {
-                await pc.setRemoteDescription(new RTCSessionDescription(message.payload));
-                const answer = await pc.createAnswer();
-                await pc.setLocalDescription(answer);
-                signalingService.sendMessage({ type: 'answer', payload: answer, sessionId: id });
-            } else if (message.type === 'answer' && isHost) {
-                await pc.setRemoteDescription(new RTCSessionDescription(message.payload));
-            } else if (message.type === 'ice-candidate') {
-                await pc.addIceCandidate(new RTCIceCandidate(message.payload));
-            } else if (message.type === 'pin-product') {
+            if (isHost) {
+                const pc = peerConnectionsRef.current.get(fromPeerId);
+
+                if (message.type === 'viewer-join') {
+                    console.log(`Viewer ${fromPeerId} wants to join. Creating connection.`);
+                    await createPeerConnectionForViewer(fromPeerId);
+                } else if (message.type === 'answer' && pc) {
+                    await pc.setRemoteDescription(new RTCSessionDescription(message.payload));
+                } else if (message.type === 'ice-candidate' && pc) {
+                     await pc.addIceCandidate(new RTCIceCandidate(message.payload));
+                }
+            } else { // Viewer logic
+                let pc = peerConnectionsRef.current.get('host');
+                if (message.type === 'offer' && targetPeerId === myPeerId) {
+                    if (!pc) {
+                        pc = new RTCPeerConnection(configuration);
+                        peerConnectionsRef.current.set('host', pc);
+
+                        pc.onicecandidate = (event) => {
+                            if (event.candidate) {
+                                signalingService.sendMessage({ type: 'ice-candidate', payload: event.candidate, sessionId: id, targetPeerId: fromPeerId });
+                            }
+                        };
+
+                        pc.ontrack = (event) => {
+                            const stream = event.streams[0];
+                            setRemoteStream(stream);
+                            if (videoRef.current) {
+                                videoRef.current.srcObject = stream;
+                                videoRef.current.play().catch(e => console.error("Remote stream play failed", e));
+                            }
+                        };
+                    }
+
+                    await pc.setRemoteDescription(new RTCSessionDescription(message.payload));
+                    const answer = await pc.createAnswer();
+                    await pc.setLocalDescription(answer);
+                    signalingService.sendMessage({ type: 'answer', payload: answer, sessionId: id, targetPeerId: fromPeerId });
+                } else if (message.type === 'ice-candidate' && targetPeerId === myPeerId && pc) {
+                     await pc.addIceCandidate(new RTCIceCandidate(message.payload));
+                }
+            }
+
+            // Common logic for both host and viewer
+            if (message.type === 'pin-product') {
                 setPinnedProductId(message.payload.productId);
             } else if (message.type === 'unpin-product') {
                 setPinnedProductId(null);
             } else if (message.type === 'end-session') {
                 setIsSessionEnded(true);
-                if (peerConnectionRef.current) {
-                    peerConnectionRef.current.close();
-                    peerConnectionRef.current = null;
-                }
+                peerConnectionsRef.current.forEach(pc => pc.close());
+                peerConnectionsRef.current.clear();
                 setTimeout(() => navigate('/live'), 3000);
             }
         } catch (error) {
-            console.error("Error handling signaling message:", error);
+            console.error("Error handling signaling message:", error, message);
         }
     };
     
@@ -125,13 +158,6 @@ const LiveDetailPage: React.FC = () => {
                 videoRef.current.muted = true;
                 videoRef.current.play().catch(e => console.error("Local stream play failed", e));
             }
-            createPeerConnection();
-            stream.getTracks().forEach(track => peerConnectionRef.current!.addTrack(track, stream));
-            
-            const offer = await peerConnectionRef.current!.createOffer();
-            await peerConnectionRef.current!.setLocalDescription(offer);
-            signalingService.sendMessage({ type: 'offer', payload: offer, sessionId: id });
-
         } catch (err) {
             console.error("Failed to get media stream:", err);
             showNotification('Gagal Memuat Kamera', 'Tidak bisa mengakses kamera.', 'error');
@@ -143,9 +169,10 @@ const LiveDetailPage: React.FC = () => {
       if (isHost) {
         startBroadcast();
       } else {
-        createPeerConnection();
+        // Viewer sends a message to announce its presence
+        signalingService.sendMessage({ type: 'viewer-join', sessionId: id });
       }
-    } else {
+    } else { // Replay logic
         if (videoRef.current) {
             videoRef.current.src = 'https://videos.pexels.com/video-files/855352/855352-hd_720_1366_25fps.mp4';
             videoRef.current.muted = false;
@@ -159,10 +186,8 @@ const LiveDetailPage: React.FC = () => {
             localStreamRef.current.getTracks().forEach(track => track.stop());
             localStreamRef.current = null;
         }
-        if (peerConnectionRef.current) {
-            peerConnectionRef.current.close();
-            peerConnectionRef.current = null;
-        }
+        peerConnectionsRef.current.forEach(pc => pc.close());
+        peerConnectionsRef.current.clear();
         signalingService.disconnect();
     };
   }, [id, session, isHost, navigate, showNotification]);
