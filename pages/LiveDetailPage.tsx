@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { liveSessions, sellers, products, endLiveSession } from '../data/dummyData';
-import { LiveChatMessage, Product } from '../types';
+import { liveSessions, sellers, products, endLiveSession, addOrUpdateLiveSession } from '../data/dummyData';
+import { LiveChatMessage, Product, LiveSession } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 import { useNotification } from '../hooks/useNotification';
@@ -73,7 +72,9 @@ const LiveDetailPage: React.FC = () => {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [pendingViewers, setPendingViewers] = useState<string[]>([]);
 
-  const session = useMemo(() => liveSessions.find(s => s.id === parseInt(id || '')), [id]);
+  const [session, setSession] = useState(() => liveSessions.find(s => s.id === parseInt(id || '')));
+  const [isLoading, setIsLoading] = useState(!session);
+
   const seller = useMemo(() => session ? sellers.find(s => s.id === session.sellerId) : null, [session]);
   const sessionProducts = useMemo(() => session ? products.filter(p => session.productIds.includes(p.id)) : [], [session]);
   
@@ -195,7 +196,9 @@ const LiveDetailPage: React.FC = () => {
   }, [createPeerConnectionForViewer, setPendingViewers, setPermissionError, setShowPermissionModal]);
 
   useEffect(() => {
-    if (!session || !id) return;
+    if (!id) return;
+    
+    let timeoutId: number | null = null;
     
     const handleVisibilityChange = async () => {
         if (document.visibilityState === 'visible' && isHost && localStreamRef.current) {
@@ -242,6 +245,8 @@ const LiveDetailPage: React.FC = () => {
         const myPeerId = signalingService.getPeerId();
 
         try {
+            // isHost is a memoized value that depends on `session`. Ensure it's correct.
+            // Since this function is defined inside useEffect which depends on isHost, it should be fine.
             if (isHost) {
                 const pc = peerConnectionsRef.current.get(fromPeerId);
                 
@@ -257,6 +262,16 @@ const LiveDetailPage: React.FC = () => {
                     await pc.setRemoteDescription(new RTCSessionDescription(message.payload));
                 } else if (message.type === 'ice-candidate' && pc) {
                      await pc.addIceCandidate(new RTCIceCandidate(message.payload));
+                } else if (message.type === 'request-session-data') {
+                    const currentSession = liveSessions.find(s => s.id === parseInt(id));
+                    if (currentSession) {
+                        signalingService.sendMessage({
+                            type: 'session-data-response',
+                            payload: currentSession,
+                            sessionId: id,
+                            targetPeerId: fromPeerId
+                        });
+                    }
                 }
             } else { // Viewer logic
                 if (message.type === 'offer' && targetPeerId === myPeerId) {
@@ -282,7 +297,6 @@ const LiveDetailPage: React.FC = () => {
 
                     await pc.setRemoteDescription(new RTCSessionDescription(message.payload));
                     
-                    // Process any queued candidates
                     candidateQueueRef.current.forEach(candidate => {
                         pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.error("Error adding queued ICE candidate", e));
                     });
@@ -296,12 +310,19 @@ const LiveDetailPage: React.FC = () => {
                     if (pc && pc.remoteDescription) {
                         await pc.addIceCandidate(new RTCIceCandidate(message.payload));
                     } else {
-                        // Queue candidate if remote description is not set yet
                         candidateQueueRef.current.push(message.payload);
                     }
                 }
             }
 
+            if (message.type === 'session-data-response' && targetPeerId === myPeerId) {
+                const receivedSession = message.payload as LiveSession;
+                if (receivedSession) {
+                    addOrUpdateLiveSession(receivedSession); // Update global store
+                    setSession(receivedSession); // Update local state
+                    setIsLoading(false); // Stop loading
+                }
+            }
             if (message.type === 'pin-product') setPinnedProductId(message.payload.productId);
             else if (message.type === 'unpin-product') setPinnedProductId(null);
             else if (message.type === 'end-session') {
@@ -319,22 +340,34 @@ const LiveDetailPage: React.FC = () => {
     signalingService.connect(id);
     signalingService.onMessage(handleSignalingMessage);
 
-    if (session.status === 'live') {
-      if (isHost) {
-        startBroadcast();
-      } else {
-        signalingService.sendMessage({ type: 'viewer-join', sessionId: id });
+    if (session) {
+      if (session.status === 'live') {
+        if (isHost) {
+          startBroadcast();
+        } else {
+          signalingService.sendMessage({ type: 'viewer-join', sessionId: id });
+        }
+      } else { // Replay
+        setIsLoading(false);
+        if (videoRef.current) {
+          videoRef.current.src = 'https://videos.pexels.com/video-files/855352/855352-hd_720_1366_25fps.mp4';
+          videoRef.current.muted = false;
+          videoRef.current.loop = true;
+          videoRef.current.play().catch(e => console.error("Replay autoplay failed", e));
+        }
       }
     } else {
-        if (videoRef.current) {
-            videoRef.current.src = 'https://videos.pexels.com/video-files/855352/855352-hd_720_1366_25fps.mp4';
-            videoRef.current.muted = false;
-            videoRef.current.loop = true;
-            videoRef.current.play().catch(e => console.error("Replay autoplay failed", e));
-        }
+        // Session not found locally, request it from host
+        console.log("Session not found locally, requesting from host...");
+        signalingService.sendMessage({ type: 'request-session-data', sessionId: id });
+        // Set a timeout to prevent indefinite loading
+        timeoutId = window.setTimeout(() => {
+            setIsLoading(false); // This will trigger the "not found" message if session is still null
+        }, 5000);
     }
 
     return () => {
+        if (timeoutId) clearTimeout(timeoutId);
         document.removeEventListener('visibilitychange', handleVisibilityChange);
         if (localStreamRef.current) {
             localStreamRef.current.getTracks().forEach(track => track.stop());
@@ -402,8 +435,17 @@ const LiveDetailPage: React.FC = () => {
       showShareModal(shareData);
     }
   };
+  
+  if (isLoading) {
+    return (
+        <div className="h-screen w-screen flex flex-col items-center justify-center bg-neutral-900 text-white text-center p-4">
+            <h1 className="text-2xl font-bold animate-pulse">Menyambungkan ke Sesi Live...</h1>
+            <p className="mt-2 text-neutral-300">Harap tunggu sebentar.</p>
+        </div>
+    );
+  }
 
-  if (!session || !seller) { return <div className="h-screen w-screen flex flex-col items-center justify-center bg-neutral-100 text-center p-4"><h1 className="text-2xl font-bold">Sesi live tidak ditemukan.</h1><Button onClick={() => navigate('/live')} className="mt-4">Kembali ke Live</Button></div>; }
+  if (!session || !seller) { return <div className="h-screen w-screen flex flex-col items-center justify-center bg-neutral-100 text-center p-4"><h1 className="text-2xl font-bold">Sesi live tidak ditemukan atau telah berakhir.</h1><Button onClick={() => navigate('/live')} className="mt-4">Kembali ke Live</Button></div>; }
 
   const following = isFollowing(seller.id);
   const handleFollowToggle = () => { if (!isAuthenticated) { showNotification('Gagal', 'Anda harus masuk untuk mengikuti toko.', 'error', { label: 'Masuk', path: '/login' }); return; } if (following) { unfollowSeller(seller.id); } else { followSeller(seller.id); } };

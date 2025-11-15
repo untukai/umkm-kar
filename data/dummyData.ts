@@ -235,6 +235,15 @@ export const addLiveSession = (session: Omit<LiveSession, 'id' | 'status'>): Liv
   return newSession;
 };
 
+export const addOrUpdateLiveSession = (session: LiveSession): void => {
+  const index = liveSessions.findIndex(s => s.id === session.id);
+  if (index !== -1) {
+    liveSessions[index] = session; // Update existing
+  } else {
+    liveSessions.unshift(session); // Add new
+  }
+};
+
 export const endLiveSession = (sessionId: number): boolean => {
   const sessionIndex = liveSessions.findIndex(s => s.id === sessionId);
   if (sessionIndex !== -1) {
