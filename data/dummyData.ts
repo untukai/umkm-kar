@@ -1,6 +1,6 @@
 
 
-import { Product, Category, Article, Seller, Review, Order, Post, LiveSession, VirtualGift } from '../types';
+import { Product, Category, Article, Seller, Review, Order, Post, LiveSession, VirtualGift, Conversation, ChatMessage } from '../types';
 
 export const categories: Category[] = [
   { id: 'kuliner', name: 'Kuliner' },
@@ -177,12 +177,23 @@ export const addPost = (post: Omit<Post, 'id' | 'likes' | 'comments' | 'timestam
   posts.unshift(newPost); // Add to the beginning of the array
 };
 
-export const liveSessions: LiveSession[] = [
+export let liveSessions: LiveSession[] = [
   { id: 1, sellerId: 1, title: 'Promo Serabi Kinca Durian!', status: 'live', thumbnailUrl: 'https://images.unsplash.com/photo-1563889958723-5a507119999a?w=600&h=600&fit=crop', productIds: [1, 8] },
   { id: 2, sellerId: 9, title: 'Unboxing Kaos Karawang Pride Edisi Baru', status: 'live', thumbnailUrl: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&h=600&fit=crop', productIds: [9] },
   { id: 3, sellerId: 2, title: 'Proses Membatik Langsung dari Studio', status: 'replay', thumbnailUrl: 'https://images.unsplash.com/photo-1622542910436-15772a153257?w=600&h=600&fit=crop', productIds: [2] },
   { id: 4, sellerId: 10, title: 'Workshop Membuat Gerabah Unik', status: 'replay', thumbnailUrl: 'https://images.unsplash.com/photo-1554228498-84752c288924?w=600&h=600&fit=crop', productIds: [10] },
 ];
+
+export const addLiveSession = (session: Omit<LiveSession, 'id' | 'status'>): LiveSession => {
+  const newId = Math.max(0, ...liveSessions.map(s => s.id)) + 1;
+  const newSession: LiveSession = {
+    id: newId,
+    ...session,
+    status: 'live',
+  };
+  liveSessions.unshift(newSession);
+  return newSession;
+};
 
 export const virtualGifts: VirtualGift[] = [
     { id: 1, name: 'Rose', icon: '🌹', price: 10 },
@@ -191,3 +202,56 @@ export const virtualGifts: VirtualGift[] = [
     { id: 4, name: 'Diamond', icon: '💎', price: 100 },
     { id: 5, name: 'Crown', icon: '👑', price: 500 },
 ];
+
+export let conversations: Conversation[] = [
+    {
+        id: 1,
+        customerId: 101,
+        customerName: 'Budi Santoso',
+        lastMessage: 'Oke, ditunggu ya kak barangnya.',
+        timestamp: '10:35',
+        unreadCount: 1,
+        messages: [
+            { sender: 'pembeli', text: 'Halo, Kak. Pesanan saya KODIK-7892A sudah dikirim?', timestamp: '10:30' },
+            { sender: 'penjual', text: 'Halo, Kak Budi. Sudah kami terima pesanannya, sedang disiapkan untuk dikemas hari ini ya.', timestamp: '10:31' },
+            { sender: 'pembeli', text: 'Oke, ditunggu ya kak barangnya.', timestamp: '10:35' },
+        ]
+    },
+    {
+        id: 2,
+        customerId: 102,
+        customerName: 'Citra Lestari',
+        lastMessage: 'Bisa custom ukuran tidak ya?',
+        timestamp: 'Kemarin',
+        unreadCount: 0,
+        messages: [
+            { sender: 'pembeli', text: 'Kak, kaosnya ready?', timestamp: 'Kemarin' },
+            { sender: 'penjual', text: 'Ready semua ukuran, Kak. Silakan diorder.', timestamp: 'Kemarin' },
+            { sender: 'pembeli', text: 'Bisa custom ukuran tidak ya?', timestamp: 'Kemarin' },
+        ]
+    },
+    {
+        id: 3,
+        customerId: 103,
+        customerName: 'Agus Wijaya',
+        lastMessage: 'Siap, terima kasih.',
+        timestamp: '2 hari lalu',
+        unreadCount: 0,
+        messages: [
+             { sender: 'penjual', text: 'Terima kasih telah berbelanja di toko kami!', timestamp: '2 hari lalu' },
+             { sender: 'pembeli', text: 'Sama-sama. Batiknya bagus banget!', timestamp: '2 hari lalu' },
+             { sender: 'penjual', text: 'Siap, terima kasih.', timestamp: '2 hari lalu' },
+        ]
+    }
+];
+
+export const addMessageToConversation = (conversationId: number, message: ChatMessage) => {
+    const convIndex = conversations.findIndex(c => c.id === conversationId);
+    if (convIndex !== -1) {
+        conversations[convIndex].messages.push(message);
+        conversations[convIndex].lastMessage = message.text;
+        conversations[convIndex].timestamp = message.timestamp;
+        // If the sender is the seller, there are no unreads for them.
+        // If it was the buyer, we would increment unreadCount.
+    }
+};

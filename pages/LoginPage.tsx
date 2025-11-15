@@ -5,18 +5,27 @@ import { useAuth } from '../hooks/useAuth';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import { User } from '../types';
+import { useNotification } from '../hooks/useNotification';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<User['role']>('pembeli');
   const { login } = useAuth();
+  const { showNotification } = useNotification();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login(email, role);
+    
+    let loginEmail = email;
+    if (role === 'penjual') {
+      loginEmail = 'penjual@example.com';
+      showNotification('Info Demo', 'Anda masuk sebagai penjual demo (penjual@example.com).');
+    }
+    
+    login(loginEmail, role);
     const redirectUrl = searchParams.get('redirect') || (role === 'penjual' ? '/seller' : '/profile');
     navigate(redirectUrl);
   };
@@ -57,7 +66,9 @@ const LoginPage: React.FC = () => {
               onChange={(e) => setEmail(e.target.value)} 
               required 
               placeholder={role === 'penjual' ? 'penjual@example.com' : 'pembeli@example.com'}
+              readOnly={role === 'penjual'}
             />
+             {role === 'penjual' && <p className="text-xs text-neutral-500 mt-1">Untuk demo, email penjual diatur otomatis.</p>}
           </div>
           <div>
             <label htmlFor="password"  className="block text-sm font-medium text-neutral-700 mb-1">Password</label>

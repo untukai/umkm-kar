@@ -1,5 +1,6 @@
 
 
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -9,19 +10,20 @@ import {
   CurrencyDollarIcon,
   UserIcon,
   VideoCameraIcon,
-} from '../Icons'; // Assuming more icons will be added here
+  ChatBubbleIcon, // Changed from UserIcon for Chat
+} from '../Icons';
 
 const navLinks = [
   { name: 'Dashboard', path: '/seller', icon: ChartBarIcon, end: true },
   { name: 'Pesanan', path: 'orders', icon: ClipboardListIcon },
   { name: 'Produk', path: 'products', icon: BoxIcon },
+  { name: 'Live Jualan', path: 'live', icon: VideoCameraIcon },
+  { name: 'Chat', path: 'chat', icon: ChatBubbleIcon },
 ];
 
 const futureLinks = [
-    { name: 'Live Jualan', icon: VideoCameraIcon },
     { name: 'Keuangan', icon: CurrencyDollarIcon },
     { name: 'Promo & Marketing', icon: UserIcon },
-    { name: 'Chat', icon: UserIcon },
     { name: 'Rating & Ulasan', icon: UserIcon },
     { name: 'Analitik Toko', icon: UserIcon },
     { name: 'Pengaturan Toko', icon: UserIcon },

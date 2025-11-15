@@ -2,6 +2,7 @@
 
 
 
+
 import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -32,6 +33,8 @@ import SellerOrderDetailPage from './pages/seller/SellerOrderDetailPage'; // Imp
 import FeedPage from './pages/FeedPage';
 import LivePage from './pages/LivePage';
 import LiveDetailPage from './pages/LiveDetailPage';
+import SellerLivePage from './pages/seller/SellerLivePage';
+import SellerChatPage from './pages/seller/SellerChatPage';
 
 const App: React.FC = () => {
   return (
@@ -70,6 +73,8 @@ const App: React.FC = () => {
                       <Route path="products" element={<MyProductsPage />} />
                       <Route path="products/new" element={<ProductFormPage />} />
                       <Route path="products/edit/:id" element={<ProductFormPage />} />
+                      <Route path="live" element={<SellerLivePage />} />
+                      <Route path="chat" element={<SellerChatPage />} />
                     </Route>
                   </Route>
                 </Routes>

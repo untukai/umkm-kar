@@ -108,3 +108,19 @@ export interface VirtualGift {
   icon: string;
   price: number; // in coins
 }
+
+export interface ChatMessage {
+  sender: 'penjual' | 'pembeli';
+  text: string;
+  timestamp: string;
+}
+
+export interface Conversation {
+  id: number;
+  customerId: number; // Assuming a customer ID exists, can link to a future customer type
+  customerName: string;
+  lastMessage: string;
+  timestamp: string;
+  unreadCount: number;
+  messages: ChatMessage[];
+}
