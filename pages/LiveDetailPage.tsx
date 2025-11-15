@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { liveSessions, sellers, products, endLiveSession } from '../data/dummyData';
 import { LiveChatMessage, Product } from '../types';
@@ -7,7 +7,7 @@ import { useCart } from '../hooks/useCart';
 import { useNotification } from '../hooks/useNotification';
 import { useFollow } from '../hooks/useFollow';
 import Button from '../components/Button';
-import { ShoppingCartIcon, XIcon, ShareIcon, StoreIcon, EyeIcon, HeartIcon } from '../components/Icons';
+import { ShoppingCartIcon, XIcon, ShareIcon, StoreIcon, EyeIcon, HeartIcon, VideoCameraIcon } from '../components/Icons';
 import signalingService from '../services/signalingService';
 
 let heartCounter = 0;
@@ -22,6 +22,38 @@ const configuration = {
 };
 
 type QualitySetting = 'high' | 'medium' | 'low';
+
+// NEW MODAL COMPONENT
+const PermissionModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onRetry: () => void;
+  errorMessage: string;
+}> = ({ isOpen, onClose, onRetry, errorMessage }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 animate-fade-in-overlay">
+      <div className="bg-white text-black rounded-lg shadow-xl w-full max-w-md animate-popup-in" onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center p-4 border-b">
+          <h2 className="text-xl font-bold text-yellow-600">Izin Diperlukan</h2>
+          <button onClick={onClose} className="p-1 text-neutral-500 hover:text-neutral-800"><XIcon className="w-6 h-6"/></button>
+        </div>
+        <div className="p-6 text-center">
+            <VideoCameraIcon className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+            <p className="text-neutral-600 mb-2">{errorMessage}</p>
+            <p className="text-xs text-neutral-500">
+                Pastikan Anda mengklik "Allow" atau "Izinkan" saat browser meminta akses. Jika Anda tidak sengaja memblokirnya, Anda perlu mengubah pengaturan izin untuk situs ini di browser Anda.
+            </p>
+        </div>
+        <div className="p-4 border-t flex justify-end gap-3">
+          <Button type="button" variant="outline" onClick={onClose}>Tutup</Button>
+          <Button type="button" onClick={onRetry}>Coba Lagi</Button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const LiveDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -57,6 +89,9 @@ const LiveDetailPage: React.FC = () => {
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number }[]>([]);
   const [isSessionEnded, setIsSessionEnded] = useState(false);
   
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [permissionError, setPermissionError] = useState('');
+
   const qualityProfiles = {
       high: {
           videoConstraints: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
@@ -91,51 +126,85 @@ const LiveDetailPage: React.FC = () => {
     }
   }, [remoteStream]);
 
+  // FIX: Moved startBroadcast and its dependency createPeerConnectionForViewer out of useEffect
+  // and wrapped in useCallback to fix scope issue and prevent re-renders.
+  const createPeerConnectionForViewer = useCallback(async (viewerId: string) => {
+    if (!localStreamRef.current) {
+        console.error("Host stream not ready when trying to connect viewer:", viewerId);
+        return;
+    }
+    if (!id) return;
+
+    console.log(`Creating peer connection for viewer ${viewerId}`);
+    const pc = new RTCPeerConnection(configuration);
+    peerConnectionsRef.current.set(viewerId, pc);
+
+    pc.onicecandidate = (event) => {
+        if (event.candidate) {
+            signalingService.sendMessage({ type: 'ice-candidate', payload: event.candidate, sessionId: id, targetPeerId: viewerId });
+        }
+    };
+    
+    // Handle ICE connection state changes for debugging and auto-recovery
+    pc.oniceconnectionstatechange = () => {
+        console.log(`ICE connection state for viewer ${viewerId} changed to: ${pc.iceConnectionState}`);
+        if (pc.iceConnectionState === 'failed') {
+            showNotification('Koneksi Gagal', `Koneksi dengan penonton terputus. Mencoba menyambungkan kembali...`, 'error');
+            // The host should initiate the restart
+            pc.restartIce();
+        }
+    };
+    
+    // Use onnegotiationneeded to handle initial offer and subsequent offers for ICE restarts
+    pc.onnegotiationneeded = async () => {
+        console.log(`Negotiation needed for viewer ${viewerId}. Creating offer...`);
+        try {
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            signalingService.sendMessage({ type: 'offer', payload: offer, sessionId: id, targetPeerId: viewerId });
+        } catch (err) {
+            console.error(`Error creating offer for ${viewerId}:`, err);
+        }
+    };
+
+    localStreamRef.current.getTracks().forEach(track => pc.addTrack(track, localStreamRef.current!));
+  }, [id, showNotification]);
+
+  const startBroadcast = useCallback(async () => {
+    setShowPermissionModal(false);
+    try {
+        // Always request high quality to have a good source stream to manipulate
+        const stream = await navigator.mediaDevices.getUserMedia({ video: qualityProfiles['high'].videoConstraints, audio: true });
+        localStreamRef.current = stream;
+        if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.muted = true;
+            videoRef.current.play().catch(e => console.error("Local stream play failed", e));
+        }
+        // Process any viewers who joined before the stream was ready by using functional update
+        setPendingViewers(currentPendingViewers => {
+            console.log(`Stream ready. Processing ${currentPendingViewers.length} pending viewers.`);
+            currentPendingViewers.forEach(viewerId => createPeerConnectionForViewer(viewerId));
+            return [];
+        });
+    } catch (err) {
+        console.error("Failed to get media stream:", err);
+        let errorMessage = 'Anda harus mengizinkan akses kamera dan mikrofon untuk memulai sesi live.';
+        if (err instanceof DOMException) {
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                errorMessage = 'Akses kamera dan mikrofon ditolak. Mohon izinkan akses di pengaturan browser Anda dan coba lagi.';
+            } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                errorMessage = 'Tidak ada kamera atau mikrofon yang ditemukan di perangkat Anda.';
+            }
+        }
+        setPermissionError(errorMessage);
+        setShowPermissionModal(true);
+    }
+  }, [createPeerConnectionForViewer, setPendingViewers, setPermissionError, setShowPermissionModal]);
+
   useEffect(() => {
     if (!session || !id) return;
     
-    // Function to create a peer connection for a specific viewer
-    const createPeerConnectionForViewer = async (viewerId: string) => {
-        if (!localStreamRef.current) {
-            console.error("Host stream not ready when trying to connect viewer:", viewerId);
-            return;
-        }
-
-        console.log(`Creating peer connection for viewer ${viewerId}`);
-        const pc = new RTCPeerConnection(configuration);
-        peerConnectionsRef.current.set(viewerId, pc);
-
-        pc.onicecandidate = (event) => {
-            if (event.candidate) {
-                signalingService.sendMessage({ type: 'ice-candidate', payload: event.candidate, sessionId: id, targetPeerId: viewerId });
-            }
-        };
-        
-        // Handle ICE connection state changes for debugging and auto-recovery
-        pc.oniceconnectionstatechange = () => {
-            console.log(`ICE connection state for viewer ${viewerId} changed to: ${pc.iceConnectionState}`);
-            if (pc.iceConnectionState === 'failed') {
-                showNotification('Koneksi Gagal', `Koneksi dengan penonton terputus. Mencoba menyambungkan kembali...`, 'error');
-                // The host should initiate the restart
-                pc.restartIce();
-            }
-        };
-        
-        // Use onnegotiationneeded to handle initial offer and subsequent offers for ICE restarts
-        pc.onnegotiationneeded = async () => {
-            console.log(`Negotiation needed for viewer ${viewerId}. Creating offer...`);
-            try {
-                const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
-                signalingService.sendMessage({ type: 'offer', payload: offer, sessionId: id, targetPeerId: viewerId });
-            } catch (err) {
-                console.error(`Error creating offer for ${viewerId}:`, err);
-            }
-        };
-
-        localStreamRef.current.getTracks().forEach(track => pc.addTrack(track, localStreamRef.current!));
-    };
-
     const handleVisibilityChange = async () => {
         if (document.visibilityState === 'visible' && isHost && localStreamRef.current) {
             const videoTrack = localStreamRef.current.getVideoTracks()[0];
@@ -160,7 +229,12 @@ const LiveDetailPage: React.FC = () => {
 
                 } catch (err) {
                     console.error("Failed to restart media stream:", err);
-                    showNotification('Gagal Memuat Kamera', 'Tidak bisa mengakses ulang kamera.', 'error');
+                    let errorMessage = 'Gagal mengakses ulang kamera dan mikrofon Anda.';
+                    if (err instanceof DOMException && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')) {
+                        errorMessage = 'Izin kamera/mikrofon dicabut. Mohon izinkan kembali di pengaturan browser.';
+                    }
+                    setPermissionError(errorMessage);
+                    setShowPermissionModal(true);
                 }
             }
         }
@@ -244,27 +318,6 @@ const LiveDetailPage: React.FC = () => {
     signalingService.connect(id);
     signalingService.onMessage(handleSignalingMessage);
 
-    const startBroadcast = async () => {
-        try {
-            // Always request high quality to have a good source stream to manipulate
-            const stream = await navigator.mediaDevices.getUserMedia({ video: qualityProfiles['high'].videoConstraints, audio: true });
-            localStreamRef.current = stream;
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-                videoRef.current.muted = true;
-                videoRef.current.play().catch(e => console.error("Local stream play failed", e));
-            }
-            // Process any viewers who joined before the stream was ready
-            console.log(`Stream ready. Processing ${pendingViewers.length} pending viewers.`);
-            pendingViewers.forEach(viewerId => createPeerConnectionForViewer(viewerId));
-            setPendingViewers([]);
-        } catch (err) {
-            console.error("Failed to get media stream:", err);
-            showNotification('Gagal Memuat Kamera', 'Tidak bisa mengakses kamera.', 'error');
-            navigate('/seller/live');
-        }
-    };
-    
     if (session.status === 'live') {
       if (isHost) {
         startBroadcast();
@@ -289,7 +342,7 @@ const LiveDetailPage: React.FC = () => {
         peerConnectionsRef.current.clear();
         signalingService.disconnect();
     };
-  }, [id, session, isHost, navigate, showNotification, pendingViewers]);
+  }, [id, session, isHost, navigate, showNotification, createPeerConnectionForViewer, startBroadcast]);
 
   const sampleChats: Omit<LiveChatMessage, 'id'>[] = [
     { userName: 'Andi', text: 'Keren banget produknya!' }, { userName: 'Sari', text: 'Diskonnya sampai kapan kak?' }, { userName: 'Rina', text: 'Baru join, lagi bahas apa nih?' }, { userName: 'Budi', text: '💚', isGift: true, giftIcon: '💚' }, { userName: 'Joko', text: 'Pengirimannya aman kan?' }, { userName: 'Wati', text: 'Langsung checkout ah! 👍' },
@@ -446,63 +499,78 @@ const LiveDetailPage: React.FC = () => {
   );
 
   return (
-    <div className="h-screen w-screen bg-black text-white relative flex flex-col font-sans overflow-hidden">
-      <video ref={videoRef} autoPlay playsInline controls={session.status === 'replay'} className="absolute inset-0 w-full h-full object-cover z-0" style={{ transform: isHost ? 'scaleX(-1)' : 'none' }} poster={session.thumbnailUrl} />
-       {isSessionEnded && (
-        <div className="absolute inset-0 bg-black/70 z-30 flex flex-col items-center justify-center text-center p-4 animate-fade-in">
-          <h2 className="text-2xl font-bold">Siaran Langsung Telah Berakhir</h2>
-          <p className="mt-2 text-neutral-300">Terima kasih telah menonton. Anda akan diarahkan kembali.</p>
-        </div>
-      )}
-      <div className="absolute bottom-20 right-4 h-64 w-20 pointer-events-none z-20">
-        {floatingHearts.map(heart => (<div key={heart.id} className="absolute bottom-0 animate-float-up" style={{ left: `${heart.x}%` }}><HeartIcon className="w-8 h-8 text-red-500" fill="currentColor" style={{ filter: `hue-rotate(${Math.random() * 360}deg)` }} /></div>))}
-      </div>
-      <header className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 bg-neutral-900/60 backdrop-blur-sm p-1.5 pr-3 rounded-full">
-          <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center flex-shrink-0"><StoreIcon className="w-5 h-5 text-white" /></div>
-          <div>
-            <div className="flex items-center gap-2"><p className="font-bold text-sm truncate">{seller.name}</p>{!isHost && (<button onClick={handleFollowToggle} className={`text-xs font-bold px-3 py-1 rounded-full transition-colors ${following ? 'bg-white/20 text-white' : 'bg-primary text-white'}`}>{following ? 'Diikuti' : 'Ikuti'}</button>)}</div>
-            <div className="flex items-center gap-3 text-xs text-white/80 mt-1"><div className="flex items-center gap-1"><EyeIcon className="w-4 h-4" /><span>{formatNumber(viewers)}</span></div><div className="flex items-center gap-1"><HeartIcon className="w-3 h-3" /><span>{formatNumber(likes)}</span></div></div>
-          </div>
-        </div>
-        <button onClick={handleCloseClick} className="p-2.5 bg-neutral-900/60 backdrop-blur-sm rounded-full hover:bg-black/60 transition-colors"><XIcon className="w-5 h-5" /></button>
-      </header>
-
-      <div className="absolute bottom-0 left-0 right-0 p-4 z-10 mt-auto flex flex-col justify-end bg-gradient-to-t from-black/70 to-transparent">
-        <div className="w-full max-h-48 overflow-y-auto text-sm space-y-2 mb-4 scrollbar-hide">
-          {chatMessages.map(msg => (<p key={msg.id} className="drop-shadow-md animate-fade-in">{msg.isGift ? (<span className="bg-yellow-400/20 text-yellow-300 p-2 rounded-lg"><span className="font-bold mr-1.5 opacity-80">{msg.userName}</span> mengirimkan {msg.giftIcon}</span>) : (<><span className="font-bold mr-1.5 opacity-80">{msg.userName}:</span><span>{msg.text}</span></>)}</p>))}
-          <div ref={chatEndRef} />
-        </div>
-        
-        {pinnedProduct && (
-          <div className="bg-white/95 backdrop-blur-sm text-black p-2 rounded-lg flex items-center gap-3 animate-fade-in shadow-lg mb-4">
-            <img src={pinnedProduct.imageUrls[0]} alt={pinnedProduct.name} className="w-12 h-12 rounded-md object-cover flex-shrink-0"/>
-            <div className="flex-1 min-w-0"><p className="font-bold text-sm truncate">{pinnedProduct.name}</p><p className="font-semibold text-primary">{formatRupiah(pinnedProduct.price)}</p></div>
-            <Button onClick={() => handleAddToCart(pinnedProduct)} className="!px-5 !py-2 !font-bold !text-sm flex-shrink-0">Beli</Button>
-            {isHost && <button onClick={handleUnpinProduct} className="p-1 text-neutral-500 hover:text-black"><XIcon className="w-4 h-4"/></button>}
+    <>
+      <div className="h-screen w-screen bg-black text-white relative flex flex-col font-sans overflow-hidden">
+        <video ref={videoRef} autoPlay playsInline controls={session.status === 'replay'} className="absolute inset-0 w-full h-full object-cover z-0" style={{ transform: isHost ? 'scaleX(-1)' : 'none' }} poster={session.thumbnailUrl} />
+        {isSessionEnded && (
+          <div className="absolute inset-0 bg-black/70 z-30 flex flex-col items-center justify-center text-center p-4 animate-fade-in">
+            <h2 className="text-2xl font-bold">Siaran Langsung Telah Berakhir</h2>
+            <p className="mt-2 text-neutral-300">Terima kasih telah menonton. Anda akan diarahkan kembali.</p>
           </div>
         )}
-
-        <footer className="flex items-center gap-3">
-          {isHost ? renderHostFooter() : renderBuyerFooter()}
-          <div className="flex items-center gap-3 ml-auto">
-            <button className="p-2.5 bg-neutral-800/60 backdrop-blur-sm rounded-full hover:bg-black/60 transition-colors"><ShoppingCartIcon className="w-6 h-6" /></button>
-            {!isHost && <button onClick={handleAddHeart} className="p-2.5 bg-neutral-800/60 backdrop-blur-sm rounded-full hover:bg-black/60 transition-colors"><HeartIcon className="w-6 h-6 text-red-400" /></button>}
-            <button onClick={handleShare} className="p-2.5 bg-neutral-800/60 backdrop-blur-sm rounded-full hover:bg-black/60 transition-colors"><ShareIcon className="w-6 h-6" /></button>
-          </div>
-        </footer>
-      </div>
-
-      {showEndLiveModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in-overlay" onClick={() => setShowEndLiveModal(false)}>
-          <div className="bg-white text-black p-6 rounded-lg text-center w-full max-w-sm animate-popup-in" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-xl font-bold mb-2">Akhiri Sesi Live?</h2>
-            <p className="text-neutral-600 mb-6">Apakah Anda yakin ingin mengakhiri siaran langsung ini?</p>
-            <div className="flex justify-center gap-4"><Button variant="outline" onClick={() => setShowEndLiveModal(false)} className="flex-1">Batal</Button><Button onClick={handleEndLive} className="flex-1">Ya, Akhiri</Button></div>
-          </div>
+        <div className="absolute bottom-20 right-4 h-64 w-20 pointer-events-none z-20">
+          {floatingHearts.map(heart => (<div key={heart.id} className="absolute bottom-0 animate-float-up" style={{ left: `${heart.x}%` }}><HeartIcon className="w-8 h-8 text-red-500" fill="currentColor" style={{ filter: `hue-rotate(${Math.random() * 360}deg)` }} /></div>))}
         </div>
-      )}
-    </div>
+        <header className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 bg-neutral-900/60 backdrop-blur-sm p-1.5 pr-3 rounded-full">
+            <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center flex-shrink-0"><StoreIcon className="w-5 h-5 text-white" /></div>
+            <div>
+              <div className="flex items-center gap-2"><p className="font-bold text-sm truncate">{seller.name}</p>{!isHost && (<button onClick={handleFollowToggle} className={`text-xs font-bold px-3 py-1 rounded-full transition-colors ${following ? 'bg-white/20 text-white' : 'bg-primary text-white'}`}>{following ? 'Diikuti' : 'Ikuti'}</button>)}</div>
+              <div className="flex items-center gap-3 text-xs text-white/80 mt-1"><div className="flex items-center gap-1"><EyeIcon className="w-4 h-4" /><span>{formatNumber(viewers)}</span></div><div className="flex items-center gap-1"><HeartIcon className="w-3 h-3" /><span>{formatNumber(likes)}</span></div></div>
+            </div>
+          </div>
+          <button onClick={handleCloseClick} className="p-2.5 bg-neutral-900/60 backdrop-blur-sm rounded-full hover:bg-black/60 transition-colors"><XIcon className="w-5 h-5" /></button>
+        </header>
+
+        <div className="absolute bottom-0 left-0 right-0 p-4 z-10 mt-auto flex flex-col justify-end bg-gradient-to-t from-black/70 to-transparent">
+          <div className="w-full max-h-48 overflow-y-auto text-sm space-y-2 mb-4 scrollbar-hide">
+            {chatMessages.map(msg => (<p key={msg.id} className="drop-shadow-md animate-fade-in">{msg.isGift ? (<span className="bg-yellow-400/20 text-yellow-300 p-2 rounded-lg"><span className="font-bold mr-1.5 opacity-80">{msg.userName}</span> mengirimkan {msg.giftIcon}</span>) : (<><span className="font-bold mr-1.5 opacity-80">{msg.userName}:</span><span>{msg.text}</span></>)}</p>))}
+            <div ref={chatEndRef} />
+          </div>
+          
+          {pinnedProduct && (
+            <div className="bg-white/95 backdrop-blur-sm text-black p-2 rounded-lg flex items-center gap-3 animate-fade-in shadow-lg mb-4">
+              <img src={pinnedProduct.imageUrls[0]} alt={pinnedProduct.name} className="w-12 h-12 rounded-md object-cover flex-shrink-0"/>
+              <div className="flex-1 min-w-0"><p className="font-bold text-sm truncate">{pinnedProduct.name}</p><p className="font-semibold text-primary">{formatRupiah(pinnedProduct.price)}</p></div>
+              <Button onClick={() => handleAddToCart(pinnedProduct)} className="!px-5 !py-2 !font-bold !text-sm flex-shrink-0">Beli</Button>
+              {isHost && <button onClick={handleUnpinProduct} className="p-1 text-neutral-500 hover:text-black"><XIcon className="w-4 h-4"/></button>}
+            </div>
+          )}
+
+          <footer className="flex items-center gap-3">
+            {isHost ? renderHostFooter() : renderBuyerFooter()}
+            <div className="flex items-center gap-3 ml-auto">
+              <button className="p-2.5 bg-neutral-800/60 backdrop-blur-sm rounded-full hover:bg-black/60 transition-colors"><ShoppingCartIcon className="w-6 h-6" /></button>
+              {!isHost && <button onClick={handleAddHeart} className="p-2.5 bg-neutral-800/60 backdrop-blur-sm rounded-full hover:bg-black/60 transition-colors"><HeartIcon className="w-6 h-6 text-red-400" /></button>}
+              <button onClick={handleShare} className="p-2.5 bg-neutral-800/60 backdrop-blur-sm rounded-full hover:bg-black/60 transition-colors"><ShareIcon className="w-6 h-6" /></button>
+            </div>
+          </footer>
+        </div>
+
+        {showEndLiveModal && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in-overlay" onClick={() => setShowEndLiveModal(false)}>
+            <div className="bg-white text-black p-6 rounded-lg text-center w-full max-w-sm animate-popup-in" onClick={(e) => e.stopPropagation()}>
+              <h2 className="text-xl font-bold mb-2">Akhiri Sesi Live?</h2>
+              <p className="text-neutral-600 mb-6">Apakah Anda yakin ingin mengakhiri siaran langsung ini?</p>
+              <div className="flex justify-center gap-4"><Button variant="outline" onClick={() => setShowEndLiveModal(false)} className="flex-1">Batal</Button><Button onClick={handleEndLive} className="flex-1">Ya, Akhiri</Button></div>
+            </div>
+          </div>
+        )}
+      </div>
+      <PermissionModal 
+          isOpen={showPermissionModal}
+          onClose={() => {
+              setShowPermissionModal(false);
+              navigate('/seller/live');
+          }}
+          onRetry={() => {
+            if (isHost) {
+              startBroadcast();
+            }
+          }}
+          errorMessage={permissionError}
+      />
+    </>
   );
 };
 
