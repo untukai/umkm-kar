@@ -65,7 +65,6 @@ const App: React.FC = () => {
                       <Route path="wishlist" element={<WishlistPage />} />
                       <Route path="feed" element={<FeedPage />} />
                       <Route path="live" element={<LivePage />} />
-                      <Route path="live/:id" element={<LiveDetailPage />} />
                     </Route>
 
                     {/* Seller Protected Routes with its own Layout */}
@@ -86,6 +85,9 @@ const App: React.FC = () => {
                         <Route path="settings" element={<SellerSettingsPage />} />
                       </Route>
                     </Route>
+
+                    {/* Standalone pages without the main Layout */}
+                    <Route path="live/:id" element={<LiveDetailPage />} />
                   </Routes>
                 </HashRouter>
               </FollowProvider>
