@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -6,7 +7,7 @@ import { useNotification } from '../hooks/useNotification';
 import { Order } from '../types';
 import Button from '../components/Button';
 import Input from '../components/Input';
-import { BoxIcon, TruckIcon, CheckCircleIcon, ChevronDownIcon, CurrencyDollarIcon } from '../components/Icons';
+import { BoxIcon, TruckIcon, CheckCircleIcon, ChevronDownIcon, CurrencyDollarIcon, QrCodeIcon, BanknotesIcon, BuildingStorefrontIcon, XIcon, WalletIcon } from '../components/Icons';
 
 // Sub-component for displaying the visual order status tracker
 const OrderStatusTracker = ({ currentStatus }: { currentStatus: Order['status'] }) => {
@@ -46,11 +47,13 @@ const OrderStatusTracker = ({ currentStatus }: { currentStatus: Order['status'] 
 
 // Sub-component for the wallet
 const KodikWallet: React.FC = () => {
-    const { user, topUpCoins, redeemCoins } = useAuth();
+    const { user, topUpCoins, redeemCoins, topUpBalance, withdrawBalance } = useAuth();
     const { showNotification } = useNotification();
     const [activeTab, setActiveTab] = useState<'topup' | 'redeem'>('topup');
     const [topUpAmount, setTopUpAmount] = useState('');
     const [redeemAmount, setRedeemAmount] = useState('');
+    const [isTopUpModalOpen, setIsTopUpModalOpen] = useState(false);
+    const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
 
     const coinPrice = 1000;
 
@@ -90,12 +93,17 @@ const KodikWallet: React.FC = () => {
     const redeemValue = parseInt(redeemAmount) > 0 ? parseInt(redeemAmount) * coinPrice : 0;
 
     return (
+        <>
         <div className="bg-white p-6 rounded-lg shadow-lg mb-8">
             <h2 className="text-2xl font-bold mb-4">Dompet KODIK</h2>
-            <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div className="bg-neutral-100 p-4 rounded-lg">
                     <p className="text-sm text-neutral-600">Saldo Anda</p>
                     <p className="text-2xl font-bold text-primary">{formatRupiah(user?.balance || 0)}</p>
+                    <div className="flex gap-2 mt-2">
+                        <Button variant="outline" onClick={() => setIsTopUpModalOpen(true)} className="!text-sm !py-1.5 !px-3 flex-1">Isi Saldo</Button>
+                        <Button variant="outline" onClick={() => setIsWithdrawModalOpen(true)} className="!text-sm !py-1.5 !px-3 flex-1">Tarik Saldo</Button>
+                    </div>
                 </div>
                 <div className="bg-neutral-100 p-4 rounded-lg">
                     <p className="text-sm text-neutral-600">Koin Anda</p>
@@ -138,9 +146,252 @@ const KodikWallet: React.FC = () => {
                 </div>
             )}
         </div>
+        <TopUpModal 
+            isOpen={isTopUpModalOpen} 
+            onClose={() => setIsTopUpModalOpen(false)}
+            onConfirm={(amount) => {
+                topUpBalance(amount);
+                showNotification('Berhasil!', `${formatRupiah(amount)} telah ditambahkan ke saldo Anda.`);
+                setIsTopUpModalOpen(false);
+            }}
+        />
+        <WithdrawModal
+            isOpen={isWithdrawModalOpen}
+            onClose={() => setIsWithdrawModalOpen(false)}
+            onConfirm={(amount) => {
+                if (withdrawBalance(amount)) {
+                    showNotification('Penarikan Berhasil!', 'Dana akan segera diproses.');
+                    setIsWithdrawModalOpen(false);
+                } else {
+                    showNotification('Gagal!', 'Saldo Anda tidak mencukupi untuk penarikan ini.', 'error');
+                }
+            }}
+        />
+        </>
     );
 }
 
+// Sub-component for Top Up Modal
+const TopUpModal: React.FC<{isOpen: boolean; onClose: () => void; onConfirm: (amount: number) => void;}> = ({ isOpen, onClose, onConfirm }) => {
+    const [step, setStep] = useState(1);
+    const [amount, setAmount] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState('');
+
+    useEffect(() => {
+        if (!isOpen) {
+            setTimeout(() => {
+                setStep(1);
+                setAmount('');
+                setPaymentMethod('');
+            }, 300);
+        }
+    }, [isOpen]);
+
+    const formatRupiah = (number: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+
+    const handleNextStep = () => {
+        if (step === 1 && parseInt(amount) > 0) setStep(2);
+        if (step === 2 && paymentMethod) setStep(3);
+    };
+    
+    const paymentMethods = [
+        { id: 'qris', name: 'QRIS', icon: QrCodeIcon, desc: 'Bayar dengan semua aplikasi E-Wallet.' },
+        { id: 'va', name: 'Virtual Account', icon: BanknotesIcon, desc: 'Transfer dari M-Banking Anda.' },
+        { id: 'retail', name: 'Gerai Retail', icon: BuildingStorefrontIcon, desc: 'Bayar di Alfamart / Indomaret.' },
+    ];
+
+    const renderStepContent = () => {
+        switch(step) {
+            case 1:
+                return (
+                    <>
+                        <h3 className="text-lg font-bold mb-4">1. Masukkan Jumlah</h3>
+                        <Input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Contoh: 50000" className="text-center text-xl" />
+                        <div className="flex gap-2 mt-3">
+                            {[50000, 100000, 200000].map(val => (
+                                <Button key={val} type="button" variant="outline" onClick={() => setAmount(String(val))} className="flex-1">{formatRupiah(val)}</Button>
+                            ))}
+                        </div>
+                    </>
+                );
+            case 2:
+                return (
+                    <>
+                        <h3 className="text-lg font-bold mb-4">2. Pilih Metode Pembayaran</h3>
+                        <div className="space-y-3">
+                            {paymentMethods.map(method => (
+                                <label key={method.id} className={`flex items-center gap-4 border p-3 rounded-lg cursor-pointer transition-all ${paymentMethod === method.id ? 'bg-primary/10 border-primary' : 'hover:bg-neutral-50'}`}>
+                                    <input type="radio" name="paymentMethod" value={method.id} checked={paymentMethod === method.id} onChange={e => setPaymentMethod(e.target.value)} className="h-4 w-4 text-primary focus:ring-primary"/>
+                                    <method.icon className="w-8 h-8 text-primary"/>
+                                    <div>
+                                        <p className="font-semibold">{method.name}</p>
+                                        <p className="text-xs text-neutral-500">{method.desc}</p>
+                                    </div>
+                                </label>
+                            ))}
+                        </div>
+                    </>
+                );
+            case 3:
+                return (
+                    <>
+                        <h3 className="text-lg font-bold mb-4">3. Instruksi Pembayaran</h3>
+                        <div className="text-center p-4 bg-neutral-100 rounded-lg">
+                            <p>Total Pembayaran</p>
+                            <p className="text-2xl font-bold text-primary">{formatRupiah(parseInt(amount))}</p>
+                        </div>
+                        {paymentMethod === 'qris' && <div className="text-center mt-4">
+                            <div className="w-40 h-40 bg-neutral-300 mx-auto my-2 flex items-center justify-center text-neutral-500 text-sm">QR Code Placeholder</div>
+                            <p>Scan QR Code di atas menggunakan aplikasi E-Wallet Anda.</p>
+                        </div>}
+                        {paymentMethod === 'va' && <div className="text-center mt-4 space-y-2">
+                            <p>Nomor Virtual Account:</p>
+                            <p className="font-bold text-lg bg-neutral-200 p-2 rounded">8808 1234 5678 9012</p>
+                            <p className="text-xs">Salin nomor di atas dan bayar melalui M-Banking.</p>
+                        </div>}
+                        {paymentMethod === 'retail' && <div className="text-center mt-4 space-y-2">
+                            <p>Kode Pembayaran:</p>
+                            <p className="font-bold text-lg bg-neutral-200 p-2 rounded">KODIKTOPUP123</p>
+                            <p className="text-xs">Tunjukkan kode di atas ke kasir Alfamart/Indomaret.</p>
+                        </div>}
+                    </>
+                );
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 animate-fade-in-overlay" onClick={onClose}>
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-md animate-popup-in" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-center p-4 border-b">
+                    <h2 className="text-xl font-bold">Isi Saldo</h2>
+                    <button onClick={onClose}><XIcon className="w-6 h-6"/></button>
+                </div>
+                <div className="p-6">{renderStepContent()}</div>
+                <div className="p-4 border-t flex justify-end gap-3">
+                    {step > 1 && <Button type="button" variant="outline" onClick={() => setStep(s => s - 1)}>Kembali</Button>}
+                    {step < 3 && <Button type="button" onClick={handleNextStep} disabled={(step === 1 && !(parseInt(amount) > 0)) || (step === 2 && !paymentMethod)}>Lanjut</Button>}
+                    {step === 3 && <Button type="button" onClick={() => onConfirm(parseInt(amount))}>Saya Sudah Bayar</Button>}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const WithdrawModal: React.FC<{isOpen: boolean; onClose: () => void; onConfirm: (amount: number) => void;}> = ({ isOpen, onClose, onConfirm }) => {
+    const { user } = useAuth();
+    const [step, setStep] = useState(1);
+    const [amount, setAmount] = useState('');
+    const [destination, setDestination] = useState(''); // 'ewallet' or 'bank'
+    const [ewallet, setEwallet] = useState({ provider: 'GoPay', phone: '' });
+    const [bank, setBank] = useState({ name: '', number: '', holder: '' });
+    const adminFee = 2500;
+    
+    const balance = user?.balance || 0;
+    const amountNum = parseInt(amount) || 0;
+    const isAmountValid = amountNum > 0 && (amountNum + adminFee) <= balance;
+
+    useEffect(() => {
+        if (!isOpen) {
+            setTimeout(() => {
+                setStep(1); setAmount(''); setDestination('');
+            }, 300);
+        }
+    }, [isOpen]);
+
+    const formatRupiah = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
+    
+    const handleSetAmount = (percentage: number) => {
+        const value = Math.floor(balance * (percentage / 100));
+        setAmount(String(value));
+    };
+
+    const handleNext = () => {
+        if (step === 1 && isAmountValid) setStep(2);
+        else if (step === 2 && destination) setStep(3);
+    };
+
+    const renderStep = () => {
+        switch (step) {
+            case 1: return (
+                <>
+                    <h3 className="text-lg font-bold mb-2">1. Masukkan Jumlah Penarikan</h3>
+                    <p className="text-sm text-neutral-500 mb-4">Saldo Tersedia: <span className="font-semibold">{formatRupiah(balance)}</span></p>
+                    <Input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Contoh: 50000" className="text-center text-xl" />
+                    <div className="flex gap-2 mt-3">
+                        {[25, 50, 100].map(p => <Button key={p} type="button" variant="outline" onClick={() => handleSetAmount(p)} className="flex-1">{p}%</Button>)}
+                    </div>
+                    {!isAmountValid && amountNum > 0 && <p className="text-red-500 text-xs mt-2 text-center">Jumlah penarikan melebihi saldo yang tersedia (termasuk biaya admin Rp2.500).</p>}
+                </>
+            );
+            case 2: return (
+                <>
+                    <h3 className="text-lg font-bold mb-4">2. Pilih Tujuan Penarikan</h3>
+                    <div className="space-y-3">
+                        <label className={`flex items-center gap-4 border p-3 rounded-lg cursor-pointer ${destination === 'ewallet' && 'bg-primary/10 border-primary'}`}>
+                            <input type="radio" name="dest" value="ewallet" onChange={e => setDestination(e.target.value)} className="h-4 w-4 text-primary"/>
+                            <WalletIcon className="w-8 h-8 text-primary"/>
+                            <div><p className="font-semibold">E-Wallet</p><p className="text-xs text-neutral-500">GoPay, OVO, Dana, dll.</p></div>
+                        </label>
+                        {destination === 'ewallet' && (
+                            <div className="pl-12 space-y-2 animate-fade-in">
+                                <select className="w-full px-3 py-2 border rounded-lg" value={ewallet.provider} onChange={e => setEwallet(p => ({...p, provider: e.target.value}))}><option>GoPay</option><option>OVO</option><option>Dana</option></select>
+                                <Input type="tel" placeholder="Nomor Handphone" value={ewallet.phone} onChange={e => setEwallet(p => ({...p, phone: e.target.value}))}/>
+                            </div>
+                        )}
+                        <label className={`flex items-center gap-4 border p-3 rounded-lg cursor-pointer ${destination === 'bank' && 'bg-primary/10 border-primary'}`}>
+                            <input type="radio" name="dest" value="bank" onChange={e => setDestination(e.target.value)} className="h-4 w-4 text-primary"/>
+                            <BanknotesIcon className="w-8 h-8 text-primary"/>
+                            <div><p className="font-semibold">Transfer Bank</p><p className="text-xs text-neutral-500">BCA, Mandiri, BRI, dll.</p></div>
+                        </label>
+                        {destination === 'bank' && (
+                            <div className="pl-12 space-y-2 animate-fade-in">
+                                <Input placeholder="Nama Bank" value={bank.name} onChange={e => setBank(b => ({...b, name: e.target.value}))}/>
+                                <Input type="number" placeholder="Nomor Rekening" value={bank.number} onChange={e => setBank(b => ({...b, number: e.target.value}))}/>
+                                <Input placeholder="Nama Pemilik Rekening" value={bank.holder} onChange={e => setBank(b => ({...b, holder: e.target.value}))}/>
+                            </div>
+                        )}
+                    </div>
+                </>
+            );
+            case 3: 
+                const destinationInfo = destination === 'ewallet'
+                    ? `${ewallet.provider} (${ewallet.phone})`
+                    : `${bank.name} (${bank.number}) a.n. ${bank.holder}`;
+                return (
+                <>
+                    <h3 className="text-lg font-bold mb-4">3. Konfirmasi Penarikan</h3>
+                    <div className="p-4 bg-neutral-100 rounded-lg space-y-2 text-sm">
+                       <div className="flex justify-between"><span className="text-neutral-600">Jumlah Penarikan</span><span className="font-semibold">{formatRupiah(amountNum)}</span></div>
+                       <div className="flex justify-between"><span className="text-neutral-600">Biaya Admin</span><span className="font-semibold">{formatRupiah(adminFee)}</span></div>
+                       <div className="flex justify-between pt-2 border-t mt-2 font-bold text-base"><span className="text-neutral-800">Total Diterima</span><span className="text-primary">{formatRupiah(amountNum - adminFee)}</span></div>
+                       <div className="pt-2 border-t mt-2"><p className="text-neutral-600">Tujuan: <span className="font-semibold">{destinationInfo}</span></p></div>
+                    </div>
+                </>
+            );
+        }
+    };
+    
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 animate-fade-in-overlay" onClick={onClose}>
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-md animate-popup-in" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-center p-4 border-b">
+                    <h2 className="text-xl font-bold">Tarik Saldo</h2>
+                    <button onClick={onClose}><XIcon className="w-6 h-6"/></button>
+                </div>
+                <div className="p-6">{renderStep()}</div>
+                <div className="p-4 border-t flex justify-end gap-3">
+                    {step > 1 && <Button type="button" variant="outline" onClick={() => setStep(s => s - 1)}>Kembali</Button>}
+                    {step < 3 && <Button type="button" onClick={handleNext} disabled={(step === 1 && !isAmountValid) || (step === 2 && !destination)}>Lanjut</Button>}
+                    {step === 3 && <Button type="button" onClick={() => onConfirm(amountNum)}>Konfirmasi & Tarik Dana</Button>}
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const ProfilePage: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();

@@ -212,3 +212,27 @@ export const TwitterIcon: React.FC<IconProps> = (props) => (
     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
   </svg>
 );
+
+export const QrCodeIcon: React.FC<IconProps> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.5a.75.75 0 01.75-.75h4.5a.75.75 0 010 1.5h-3v3a.75.75 0 01-1.5 0v-4.5zM3.75 19.5a.75.75 0 01.75.75v-4.5a.75.75 0 011.5 0v3h3a.75.75 0 010 1.5h-4.5a.75.75 0 01-.75-.75zM19.5 4.5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-3h-3a.75.75 0 010-1.5h4.5zM19.5 19.5a.75.75 0 01.75-.75h-4.5a.75.75 0 010-1.5h3v-3a.75.75 0 011.5 0v4.5a.75.75 0 01-.75.75zM9 9h6v6H9V9z" />
+  </svg>
+);
+
+export const BanknotesIcon: React.FC<IconProps> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+);
+
+export const BuildingStorefrontIcon: React.FC<IconProps> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+  </svg>
+);
+
+export const WalletIcon: React.FC<IconProps> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.75H5.25m16.5 0v5.625c0 .621-.504 1.125-1.125 1.125H4.125a1.125 1.125 0 01-1.125-1.125V6.75a1.125 1.125 0 011.125-1.125h14.625c.621 0 1.125.504 1.125 1.125V9M19.5 12.75c0-1.518-1.232-2.75-2.75-2.75s-2.75 1.232-2.75 2.75 1.232 2.75 2.75 2.75 2.75-1.232 2.75-2.75z" />
+  </svg>
+);

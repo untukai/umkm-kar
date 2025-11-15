@@ -1,4 +1,5 @@
 
+
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '../types';
 
@@ -10,6 +11,8 @@ interface AuthContextType {
   spendCoins: (amount: number) => boolean;
   topUpCoins: (coinAmount: number) => boolean;
   redeemCoins: (coinAmount: number) => boolean;
+  topUpBalance: (amount: number) => void;
+  withdrawBalance: (amount: number) => boolean;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -78,11 +81,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem('kodik-user', JSON.stringify(updatedUser));
     return true;
   };
+  
+  const topUpBalance = (amount: number) => {
+    if (user) {
+      const updatedUser = {
+        ...user,
+        balance: (user.balance || 0) + amount,
+      };
+      setUser(updatedUser);
+      localStorage.setItem('kodik-user', JSON.stringify(updatedUser));
+    }
+  };
+  
+  const withdrawBalance = (amount: number): boolean => {
+    if (!user || !user.balance) return false;
+    const adminFee = 2500;
+    const totalWithdrawal = amount + adminFee;
+    if (user.balance >= totalWithdrawal) {
+      const updatedUser = {
+        ...user,
+        balance: user.balance - totalWithdrawal,
+      };
+      setUser(updatedUser);
+      localStorage.setItem('kodik-user', JSON.stringify(updatedUser));
+      return true;
+    }
+    return false;
+  };
 
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated, spendCoins, topUpCoins, redeemCoins }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated, spendCoins, topUpCoins, redeemCoins, topUpBalance, withdrawBalance }}>
       {children}
     </AuthContext.Provider>
   );
