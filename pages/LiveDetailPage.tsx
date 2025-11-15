@@ -24,6 +24,9 @@ const LiveDetailPage: React.FC = () => {
   const session = liveSessions.find(s => s.id === parseInt(id || ''));
   const seller = session ? sellers.find(s => s.id === session.sellerId) : null;
   const sessionProducts = session ? products.filter(p => session.productIds.includes(p.id)) : [];
+  
+  const currentSeller = user ? sellers.find(s => s.email === user.email) : null;
+  const isHost = session?.status === 'live' && currentSeller?.id === seller?.id;
 
   const [chatMessages, setChatMessages] = useState<LiveChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -43,35 +46,52 @@ const LiveDetailPage: React.FC = () => {
   }, [chatMessages]);
 
   useEffect(() => {
-    if (!session || !seller) return;
+    if (!session || !seller || !videoRef.current) return;
 
-    const currentSeller = user ? sellers.find(s => s.email === user.email) : null;
-    const isHost = session.status === 'live' && currentSeller?.id === seller.id;
-
-    let stream: MediaStream;
-
-    if (isHost) {
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(mediaStream => {
-          stream = mediaStream;
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
-        })
-        .catch(err => {
-          console.error("Failed to get camera stream:", err);
-          showNotification('Gagal Memuat Kamera', 'Tidak bisa mengakses kamera. Pastikan Anda telah memberikan izin.', 'error');
-          navigate('/seller/live'); // Navigate back if camera fails for the host
-        });
+    const videoEl = videoRef.current;
+    let stream: MediaStream | null = null;
+    
+    // Reset video state before setting new source
+    videoEl.pause();
+    videoEl.src = '';
+    videoEl.srcObject = null;
+    
+    if (session.status === 'live') {
+      if (isHost) {
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+          .then(mediaStream => {
+            stream = mediaStream;
+            videoEl.srcObject = mediaStream;
+            videoEl.muted = true; // Host preview is muted
+            videoEl.play().catch(e => console.error("Host autoplay failed", e));
+          })
+          .catch(err => {
+            console.error("Failed to get camera stream:", err);
+            showNotification('Gagal Memuat Kamera', 'Tidak bisa mengakses kamera. Pastikan Anda telah memberikan izin.', 'error');
+            navigate('/seller/live');
+          });
+      } else {
+        // Buyer is watching live, play placeholder video to simulate stream
+        videoEl.src = 'https://videos.pexels.com/video-files/853878/853878-hd_1280_720_25fps.mp4';
+        videoEl.muted = false;
+        videoEl.loop = true;
+        videoEl.play().catch(e => console.error("Buyer autoplay failed", e));
+      }
+    } else { // status === 'replay'
+      // For replays, both host and buyer see the placeholder video
+      videoEl.src = 'https://videos.pexels.com/video-files/853878/853878-hd_1280_720_25fps.mp4';
+      videoEl.muted = false;
+      videoEl.loop = true;
+      videoEl.play().catch(e => console.error("Replay autoplay failed", e));
     }
 
-    // Cleanup function to stop the camera stream when the component unmounts
+    // Cleanup function
     return () => {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [session, seller, user, navigate, showNotification]);
+  }, [session, seller, isHost, navigate, showNotification]);
 
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -142,24 +162,20 @@ const LiveDetailPage: React.FC = () => {
     }
     return num.toString();
   };
-  
-  const currentSeller = user ? sellers.find(s => s.email === user.email) : null;
-  const isHost = session.status === 'live' && currentSeller?.id === seller.id;
 
   return (
     <div className="h-screen w-screen bg-black text-white relative flex flex-col font-sans overflow-hidden">
-      {/* Background Image/Video */}
-      {isHost ? (
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="absolute inset-0 w-full h-full object-cover z-0 transform scale-x-[-1]"
-        />
-      ) : (
-        <img src={session.thumbnailUrl} alt={session.title} className="absolute inset-0 w-full h-full object-cover z-0" />
-      )}
+      {/* Background Video Player */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        controls={!isHost && session.status !== 'live'} // Show controls for non-hosts or on replays
+        muted={isHost} // Host preview is muted
+        className="absolute inset-0 w-full h-full object-cover z-0"
+        style={{ transform: isHost ? 'scaleX(-1)' : 'none' }}
+        poster={session.thumbnailUrl} // Use thumbnail as a poster image
+      />
 
       {/* Top Bar */}
       <header className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between gap-2">
