@@ -201,6 +201,37 @@ const LiveDetailPage: React.FC = () => {
     signalingService.sendMessage({ type: 'unpin-product', sessionId: id });
   };
 
+  const handleShare = async () => {
+    if (!session || !seller) return;
+
+    const shareUrl = `${window.location.origin}${window.location.pathname}#/live/${session.id}`;
+    const shareTitle = `${seller.name} sedang live di KODIK!`;
+    const shareText = `Tonton keseruan live shopping dari ${seller.name} dan dapatkan promo spesial!`;
+
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: shareTitle,
+                text: shareText,
+                url: shareUrl,
+            });
+            showNotification('Berhasil', 'Tautan live berhasil dibagikan!');
+        } catch (error) {
+            console.error('Error sharing:', error);
+            // Pengguna kemungkinan membatalkan, tidak perlu notifikasi error
+        }
+    } else {
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            showNotification('Berhasil Disalin', 'Tautan live berhasil disalin ke clipboard!');
+        } catch (error) {
+            console.error('Error copying to clipboard:', error);
+            showNotification('Gagal', 'Gagal menyalin tautan.', 'error');
+        }
+    }
+  };
+
+
   if (!session || !seller) { return <div className="h-screen w-screen flex flex-col items-center justify-center bg-neutral-100 text-center p-4"><h1 className="text-2xl font-bold">Sesi live tidak ditemukan.</h1><Button onClick={() => navigate('/live')} className="mt-4">Kembali ke Live</Button></div>; }
 
   const following = isFollowing(seller.id);
@@ -288,7 +319,7 @@ const LiveDetailPage: React.FC = () => {
           <div className="flex items-center gap-3 ml-auto">
             <button className="p-2.5 bg-neutral-800/60 backdrop-blur-sm rounded-full hover:bg-black/60 transition-colors"><ShoppingCartIcon className="w-6 h-6" /></button>
             {!isHost && <button onClick={handleAddHeart} className="p-2.5 bg-neutral-800/60 backdrop-blur-sm rounded-full hover:bg-black/60 transition-colors"><HeartIcon className="w-6 h-6 text-red-400" /></button>}
-            <button className="p-2.5 bg-neutral-800/60 backdrop-blur-sm rounded-full hover:bg-black/60 transition-colors"><ShareIcon className="w-6 h-6" /></button>
+            <button onClick={handleShare} className="p-2.5 bg-neutral-800/60 backdrop-blur-sm rounded-full hover:bg-black/60 transition-colors"><ShareIcon className="w-6 h-6" /></button>
           </div>
         </footer>
       </div>

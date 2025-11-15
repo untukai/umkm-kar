@@ -7,6 +7,7 @@ const SIGNALING_SERVER_URL = 'wss://socketsbay.com/wss/v2/1/demo/';
 let socket: WebSocket | null = null;
 let onMessageCallback: ((message: any) => void) | null = null;
 let currentSessionId: string | null = null;
+let peerId: string | null = null; // A unique ID for this client instance
 
 const signalingService = {
   connect: (sessionId: string) => {
@@ -15,26 +16,31 @@ const signalingService = {
       return;
     }
     
-    // If connecting to a new session, disconnect the old one first.
     if (socket) {
         socket.close();
     }
     
+    // Generate a unique ID for this peer connection to filter out echoed messages
+    peerId = `peer_${Math.random().toString(36).substr(2, 9)}`;
+    console.log(`Generated Peer ID: ${peerId}`);
+
     currentSessionId = sessionId;
     socket = new WebSocket(SIGNALING_SERVER_URL);
 
     socket.onopen = () => {
-      console.log(`Signaling service connected for session: ${sessionId}`);
-      // In a real app, you would join a specific room for the session.
-      // This demo server doesn't support rooms, so we filter messages on the client-side.
+      console.log(`Signaling service connected for session: ${sessionId} with peerId: ${peerId}`);
     };
 
     socket.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
         
+        // **CRITICAL**: Ignore messages sent by ourselves (echoed back by the public server).
+        if (message.peerId === peerId) {
+          return;
+        }
+        
         // **CRITICAL**: Filter messages to only process those for the current session.
-        // This simulates a "room" on the client-side, which a real backend would handle.
         if (message.sessionId === currentSessionId && onMessageCallback) {
           onMessageCallback(message);
         }
@@ -52,18 +58,20 @@ const signalingService = {
       if (currentSessionId === sessionId) {
         socket = null;
         currentSessionId = null;
+        peerId = null;
       }
     };
   },
   
   sendMessage: (message: any) => {
-    // The message MUST include a sessionId property.
     if (!message.sessionId) {
         console.error('Signaling message must include a sessionId.');
         return;
     }
     if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify(message));
+      // **CRITICAL**: Attach the peerId to every outgoing message.
+      const messageWithPeerId = { ...message, peerId };
+      socket.send(JSON.stringify(messageWithPeerId));
     } else {
       console.error('Signaling service is not connected.');
     }
@@ -76,10 +84,11 @@ const signalingService = {
   disconnect: () => {
     if (socket) {
       socket.close();
-      socket = null;
     }
+    socket = null;
     onMessageCallback = null;
     currentSessionId = null;
+    peerId = null;
   }
 };
 
