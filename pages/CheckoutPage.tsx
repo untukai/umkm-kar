@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../hooks/useCart';
@@ -10,7 +9,7 @@ import { Order } from '../types';
 
 const CheckoutPage: React.FC = () => {
   const { cartItems, totalPrice, clearCart } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { showNotification } = useNotification();
   const navigate = useNavigate();
 
@@ -64,6 +63,8 @@ const CheckoutPage: React.FC = () => {
 
     const newOrder: Order = {
       id: new Date().getTime().toString(),
+      // FIX: Added missing customerName property.
+      customerName: user?.email ?? shippingInfo.name,
       items: cartItems,
       total: totalPrice,
       date: new Date().toISOString(),

@@ -9,6 +9,7 @@ export interface Product {
   sellerId: number; // Changed from seller: string
   discount?: number; // Percentage off
   imageUrls: string[];
+  status: 'aktif' | 'nonaktif' | 'habis stok';
 }
 
 export interface Seller {
@@ -39,10 +40,11 @@ export interface CartItem {
 
 export interface Order {
   id: string;
+  customerName: string;
   items: CartItem[];
   total: number;
   date: string;
-  status: 'dikemas' | 'dikirim' | 'selesai';
+  status: 'menunggu pembayaran' | 'dikemas' | 'dikirim' | 'selesai';
   shippingAddress: {
     name: string;
     address: string;
@@ -52,6 +54,7 @@ export interface Order {
 
 export interface User {
   email: string;
+  role: 'pembeli' | 'penjual';
 }
 
 export interface Review {

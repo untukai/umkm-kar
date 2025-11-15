@@ -4,7 +4,7 @@ import { User } from '../types';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string) => void;
+  login: (email: string, role: 'pembeli' | 'penjual') => void;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -21,8 +21,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const login = (email: string) => {
-    const newUser: User = { email };
+  const login = (email: string, role: 'pembeli' | 'penjual') => {
+    const newUser: User = { email, role };
     setUser(newUser);
     localStorage.setItem('kodik-user', JSON.stringify(newUser));
   };

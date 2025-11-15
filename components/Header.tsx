@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -8,7 +9,7 @@ import { kodikLogo } from '../assets/logo';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { cartCount } = useCart();
   const { wishlistCount } = useWishlist(); // Get wishlist count
   const navigate = useNavigate();
@@ -101,6 +102,11 @@ const Header: React.FC = () => {
                 {link.name}
               </Link>
             ))}
+             {user?.role === 'penjual' && (
+              <Link to="/seller" className="block px-3 py-3 rounded-md text-base font-medium text-primary hover:bg-neutral-100 transition-colors">
+                Dashboard Penjual
+              </Link>
+            )}
           </nav>
           
           {/* User Actions at the bottom */}
@@ -133,6 +139,11 @@ const Header: React.FC = () => {
                     {link.name}
                   </Link>
                 ))}
+                {user?.role === 'penjual' && (
+                  <Link to="/seller" className="text-primary hover:underline transition-colors text-sm font-bold">
+                    Dashboard Penjual
+                  </Link>
+                )}
               </nav>
             </div>
 

@@ -1,6 +1,7 @@
 
+
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { products, sellers, reviews as initialReviews } from '../data/dummyData';
 import { useCart } from '../hooks/useCart';
 import { useNotification } from '../hooks/useNotification';
@@ -21,6 +22,7 @@ const ProductDetailPage: React.FC = () => {
   const { showSellerModal } = useSeller();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   
   const product = products.find(p => p.id === parseInt(id || ''));
   const seller = product ? sellers.find(s => s.id === product.sellerId) : undefined;
@@ -64,6 +66,14 @@ const ProductDetailPage: React.FC = () => {
     if (product) {
       addToCart(product);
       showNotification('Berhasil', `'${product.name}' ditambahkan ke keranjang.`);
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (product) {
+      addToCart(product);
+      showNotification('Berhasil', `'${product.name}' ditambahkan ke keranjang.`);
+      navigate('/checkout');
     }
   };
   
@@ -251,17 +261,22 @@ const ProductDetailPage: React.FC = () => {
                     <h3 className="font-semibold">Atur Jumlah</h3>
                     <p className="text-sm text-neutral-600">Stok: <span className="font-bold">{product.stock}</span></p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Button onClick={handleAddToCart} disabled={product.stock === 0} className="w-full !text-base sm:!text-lg !py-3 !font-bold">
-                      {product.stock > 0 ? '+ Keranjang' : 'Stok Habis'}
+                  <div className="space-y-3">
+                    <Button onClick={handleBuyNow} disabled={product.stock === 0} className="w-full !text-base sm:!text-lg !py-3 !font-bold">
+                      {product.stock > 0 ? 'Beli Sekarang' : 'Stok Habis'}
                     </Button>
-                    <button 
-                      onClick={handleWishlistToggle} 
-                      className={`p-3 rounded-lg border-2 transition-colors ${isWishlisted ? 'bg-red-500 border-red-500 text-white' : 'bg-transparent border-neutral-300 text-neutral-500 hover:border-red-500 hover:text-red-500'}`}
-                      aria-label="Tambah ke wishlist"
-                    >
-                      <HeartIcon className="w-6 h-6" fill={isWishlisted ? 'currentColor' : 'none'} />
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <Button onClick={handleAddToCart} variant="outline" disabled={product.stock === 0} className="w-full !text-base sm:!text-lg !py-3 !font-bold">
+                        + Keranjang
+                      </Button>
+                      <button 
+                        onClick={handleWishlistToggle} 
+                        className={`p-3 rounded-lg border-2 transition-colors ${isWishlisted ? 'bg-red-500 border-red-500 text-white' : 'bg-transparent border-neutral-300 text-neutral-500 hover:border-red-500 hover:text-red-500'}`}
+                        aria-label="Tambah ke wishlist"
+                      >
+                        <HeartIcon className="w-6 h-6" fill={isWishlisted ? 'currentColor' : 'none'} />
+                      </button>
+                    </div>
                   </div>
               </div>
             </div>

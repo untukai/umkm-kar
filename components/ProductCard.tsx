@@ -125,31 +125,27 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               <p className="text-base sm:text-lg font-bold text-neutral-900">{formatRupiah(product.price)}</p>
             )}
           </div>
-          <div className="flex items-center text-xs text-neutral-500 mt-2 w-full text-left">
-            <StoreIcon className="w-3 h-3 mr-1.5 flex-shrink-0" />
-            <span className="truncate">{seller?.name || 'Penjual tidak ditemukan'}</span>
+          <div className="mt-2 space-y-1">
+            <button onClick={handleSellerClick} className="flex items-center text-xs text-neutral-500 hover:text-primary transition-colors w-full text-left group">
+                <StoreIcon className="w-4 h-4 mr-1.5 flex-shrink-0" />
+                <span className="truncate group-hover:underline font-medium">{seller?.name || 'Penjual tidak ditemukan'}</span>
+            </button>
+            {productReviews.length > 0 && (
+                <div className="flex items-center gap-1">
+                    <StarRating rating={avgRating} />
+                    <span className="text-xs text-neutral-500 ml-1">({productReviews.length})</span>
+                </div>
+            )}
           </div>
-          <button
-              onClick={handleSellerClick}
-              className="text-xs font-semibold text-primary hover:underline mt-1 w-full text-left"
-          >
-              Lihat Penjual
-          </button>
-          {productReviews.length > 0 && (
-            <div className="flex items-center gap-1 mt-1">
-                <StarRating rating={avgRating} />
-                <span className="text-xs text-neutral-500">({productReviews.length})</span>
-            </div>
-          )}
         </div>
       </Link>
       <div className="p-3 pt-0 mt-auto">
         <div className="space-y-2">
-          <Button onClick={handleBuyNow} className="w-full !font-bold !text-sm">
-            Beli Sekarang
+          <Button onClick={handleBuyNow} className="w-full !font-bold !text-sm" disabled={product.stock === 0}>
+            {product.stock > 0 ? 'Beli Sekarang' : 'Stok Habis'}
           </Button>
           <div className="flex items-center gap-2">
-            <Button onClick={handleAddToCart} variant="outline" className="flex-grow !font-bold !text-sm">
+            <Button onClick={handleAddToCart} variant="outline" className="flex-grow !font-bold !text-sm" disabled={product.stock === 0}>
               Tambah Keranjang
             </Button>
             <button

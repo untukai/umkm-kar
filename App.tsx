@@ -5,7 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { SellerProvider } from './context/SellerContext';
-import { WishlistProvider } from './context/WishlistContext'; // Import WishlistProvider
+import { WishlistProvider } from './context/WishlistContext';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import ProductsPage from './pages/ProductsPage';
@@ -17,7 +17,14 @@ import ProfilePage from './pages/ProfilePage';
 import ArticlesPage from './pages/ArticlesPage';
 import ArticleDetailPage from './pages/ArticleDetailPage';
 import CollaborationPage from './pages/CollaborationPage';
-import WishlistPage from './pages/WishlistPage'; // Import WishlistPage
+import WishlistPage from './pages/WishlistPage';
+import ScrollToTop from './components/ScrollToTop';
+import ProtectedRoute from './components/ProtectedRoute';
+import SellerLayout from './components/seller/SellerLayout'; // Import SellerLayout
+import SellerDashboardPage from './pages/seller/SellerDashboardPage';
+import MyProductsPage from './pages/seller/MyProductsPage';
+import ProductFormPage from './pages/seller/ProductFormPage';
+import SellerOrdersPage from './pages/seller/SellerOrdersPage'; // Import SellerOrdersPage
 
 const App: React.FC = () => {
   return (
@@ -27,21 +34,34 @@ const App: React.FC = () => {
           <SellerProvider>
             <WishlistProvider>
               <HashRouter>
-                <Layout>
-                  <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/products" element={<ProductsPage />} />
-                    <Route path="/products/:id" element={<ProductDetailPage />} />
-                    <Route path="/cart" element={<CartPage />} />
-                    <Route path="/checkout" element={<CheckoutPage />} />
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/articles" element={<ArticlesPage />} />
-                    <Route path="/articles/:id" element={<ArticleDetailPage />} />
-                    <Route path="/collaboration" element={<CollaborationPage />} />
-                    <Route path="/wishlist" element={<WishlistPage />} />
-                  </Routes>
-                </Layout>
+                <ScrollToTop />
+                <Routes>
+                  {/* Public Routes with main Layout */}
+                  <Route path="/" element={<Layout />}>
+                    <Route index element={<HomePage />} />
+                    <Route path="products" element={<ProductsPage />} />
+                    <Route path="products/:id" element={<ProductDetailPage />} />
+                    <Route path="cart" element={<CartPage />} />
+                    <Route path="checkout" element={<CheckoutPage />} />
+                    <Route path="login" element={<LoginPage />} />
+                    <Route path="profile" element={<ProfilePage />} />
+                    <Route path="articles" element={<ArticlesPage />} />
+                    <Route path="articles/:id" element={<ArticleDetailPage />} />
+                    <Route path="collaboration" element={<CollaborationPage />} />
+                    <Route path="wishlist" element={<WishlistPage />} />
+                  </Route>
+
+                  {/* Seller Protected Routes with its own Layout */}
+                  <Route path="/seller" element={<ProtectedRoute />}>
+                    <Route element={<SellerLayout />}>
+                      <Route index element={<SellerDashboardPage />} />
+                      <Route path="orders" element={<SellerOrdersPage />} />
+                      <Route path="products" element={<MyProductsPage />} />
+                      <Route path="products/new" element={<ProductFormPage />} />
+                      <Route path="products/edit/:id" element={<ProductFormPage />} />
+                    </Route>
+                  </Route>
+                </Routes>
               </HashRouter>
             </WishlistProvider>
           </SellerProvider>
