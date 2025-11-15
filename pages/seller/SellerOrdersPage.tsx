@@ -1,5 +1,7 @@
 
+
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { orders } from '../../data/dummyData';
 import { Order } from '../../types';
 
@@ -61,9 +63,9 @@ const SellerOrdersPage: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button className="text-primary hover:text-primary-dark">
+                    <Link to={`/seller/orders/${order.id}`} className="text-primary hover:text-primary-dark font-semibold">
                       Detail
-                    </button>
+                    </Link>
                   </td>
                 </tr>
               ))}

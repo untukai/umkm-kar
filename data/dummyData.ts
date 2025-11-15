@@ -1,4 +1,5 @@
 
+
 import { Product, Category, Article, Seller, Review, Order } from '../types';
 
 export const categories: Category[] = [
@@ -60,7 +61,7 @@ export const reviews: Review[] = [
   { id: 6, productId: 1, userName: 'Fitriani', userEmail: 'fitri@example.com', rating: 5, comment: 'The best serabi in town!', date: '2024-05-22T08:45:00Z' },
 ];
 
-export const orders: Order[] = [
+export let orders: Order[] = [
   {
     id: 'KODIK-7892A',
     customerName: 'Budi Santoso',
@@ -119,3 +120,12 @@ export const orders: Order[] = [
     shippingAddress: { name: 'Eko Prasetyo', address: 'Jl. Raya Kosambi No. 55, Klari', phone: '081234567894' },
   }
 ];
+
+export const updateOrderStatus = (orderId: string, newStatus: Order['status']) => {
+  const orderIndex = orders.findIndex(o => o.id === orderId);
+  if (orderIndex !== -1) {
+    orders[orderIndex].status = newStatus;
+    return true;
+  }
+  return false;
+};

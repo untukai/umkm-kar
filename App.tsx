@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -25,6 +26,7 @@ import SellerDashboardPage from './pages/seller/SellerDashboardPage';
 import MyProductsPage from './pages/seller/MyProductsPage';
 import ProductFormPage from './pages/seller/ProductFormPage';
 import SellerOrdersPage from './pages/seller/SellerOrdersPage'; // Import SellerOrdersPage
+import SellerOrderDetailPage from './pages/seller/SellerOrderDetailPage'; // Import SellerOrderDetailPage
 
 const App: React.FC = () => {
   return (
@@ -56,6 +58,7 @@ const App: React.FC = () => {
                     <Route element={<SellerLayout />}>
                       <Route index element={<SellerDashboardPage />} />
                       <Route path="orders" element={<SellerOrdersPage />} />
+                      <Route path="orders/:id" element={<SellerOrderDetailPage />} />
                       <Route path="products" element={<MyProductsPage />} />
                       <Route path="products/new" element={<ProductFormPage />} />
                       <Route path="products/edit/:id" element={<ProductFormPage />} />

@@ -9,7 +9,7 @@ import { useNotification } from '../hooks/useNotification';
 import { useSeller } from '../hooks/useSeller';
 import { useWishlist } from '../hooks/useWishlist';
 import { sellers, reviews } from '../data/dummyData';
-import { StoreIcon, HeartIcon, ShareIcon } from './Icons';
+import { StoreIcon, HeartIcon, ShareIcon, StarIcon } from './Icons';
 import StarRating from './StarRating'; // Import StarRating
 
 interface ProductCardProps {
@@ -126,9 +126,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             )}
           </div>
           <div className="mt-2 space-y-1">
-            <button onClick={handleSellerClick} className="flex items-center text-xs text-neutral-500 hover:text-primary transition-colors w-full text-left group">
-                <StoreIcon className="w-4 h-4 mr-1.5 flex-shrink-0" />
-                <span className="truncate group-hover:underline font-medium">{seller?.name || 'Penjual tidak ditemukan'}</span>
+            <button onClick={handleSellerClick} className="flex items-center justify-between text-xs text-neutral-500 hover:text-primary transition-colors w-full text-left group">
+                <div className="flex items-center truncate">
+                    <StoreIcon className="w-4 h-4 mr-1.5 flex-shrink-0" />
+                    <span className="truncate group-hover:underline font-medium">{seller?.name || 'Penjual tidak ditemukan'}</span>
+                </div>
+                {seller && (
+                    <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                        <StarIcon className="w-4 h-4 text-yellow-400" fill="currentColor" />
+                        <span className="font-semibold text-neutral-600">{seller.rating.toFixed(1)}</span>
+                    </div>
+                )}
             </button>
             {productReviews.length > 0 && (
                 <div className="flex items-center gap-1">
