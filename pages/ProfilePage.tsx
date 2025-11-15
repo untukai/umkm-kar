@@ -1,9 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useNotification } from '../hooks/useNotification';
 import { Order } from '../types';
 import Button from '../components/Button';
-import { BoxIcon, TruckIcon, CheckCircleIcon, ChevronDownIcon } from '../components/Icons';
+import Input from '../components/Input';
+import { BoxIcon, TruckIcon, CheckCircleIcon, ChevronDownIcon, CurrencyDollarIcon } from '../components/Icons';
 
 // Sub-component for displaying the visual order status tracker
 const OrderStatusTracker = ({ currentStatus }: { currentStatus: Order['status'] }) => {
@@ -40,6 +43,103 @@ const OrderStatusTracker = ({ currentStatus }: { currentStatus: Order['status'] 
     </div>
   );
 };
+
+// Sub-component for the wallet
+const KodikWallet: React.FC = () => {
+    const { user, topUpCoins, redeemCoins } = useAuth();
+    const { showNotification } = useNotification();
+    const [activeTab, setActiveTab] = useState<'topup' | 'redeem'>('topup');
+    const [topUpAmount, setTopUpAmount] = useState('');
+    const [redeemAmount, setRedeemAmount] = useState('');
+
+    const coinPrice = 1000;
+
+    const formatRupiah = (number: number) => {
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+    };
+
+    const handleTopUp = () => {
+        const amount = parseInt(topUpAmount, 10);
+        if (isNaN(amount) || amount <= 0) {
+            showNotification('Gagal', 'Jumlah koin tidak valid.', 'error');
+            return;
+        }
+        if (topUpCoins(amount)) {
+            showNotification('Berhasil', `Anda berhasil membeli ${amount} koin!`);
+            setTopUpAmount('');
+        } else {
+            showNotification('Gagal', 'Saldo Anda tidak mencukupi untuk transaksi ini.', 'error');
+        }
+    };
+
+    const handleRedeem = () => {
+        const amount = parseInt(redeemAmount, 10);
+        if (isNaN(amount) || amount <= 0) {
+            showNotification('Gagal', 'Jumlah koin tidak valid.', 'error');
+            return;
+        }
+        if (redeemCoins(amount)) {
+            showNotification('Berhasil', `Anda berhasil menukar ${amount} koin menjadi saldo.`);
+            setRedeemAmount('');
+        } else {
+            showNotification('Gagal', 'Koin Anda tidak mencukupi.', 'error');
+        }
+    };
+    
+    const topUpCost = parseInt(topUpAmount) > 0 ? parseInt(topUpAmount) * coinPrice : 0;
+    const redeemValue = parseInt(redeemAmount) > 0 ? parseInt(redeemAmount) * coinPrice : 0;
+
+    return (
+        <div className="bg-white p-6 rounded-lg shadow-lg mb-8">
+            <h2 className="text-2xl font-bold mb-4">Dompet KODIK</h2>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-neutral-100 p-4 rounded-lg">
+                    <p className="text-sm text-neutral-600">Saldo Anda</p>
+                    <p className="text-2xl font-bold text-primary">{formatRupiah(user?.balance || 0)}</p>
+                </div>
+                <div className="bg-neutral-100 p-4 rounded-lg">
+                    <p className="text-sm text-neutral-600">Koin Anda</p>
+                    <p className="text-2xl font-bold text-yellow-500 flex items-center gap-2">
+                        <CurrencyDollarIcon className="w-6 h-6" /> {user?.coins || 0}
+                    </p>
+                </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b mb-4">
+                <button onClick={() => setActiveTab('topup')} className={`py-2 px-4 font-semibold ${activeTab === 'topup' ? 'border-b-2 border-primary text-primary' : 'text-neutral-500'}`}>Isi Ulang Koin</button>
+                <button onClick={() => setActiveTab('redeem')} className={`py-2 px-4 font-semibold ${activeTab === 'redeem' ? 'border-b-2 border-primary text-primary' : 'text-neutral-500'}`}>Tukar Koin ke Saldo</button>
+            </div>
+
+            {/* Tab Content */}
+            {activeTab === 'topup' && (
+                <div className="space-y-4 animate-fade-in">
+                    <h3 className="font-semibold">Beli Koin</h3>
+                    <p className="text-sm text-neutral-500">1 Koin = {formatRupiah(coinPrice)}</p>
+                    <Input type="number" placeholder="Masukkan jumlah koin" value={topUpAmount} onChange={(e) => setTopUpAmount(e.target.value)} />
+                    <div className="flex gap-2">
+                        {[10, 50, 100].map(val => <Button key={val} type="button" variant="outline" onClick={() => setTopUpAmount(String(val))}>{val} Koin</Button>)}
+                    </div>
+                    {topUpCost > 0 && <p className="text-sm">Total Biaya: <span className="font-bold">{formatRupiah(topUpCost)}</span></p>}
+                    <Button onClick={handleTopUp} disabled={!topUpAmount || parseInt(topUpAmount) <= 0}>Beli Koin</Button>
+                </div>
+            )}
+
+            {activeTab === 'redeem' && (
+                <div className="space-y-4 animate-fade-in">
+                    <h3 className="font-semibold">Tukar Koin</h3>
+                    <p className="text-sm text-neutral-500">Tukar koin Anda menjadi saldo yang bisa digunakan.</p>
+                    <Input type="number" placeholder="Masukkan jumlah koin" value={redeemAmount} onChange={(e) => setRedeemAmount(e.target.value)} />
+                     <div className="flex gap-2">
+                        {[10, 50, 100].map(val => <Button key={val} type="button" variant="outline" onClick={() => setRedeemAmount(String(val))}>{val} Koin</Button>)}
+                    </div>
+                    {redeemValue > 0 && <p className="text-sm">Anda akan menerima: <span className="font-bold">{formatRupiah(redeemValue)}</span></p>}
+                    <Button onClick={handleRedeem} disabled={!redeemAmount || parseInt(redeemAmount) <= 0}>Tukar Koin</Button>
+                </div>
+            )}
+        </div>
+    );
+}
 
 
 const ProfilePage: React.FC = () => {
@@ -87,73 +187,79 @@ const ProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-lg">
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
-        <h1 className="text-3xl font-bold">Profil Saya</h1>
-        <Button onClick={handleLogout} variant="outline">Keluar</Button>
+    <div>
+      <div className="bg-white p-6 rounded-lg shadow-lg mb-8">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
+          <h1 className="text-3xl font-bold">Profil Saya</h1>
+          <Button onClick={handleLogout} variant="outline">Keluar</Button>
+        </div>
+        <p className="text-lg">Selamat datang, <span className="font-semibold">{user?.email}</span>!</p>
       </div>
-      <p className="text-lg mb-8">Selamat datang, <span className="font-semibold">{user?.email}</span>!</p>
 
-      <h2 className="text-2xl font-bold mb-4">Riwayat Pesanan</h2>
-      <div className="space-y-4">
-        {orders.length > 0 ? (
-          orders.map(order => (
-            <div key={order.id} className="border rounded-lg overflow-hidden transition-shadow duration-300">
-              <button 
-                onClick={() => toggleOrderDetails(order.id)} 
-                className="w-full text-left bg-neutral-50 p-4 hover:bg-neutral-100 focus:outline-none focus:bg-neutral-100 transition-colors"
-                aria-expanded={expandedOrderId === order.id}
-                aria-controls={`order-details-${order.id}`}
-              >
-                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-                  <div className="flex-1">
-                    <p className="font-bold text-neutral-800">Pesanan #{order.id}</p>
-                    <p className="text-sm text-neutral-500">{formatDate(order.date)}</p>
-                  </div>
-                  <div className="flex items-center gap-4 mt-2 sm:mt-0">
-                    <div className="text-right sm:text-left">
-                       <p className="font-bold text-lg text-primary">{formatRupiah(order.total)}</p>
+      <KodikWallet />
+
+      <div className="bg-white p-6 rounded-lg shadow-lg">
+        <h2 className="text-2xl font-bold mb-4">Riwayat Pesanan</h2>
+        <div className="space-y-4">
+          {orders.length > 0 ? (
+            orders.map(order => (
+              <div key={order.id} className="border rounded-lg overflow-hidden transition-shadow duration-300">
+                <button 
+                  onClick={() => toggleOrderDetails(order.id)} 
+                  className="w-full text-left bg-neutral-50 p-4 hover:bg-neutral-100 focus:outline-none focus:bg-neutral-100 transition-colors"
+                  aria-expanded={expandedOrderId === order.id}
+                  aria-controls={`order-details-${order.id}`}
+                >
+                  <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                    <div className="flex-1">
+                      <p className="font-bold text-neutral-800">Pesanan #{order.id}</p>
+                      <p className="text-sm text-neutral-500">{formatDate(order.date)}</p>
                     </div>
-                     <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusChipClass(order.status)} capitalize`}>{order.status}</span>
-                    <ChevronDownIcon className={`w-6 h-6 text-neutral-500 transition-transform flex-shrink-0 ${expandedOrderId === order.id ? 'rotate-180' : ''}`} />
+                    <div className="flex items-center gap-4 mt-2 sm:mt-0">
+                      <div className="text-right sm:text-left">
+                         <p className="font-bold text-lg text-primary">{formatRupiah(order.total)}</p>
+                      </div>
+                       <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusChipClass(order.status)} capitalize`}>{order.status}</span>
+                      <ChevronDownIcon className={`w-6 h-6 text-neutral-500 transition-transform flex-shrink-0 ${expandedOrderId === order.id ? 'rotate-180' : ''}`} />
+                    </div>
                   </div>
-                </div>
-              </button>
-              {expandedOrderId === order.id && (
-                <div id={`order-details-${order.id}`} className="p-4 sm:p-6 bg-white border-t animate-fade-in">
-                  <OrderStatusTracker currentStatus={order.status} />
-                  <div className="border-t mt-6 pt-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                      {/* Kolom 1: Alamat Pengiriman */}
-                      <div>
-                        <h4 className="font-semibold text-neutral-800 mb-2">Alamat Pengiriman</h4>
-                        <div className="text-sm text-neutral-600 space-y-1">
-                          <p className="font-bold">{order.shippingAddress.name}</p>
-                          <p>{order.shippingAddress.address}</p>
-                          <p>{order.shippingAddress.phone}</p>
+                </button>
+                {expandedOrderId === order.id && (
+                  <div id={`order-details-${order.id}`} className="p-4 sm:p-6 bg-white border-t animate-fade-in">
+                    <OrderStatusTracker currentStatus={order.status} />
+                    <div className="border-t mt-6 pt-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                        {/* Kolom 1: Alamat Pengiriman */}
+                        <div>
+                          <h4 className="font-semibold text-neutral-800 mb-2">Alamat Pengiriman</h4>
+                          <div className="text-sm text-neutral-600 space-y-1">
+                            <p className="font-bold">{order.shippingAddress.name}</p>
+                            <p>{order.shippingAddress.address}</p>
+                            <p>{order.shippingAddress.phone}</p>
+                          </div>
+                        </div>
+                        {/* Kolom 2: Barang Pesanan */}
+                        <div>
+                          <h4 className="font-semibold text-neutral-800 mb-2">Barang Pesanan</h4>
+                          <ul className="space-y-2">
+                            {order.items.map(item => (
+                              <li key={item.product.id} className="text-sm text-neutral-600 flex justify-between">
+                                <span className="pr-2">{item.product.name} <span className="text-neutral-500">(x{item.quantity})</span></span>
+                                <span className="font-semibold text-neutral-700 whitespace-nowrap">{formatRupiah(item.product.price * item.quantity)}</span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
                       </div>
-                      {/* Kolom 2: Barang Pesanan */}
-                      <div>
-                        <h4 className="font-semibold text-neutral-800 mb-2">Barang Pesanan</h4>
-                        <ul className="space-y-2">
-                          {order.items.map(item => (
-                            <li key={item.product.id} className="text-sm text-neutral-600 flex justify-between">
-                              <span className="pr-2">{item.product.name} <span className="text-neutral-500">(x{item.quantity})</span></span>
-                              <span className="font-semibold text-neutral-700 whitespace-nowrap">{formatRupiah(item.product.price * item.quantity)}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ))
-        ) : (
-          <p className="text-gray-500 text-center py-8">Anda belum memiliki riwayat pesanan.</p>
-        )}
+                )}
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500 text-center py-8">Anda belum memiliki riwayat pesanan.</p>
+          )}
+        </div>
       </div>
     </div>
   );

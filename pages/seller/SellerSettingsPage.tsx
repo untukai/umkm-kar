@@ -11,6 +11,7 @@ const SellerSettingsPage: React.FC = () => {
   const { user } = useAuth();
   const { showNotification } = useNotification();
   const [seller, setSeller] = useState<Seller | null>(null);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -38,10 +39,15 @@ const SellerSettingsPage: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleConfirmSave = () => {
     if (seller) {
       updateSellerDetails(seller.id, formData);
       showNotification('Berhasil', 'Informasi toko berhasil diperbarui.');
     }
+    setIsConfirmModalOpen(false);
   };
 
   if (!seller) {
@@ -49,32 +55,53 @@ const SellerSettingsPage: React.FC = () => {
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-lg max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6 border-b pb-4">Pengaturan Toko</h1>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-neutral-700">Nama Toko</label>
-          <Input type="text" id="name" name="name" value={formData.name} onChange={handleChange} required className="mt-1" />
-        </div>
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-neutral-700">Deskripsi Toko</label>
-          <textarea id="description" name="description" value={formData.description} onChange={handleChange} rows={4} required className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <>
+      <div className="bg-white p-6 rounded-lg shadow-lg max-w-2xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6 border-b pb-4">Pengaturan Toko</h1>
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-neutral-700">Nomor Telepon</label>
-            <Input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} className="mt-1" />
+            <label htmlFor="name" className="block text-sm font-medium text-neutral-700">Nama Toko</label>
+            <Input type="text" id="name" name="name" value={formData.name} onChange={handleChange} required className="mt-1" />
           </div>
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-neutral-700">Email</label>
-            <Input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required className="mt-1" />
+            <label htmlFor="description" className="block text-sm font-medium text-neutral-700">Deskripsi Toko</label>
+            <textarea id="description" name="description" value={formData.description} onChange={handleChange} rows={4} required className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-neutral-700">Nomor Telepon</label>
+              <Input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} className="mt-1" />
+            </div>
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-neutral-700">Email</label>
+              <Input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required className="mt-1" />
+            </div>
+          </div>
+          <div className="text-right pt-4 border-t">
+            <Button type="submit">Simpan Perubahan</Button>
+          </div>
+        </form>
+      </div>
+
+      {isConfirmModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-fade-in-overlay" onClick={() => setIsConfirmModalOpen(false)}>
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm text-center animate-popup-in" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-xl font-bold mb-4">Konfirmasi Perubahan</h2>
+            <p className="text-neutral-600 mb-6">
+              Apakah Anda yakin ingin menyimpan perubahan pada informasi toko Anda?
+            </p>
+            <div className="flex justify-center gap-4">
+              <Button variant="outline" onClick={() => setIsConfirmModalOpen(false)}>
+                Batal
+              </Button>
+              <Button onClick={handleConfirmSave}>
+                Ya, Simpan
+              </Button>
+            </div>
           </div>
         </div>
-        <div className="text-right pt-4 border-t">
-          <Button type="submit">Simpan Perubahan</Button>
-        </div>
-      </form>
-    </div>
+      )}
+    </>
   );
 };
 

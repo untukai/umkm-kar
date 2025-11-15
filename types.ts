@@ -58,6 +58,7 @@ export interface User {
   email: string;
   role: 'pembeli' | 'penjual';
   coins?: number;
+  balance?: number;
 }
 
 export interface Review {

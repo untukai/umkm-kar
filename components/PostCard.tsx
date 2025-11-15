@@ -15,7 +15,7 @@ interface PostCardProps {
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
-    const { user } = useAuth();
+    const { user, isAuthenticated } = useAuth();
     const { showNotification } = useNotification();
     const [post, setPost] = useState(initialPost);
     const [comments, setComments] = useState<Comment[]>(initialPost.comments);
@@ -42,13 +42,42 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
         if (interval > 1) return Math.floor(interval) + " menit lalu";
         return "Baru saja";
     };
+    
+    const showLoginNotification = () => {
+        showNotification(
+            'Login Diperlukan',
+            'Anda harus masuk untuk menyukai atau mengomentari postingan.',
+            'error',
+            { label: 'Masuk Sekarang', path: '/login' }
+        );
+    };
 
     const handleLike = () => {
+        if (!isAuthenticated) {
+            showLoginNotification();
+            return;
+        }
         setPost(prevPost => ({
             ...prevPost,
             likes: isLiked ? prevPost.likes - 1 : prevPost.likes + 1,
         }));
         setIsLiked(!isLiked);
+    };
+
+    const handleToggleComments = () => {
+        if (!isAuthenticated) {
+            showLoginNotification();
+            return;
+        }
+        setShowComments(!showComments);
+    };
+    
+    const handleSetReplyTo = (commentId: number) => {
+        if (!isAuthenticated) {
+            showLoginNotification();
+            return;
+        }
+        setReplyingTo(commentId);
     };
 
     const handleShare = () => {
@@ -63,7 +92,10 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
     };
     
     const handleCommentSubmit = (text: string, parentId: number | null = null) => {
-        if (!user) return;
+        if (!user) {
+            showLoginNotification();
+            return;
+        }
 
         const newCommentData: Omit<Comment, 'id'> = {
             parentId: parentId || undefined,
@@ -118,7 +150,7 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
                         <HeartIcon className="w-5 h-5" fill={isLiked ? 'currentColor' : 'none'} />
                         <span>Suka</span>
                     </button>
-                    <button onClick={() => setShowComments(!showComments)} className="flex items-center justify-center gap-2 p-2 rounded-lg hover:bg-neutral-100 text-neutral-600 font-semibold">
+                    <button onClick={handleToggleComments} className="flex items-center justify-center gap-2 p-2 rounded-lg hover:bg-neutral-100 text-neutral-600 font-semibold">
                         <ChatBubbleIcon className="w-5 h-5" />
                         <span>Komentar</span>
                     </button>
@@ -138,7 +170,7 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
                                     key={comment.id}
                                     comment={comment}
                                     allComments={comments}
-                                    onReply={setReplyingTo}
+                                    onReply={handleSetReplyTo}
                                     activeReplyId={replyingTo}
                                     onSubmitReply={handleCommentSubmit}
                                     onCancelReply={() => setReplyingTo(null)}
@@ -148,7 +180,7 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
                             <p className="text-sm text-neutral-500 text-center py-4">Jadilah yang pertama berkomentar.</p>
                         )}
                     </div>
-                    {user && (
+                    {isAuthenticated && (
                          <CommentForm 
                             onSubmit={(text) => handleCommentSubmit(text, null)}
                             placeholder="Tulis komentar publik..."
