@@ -321,6 +321,7 @@ const LiveDetailPage: React.FC = () => {
                     addOrUpdateLiveSession(receivedSession); // Update global store
                     setSession(receivedSession); // Update local state
                     setIsLoading(false); // Stop loading
+                    if (timeoutId) clearTimeout(timeoutId); // Clear the timeout
                 }
             }
             if (message.type === 'pin-product') setPinnedProductId(message.payload.productId);
@@ -362,7 +363,9 @@ const LiveDetailPage: React.FC = () => {
         signalingService.sendMessage({ type: 'request-session-data', sessionId: id });
         // Set a timeout to prevent indefinite loading
         timeoutId = window.setTimeout(() => {
-            setIsLoading(false); // This will trigger the "not found" message if session is still null
+            if (!session) { // Check again in case a response came in right at the 5s mark
+                setIsLoading(false); // This will trigger the "not found" message if session is still null
+            }
         }, 5000);
     }
 
@@ -376,7 +379,7 @@ const LiveDetailPage: React.FC = () => {
         peerConnectionsRef.current.clear();
         signalingService.disconnect();
     };
-  }, [id, session, isHost, navigate, showNotification, createPeerConnectionForViewer, startBroadcast]);
+  }, [id, isHost, navigate, showNotification, createPeerConnectionForViewer, startBroadcast]);
 
   const sampleChats: Omit<LiveChatMessage, 'id'>[] = [
     { userName: 'Andi', text: 'Keren banget produknya!' }, { userName: 'Sari', text: 'Diskonnya sampai kapan kak?' }, { userName: 'Rina', text: 'Baru join, lagi bahas apa nih?' }, { userName: 'Budi', text: '💚', isGift: true, giftIcon: '💚' }, { userName: 'Joko', text: 'Pengirimannya aman kan?' }, { userName: 'Wati', text: 'Langsung checkout ah! 👍' },
