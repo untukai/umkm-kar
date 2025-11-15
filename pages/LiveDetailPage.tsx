@@ -1,18 +1,22 @@
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { liveSessions, sellers, products, virtualGifts, endLiveSession } from '../data/dummyData';
-import { LiveChatMessage, Product, VirtualGift } from '../types';
+import { LiveChatMessage, Product } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 import { useNotification } from '../hooks/useNotification';
+import { useFollow } from '../hooks/useFollow';
 import Button from '../components/Button';
-import { UserIcon, StoreIcon, SendIcon, GiftIcon, ShoppingCartIcon, CurrencyDollarIcon, XCircleIcon } from '../components/Icons';
+import { UserIcon, StoreIcon, SendIcon, GiftIcon, ShoppingCartIcon, XCircleIcon, UserPlusIcon, XIcon, ShareIcon } from '../components/Icons';
 
 const LiveDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { user, isAuthenticated, spendCoins } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { addToCart } = useCart();
   const { showNotification } = useNotification();
+  const { isFollowing, followSeller, unfollowSeller } = useFollow();
   const navigate = useNavigate();
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -22,9 +26,8 @@ const LiveDetailPage: React.FC = () => {
 
   const [chatMessages, setChatMessages] = useState<LiveChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [showGifts, setShowGifts] = useState(false);
-  const [flyingGifts, setFlyingGifts] = useState<{ id: number; icon: string }[]>([]);
   const [isConfirmEndLiveOpen, setIsConfirmEndLiveOpen] = useState(false);
+  const [pinnedProduct, setPinnedProduct] = useState<Product | null>(sessionProducts[0] || null);
 
   useEffect(() => {
     // Initial dummy chat messages
@@ -49,32 +52,14 @@ const LiveDetailPage: React.FC = () => {
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !user) return;
+    if (!newMessage.trim()) return;
+    if (!isAuthenticated) {
+        showNotification('Gagal', 'Anda harus masuk untuk mengirim komentar.', 'error', {label: 'Masuk', path: '/login'});
+        return;
+    }
     const msg: LiveChatMessage = { id: Date.now(), userName: user.email.split('@')[0], text: newMessage };
     setChatMessages(prev => [...prev, msg]);
     setNewMessage('');
-  };
-
-  const handleSendGift = (gift: VirtualGift) => {
-    if (!user) {
-      showNotification('Gagal', 'Anda harus login untuk mengirim hadiah.', 'error');
-      return;
-    }
-    if (spendCoins(gift.price)) {
-      const msg: LiveChatMessage = { id: Date.now(), userName: user.email.split('@')[0], text: `mengirim ${gift.name}`, isGift: true, giftIcon: gift.icon };
-      setChatMessages(prev => [...prev, msg]);
-      showNotification('Berhasil', `Anda mengirim ${gift.name}!`);
-      
-      const newGift = { id: Date.now(), icon: gift.icon };
-      setFlyingGifts(prev => [...prev, newGift]);
-      setTimeout(() => {
-        setFlyingGifts(prev => prev.filter(f => f.id !== newGift.id));
-      }, 3000);
-      
-    } else {
-      showNotification('Gagal', 'Koin Anda tidak cukup.', 'error');
-    }
-    setShowGifts(false);
   };
   
   const handleAddToCart = (product: Product) => {
@@ -105,133 +90,137 @@ const LiveDetailPage: React.FC = () => {
 
   const isSellerOwner = isAuthenticated && user?.role === 'penjual' && user.email === seller.email;
   const isSessionLive = session.status === 'live';
+  const isFollowingSeller = isFollowing(seller.id);
+
+  const handleFollowToggle = () => {
+    if (!isAuthenticated) {
+        showNotification('Gagal', 'Anda harus masuk untuk mengikuti penjual.', 'error');
+        return;
+    }
+    if (isFollowingSeller) {
+      unfollowSeller(seller.id);
+    } else {
+      followSeller(seller.id);
+      showNotification('Berhasil', `Anda sekarang mengikuti ${seller.name}`);
+    }
+  };
 
   return (
     <>
-      <div className="fixed inset-0 bg-black text-white flex flex-col lg:flex-row">
-        <style>{`
-          @keyframes fly-up {
-            0% { transform: translateY(0) scale(0.5); opacity: 1; }
-            100% { transform: translateY(-200px) scale(1.5); opacity: 0; }
-          }
-          .animate-fly-up {
-            animation: fly-up 3s ease-out forwards;
-          }
-        `}</style>
+      <div className="fixed inset-0 bg-black text-white font-sans">
+        {/* Background Video/Image */}
+        <img src={session.thumbnailUrl} alt="Live Thumbnail" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/60"></div>
 
-        {/* Main Content: Video + Products */}
-        <div className="flex-1 flex flex-col bg-neutral-900 relative">
-          <div className="absolute top-4 left-4 z-10">
-            <Link to="/live">
-              <Button variant="secondary" className="bg-black/50 text-white hover:bg-black/80 !px-3 !py-1.5 text-sm">&larr; Kembali</Button>
-            </Link>
-          </div>
-          <div className="absolute top-4 right-4 z-10 flex items-center gap-2 bg-black/50 p-2 rounded-lg">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-              <StoreIcon className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-                <h2 className="font-bold text-sm leading-tight">{seller.name}</h2>
-                <p className="text-xs text-neutral-300">{session.title}</p>
-            </div>
-            {isSellerOwner && isSessionLive && (
-                <Button variant="secondary" onClick={() => setIsConfirmEndLiveOpen(true)} className="ml-4 bg-red-500 text-white hover:bg-red-600 !px-3 !py-1.5 text-sm !font-bold">
-                    Akhiri Live
-                </Button>
-            )}
-          </div>
-          
-          <div className="absolute bottom-20 right-4 h-64 w-24 overflow-hidden pointer-events-none">
-            {flyingGifts.map((gift) => (
-              <div key={gift.id} className="absolute bottom-0 animate-fly-up text-4xl" style={{ left: `${Math.random() * 50}%` }}>
-                {gift.icon}
+        {/* Main Overlay Container */}
+        <div className="relative z-10 h-full w-full flex flex-col p-4">
+
+          {/* Top Bar */}
+          <header className="w-full flex justify-between items-start">
+            <div className="flex items-center gap-3 bg-black/40 backdrop-blur-sm p-1.5 rounded-full">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <StoreIcon className="w-5 h-5 text-primary" />
               </div>
-            ))}
-          </div>
+              <div>
+                <h2 className="font-bold text-sm leading-tight">{seller.name}</h2>
+                <p className="text-xs text-neutral-300">
+                  {session.likes && session.likes > 1000 
+                    ? `${(session.likes / 1000).toFixed(1)}K` 
+                    : session.likes} likes
+                </p>
+              </div>
+              {!isSellerOwner && (
+                <button 
+                  onClick={handleFollowToggle}
+                  className={`ml-2 px-4 py-1.5 text-sm font-bold rounded-full transition-colors flex items-center gap-1.5 ${
+                    isFollowingSeller 
+                    ? 'bg-white/20 text-white' 
+                    : 'bg-red-500 text-white hover:bg-red-600'
+                  }`}
+                >
+                  {isFollowingSeller ? 'Diikuti' : 'Ikuti'}
+                </button>
+              )}
+            </div>
 
-          <div className="flex-1 bg-black flex items-center justify-center">
-              <img src={session.thumbnailUrl} alt="Live Thumbnail" className="max-h-full max-w-full object-contain" />
-          </div>
-          
-          <div className="bg-black/80 backdrop-blur-sm p-3">
-            <div className="flex space-x-3 overflow-x-auto scrollbar-hide">
-              {sessionProducts.map(p => (
-                <div key={p.id} className="flex-shrink-0 w-48 bg-neutral-800 rounded-lg p-2 flex items-center gap-2">
-                  <img src={p.imageUrls[0]} alt={p.name} className="w-14 h-14 rounded-md object-cover" />
-                  <div className="flex-1 text-xs">
-                    <p className="font-semibold leading-tight line-clamp-2">{p.name}</p>
-                    <p className="font-bold text-primary">{formatRupiah(p.price)}</p>
-                    <button onClick={() => handleAddToCart(p)} className="text-white bg-primary/80 hover:bg-primary rounded-full px-2 py-0.5 mt-1 text-[10px] font-bold">
-                      + Keranjang
-                    </button>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                <UserIcon className="w-4 h-4" />
+                <span className="text-sm font-semibold">{session.viewers}</span>
+              </div>
+              {isSellerOwner && isSessionLive && (
+                <button onClick={() => setIsConfirmEndLiveOpen(true)} className="bg-red-500 text-white hover:bg-red-600 px-3 py-1.5 rounded-full text-sm font-bold">
+                  Akhiri
+                </button>
+              )}
+              <button onClick={() => navigate('/live')} className="bg-black/40 backdrop-blur-sm p-1.5 rounded-full">
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+          </header>
+
+          {/* Spacer to push content to the bottom */}
+          <div className="flex-1"></div>
+
+          {/* Bottom Section (Chat, Pinned Product, Actions) */}
+          <footer className="w-full flex flex-col items-start">
+            {/* Live Chat */}
+            <div className="w-full md:w-3/4 lg:w-1/2 h-48 overflow-y-auto space-y-2 pb-4 scrollbar-hide [mask-image:linear-gradient(to_bottom,transparent,black_20%,black_100%)]">
+                  {chatMessages.map(msg => (
+                <div key={msg.id} className="flex gap-2 items-start text-sm animate-fade-in">
+                  <div className="bg-black/40 backdrop-blur-sm p-2 rounded-lg max-w-xs">
+                    <span className="font-semibold text-neutral-400 mr-2">{msg.userName}</span>
+                    <span className="text-white leading-tight">{msg.text}</span>
                   </div>
                 </div>
               ))}
+              <div ref={chatEndRef} />
             </div>
-          </div>
-        </div>
 
-        {/* Sidebar: Chat */}
-        <div className="w-full lg:w-80 bg-neutral-800 flex flex-col h-1/3 lg:h-full">
-          <div className="p-3 border-b border-neutral-700 text-center">
-              <h3 className="font-bold">Live Chat</h3>
-          </div>
-          <div className="flex-1 p-3 space-y-3 overflow-y-auto">
-            {chatMessages.map(msg => (
-              <div key={msg.id} className="flex gap-2 items-start text-sm">
-                  <div className="w-7 h-7 rounded-full bg-neutral-600 flex items-center justify-center flex-shrink-0">
-                      <UserIcon className="w-4 h-4 text-neutral-300" />
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-400">{msg.userName}</span>
-                    {msg.isGift ? (
-                      <span className="ml-2 bg-primary/20 text-primary px-2 py-1 rounded-md">
-                        {msg.giftIcon} {msg.text}
-                      </span>
-                    ) : (
-                      <p className="text-white leading-tight">{msg.text}</p>
-                    )}
-                  </div>
-              </div>
-            ))}
-            <div ref={chatEndRef} />
-          </div>
-          <div className="p-3 border-t border-neutral-700">
-            {showGifts && (
-                <div className="mb-2 p-2 bg-neutral-900 rounded-lg grid grid-cols-5 gap-2 animate-fade-in">
-                    {virtualGifts.map(gift => (
-                      <button key={gift.id} onClick={() => handleSendGift(gift)} className="flex flex-col items-center p-1 rounded-md hover:bg-neutral-700 transition-colors">
-                          <span className="text-2xl">{gift.icon}</span>
-                          <span className="text-xs text-yellow-400 flex items-center gap-0.5">
-                            <CurrencyDollarIcon className="w-3 h-3" />
-                            {gift.price}
-                          </span>
-                      </button>
-                    ))}
+            {/* Pinned Product */}
+            {pinnedProduct && (
+              <div className="bg-white/90 backdrop-blur-sm text-black p-2 rounded-lg flex items-center gap-3 animate-fade-in mb-4 w-full max-w-sm shadow-lg">
+                <img src={pinnedProduct.imageUrls[0]} alt={pinnedProduct.name} className="w-16 h-16 rounded-md object-cover"/>
+                <div className="flex-1">
+                  <p className="font-bold text-sm line-clamp-2">{pinnedProduct.name}</p>
+                  <p className="font-bold text-primary">{formatRupiah(pinnedProduct.price)}</p>
                 </div>
-            )}
-            <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                <button type="button" onClick={() => setShowGifts(!showGifts)} className="p-2.5 bg-neutral-700 hover:bg-neutral-600 rounded-lg transition-colors" title="Kirim Hadiah">
-                    <GiftIcon className="w-5 h-5 text-yellow-400"/>
+                <Button onClick={() => handleAddToCart(pinnedProduct)} className="!px-6 !font-bold">Beli</Button>
+                <button onClick={() => setPinnedProduct(null)} className="p-1 text-neutral-500 hover:text-black">
+                  <XIcon className="w-5 h-5"/>
                 </button>
-                <input 
-                  type="text" 
+              </div>
+            )}
+
+            {/* Action Bar */}
+            <div className="w-full flex items-center gap-3">
+              <button className="h-12 w-12 flex-shrink-0 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-lg" onClick={() => showNotification('Info', 'Fitur toko sedang disiapkan!')}>
+                <ShoppingCartIcon className="w-6 h-6"/>
+              </button>
+              <form onSubmit={handleSendMessage} className="flex-1">
+                <input
+                  type="text"
                   value={newMessage}
                   onChange={e => setNewMessage(e.target.value)}
-                  placeholder="Ketik komentar..." 
-                  className="flex-1 bg-neutral-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                  placeholder="Tambah komentar..."
+                  className="w-full h-12 bg-black/40 backdrop-blur-sm rounded-lg px-4 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                  autoComplete="off"
                 />
-                <button type="submit" className="p-2.5 bg-primary hover:bg-primary-dark rounded-lg transition-colors">
-                  <SendIcon className="w-5 h-5 text-white" />
-                </button>
-            </form>
-              {user && <p className="text-xs text-neutral-400 mt-2 text-center">Koin Anda: {user.coins || 0}</p>}
-          </div>
+              </form>
+              <button className="h-12 w-12 flex-shrink-0 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-lg" onClick={() => showNotification('Info', 'Fitur hadiah sedang disiapkan!')}>
+                <GiftIcon className="w-6 h-6"/>
+              </button>
+                <button className="h-12 w-12 flex-shrink-0 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-lg" onClick={() => showNotification('Info', 'Fitur bagikan sedang disiapkan!')}>
+                <ShareIcon className="w-6 h-6"/>
+              </button>
+            </div>
+          </footer>
         </div>
       </div>
       
+      {/* End Live Confirmation Modal */}
       {isConfirmEndLiveOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 animate-fade-in-overlay" onClick={() => setIsConfirmEndLiveOpen(false)}>
+            <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 animate-fade-in-overlay" onClick={() => setIsConfirmEndLiveOpen(false)}>
             <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm text-center text-neutral-800 animate-popup-in" onClick={e => e.stopPropagation()}>
                 <XCircleIcon className="w-16 h-16 text-red-500 mx-auto mb-4"/>
                 <h2 className="text-xl font-bold mb-2">Akhiri Sesi Live?</h2>

@@ -1,4 +1,5 @@
 
+
 export interface Product {
   id: number;
   name: string;
@@ -104,6 +105,8 @@ export interface LiveSession {
   status: 'live' | 'replay';
   thumbnailUrl: string;
   productIds: number[];
+  likes?: number;
+  viewers?: number;
 }
 
 export interface VirtualGift {
