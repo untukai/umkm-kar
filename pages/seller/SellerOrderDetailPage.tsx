@@ -6,8 +6,8 @@ import { orders, updateOrderStatus } from '../../data/dummyData';
 import { Order } from '../../types';
 import Button from '../../components/Button';
 import { useNotification } from '../../hooks/useNotification';
-import { MailIcon } from '../../components/Icons'; // Import MailIcon for chat
-import Input from '../../components/Input'; // Import Input for chat
+import { MailIcon, PrinterIcon } from '../../components/Icons'; 
+import Input from '../../components/Input'; 
 
 interface ChatMessage {
   sender: 'penjual' | 'pembeli';
@@ -44,7 +44,6 @@ const SellerOrderDetailPage: React.FC = () => {
     }
   }, [id, navigate, showNotification]);
   
-  // Auto-scroll to the latest message
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
@@ -67,6 +66,11 @@ const SellerOrderDetailPage: React.FC = () => {
   const handleCancelStatusChange = () => {
     setIsConfirmModalOpen(false);
     setStatusToConfirm(null);
+  };
+  
+  const handlePrintReceipt = () => {
+      showNotification("Info", "Fitur cetak resi sedang disiapkan!");
+      // In a real app, this would trigger window.print() or generate a PDF.
   };
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -192,16 +196,26 @@ const SellerOrderDetailPage: React.FC = () => {
               {order.status !== 'selesai' && order.status !== 'menunggu pembayaran' && (
                 <div>
                     <h3 className="text-lg font-bold text-neutral-800 mb-2">Aksi Pesanan</h3>
-                    {nextStatus ? (
+                    <div className="space-y-2">
+                      {nextStatus ? (
+                        <Button 
+                            className="w-full !font-bold"
+                            onClick={() => handleInitiateStatusChange(nextStatus)}
+                        >
+                            Ubah Status ke "{nextStatus}"
+                        </Button>
+                      ) : (
+                        <p className="text-sm text-neutral-500 text-center p-3 bg-neutral-50 rounded-lg">Pesanan sudah selesai.</p>
+                      )}
                       <Button 
-                          className="w-full !font-bold"
-                          onClick={() => handleInitiateStatusChange(nextStatus)}
+                          variant="outline"
+                          className="w-full !font-bold flex items-center justify-center gap-2"
+                          onClick={handlePrintReceipt}
                       >
-                          Ubah Status ke "{nextStatus}"
+                          <PrinterIcon className="w-5 h-5" />
+                          Cetak Resi
                       </Button>
-                    ) : (
-                      <p className="text-sm text-neutral-500 text-center p-3 bg-neutral-50 rounded-lg">Pesanan sudah selesai.</p>
-                    )}
+                    </div>
                 </div>
               )}
               

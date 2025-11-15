@@ -1,6 +1,6 @@
 
 
-import { Product, Category, Article, Seller, Review, Order, Post, LiveSession, VirtualGift, Conversation, ChatMessage } from '../types';
+import { Product, Category, Article, Seller, Review, Order, Post, LiveSession, VirtualGift, Conversation, ChatMessage, FinancialTransaction, Promotion } from '../types';
 
 export const categories: Category[] = [
   { id: 'kuliner', name: 'Kuliner' },
@@ -12,7 +12,7 @@ export const categories: Category[] = [
   { id: 'edukasi', name: 'Edukasi' },
 ];
 
-export const sellers: Seller[] = [
+export let sellers: Seller[] = [
   { id: 1, name: 'UMKM Serabi Maknyus', description: 'Pelopor serabi hijau dengan resep warisan keluarga. Selalu menggunakan bahan-bahan alami dan berkualitas tinggi.', rating: 4.8, phone: '081234567890', email: 'penjual@example.com' },
   { id: 2, name: 'Batik Jaya', description: 'Pengrajin batik tulis asli Karawang dengan motif yang terinspirasi dari kekayaan alam lokal. Setiap kain adalah karya seni.', rating: 4.9, email: 'info@batikjaya.id' },
   { id: 3, name: 'Kreasi Bambu', description: 'Mengubah bambu menjadi karya seni fungsional. Produk kami ramah lingkungan dan dibuat dengan tangan terampil.', rating: 4.7 },
@@ -25,6 +25,15 @@ export const sellers: Seller[] = [
   { id: 10, name: 'Seni Tanah Liat', description: 'Studio gerabah yang memadukan teknik tradisional dengan desain kontemporer.', rating: 4.8, phone: '081122334455' },
 ];
 
+export const updateSellerDetails = (sellerId: number, newDetails: Partial<Seller>): boolean => {
+  const sellerIndex = sellers.findIndex(s => s.id === sellerId);
+  if (sellerIndex !== -1) {
+    sellers[sellerIndex] = { ...sellers[sellerIndex], ...newDetails };
+    return true;
+  }
+  return false;
+};
+
 export let products: Product[] = [
   { id: 1, name: 'Serabi Hijau Khas Karawang', price: 15000, category: 'Kuliner', description: 'Serabi hijau otentik dengan saus kinca durian.', stock: 50, sellerId: 1, discount: 10, imageUrls: ['https://images.unsplash.com/photo-1563889958723-5a507119999a?w=600&h=600&fit=crop', 'https://images.unsplash.com/photo-1598103366923-387b92f44146?w=600&h=600&fit=crop'], status: 'aktif' },
   { id: 2, name: 'Batik Karawang Motif Padi', price: 250000, category: 'Fashion', description: 'Kain batik tulis dengan motif padi khas lumbung padi Jawa Barat.', stock: 20, sellerId: 2, imageUrls: ['https://images.unsplash.com/photo-1622542910436-15772a153257?w=600&h=600&fit=crop', 'https://images.unsplash.com/photo-1583311833017-11202e2e935b?w=600&h=600&fit=crop'], status: 'aktif' },
@@ -34,7 +43,7 @@ export let products: Product[] = [
   { id: 6, name: 'Jasa Foto Produk UMKM', price: 500000, category: 'Jasa', description: 'Paket jasa foto produk profesional untuk 20 item.', stock: 99, sellerId: 6, imageUrls: ['https://images.unsplash.com/photo-1599423524326-559d33230d7b?w=600&h=600&fit=crop'], status: 'aktif' },
   { id: 7, name: 'Pelatihan UMKM Go Digital', price: 300000, category: 'Edukasi', description: 'Workshop 2 hari tentang pemasaran digital untuk UMKM.', stock: 99, sellerId: 7, imageUrls: ['https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=600&fit=crop'], status: 'nonaktif' },
   { id: 8, name: 'Dodol Karawang Premium', price: 45000, category: 'Kuliner', description: 'Dodol legit dengan bahan pilihan dan resep turun-temurun.', stock: 80, sellerId: 1, discount: 15, imageUrls: ['https://images.unsplash.com/photo-1629233231398-922055652538?w=600&h=600&fit=crop'], status: 'aktif' },
-  { id: 9, name: 'Kaos Lokal "Karawang Pride"', price: 120000, category: 'Fashion', description: 'Kaos katun combed 30s dengan sablon desain lokal.', stock: 60, sellerId: 9, imageUrls: ['https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&h=600&fit=crop'], status: 'aktif' },
+  { id: 9, name: 'Kaos Lokal "Karawang Pride"', price: 120000, category: 'Fashion', description: 'Kaos katun combed 30s dengan sablon desain lokal.', stock: 6, sellerId: 9, imageUrls: ['https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&h=600&fit=crop'], status: 'aktif' },
   { id: 10, name: 'Gerabah Artistik', price: 150000, category: 'Kerajinan', description: 'Vas gerabah dengan ukiran tangan yang unik.', stock: 25, sellerId: 10, imageUrls: ['https://images.unsplash.com/photo-1554228498-84752c288924?w=600&h=600&fit=crop', 'https://images.unsplash.com/photo-1565015926312-a161a455a303?w=600&h=600&fit=crop'], status: 'aktif' },
   { id: 11, name: 'Pupuk Cair Organik Super', price: 50000, category: 'Pertanian', description: 'Pupuk cair organik 1 liter untuk kesuburan tanaman.', stock: 200, sellerId: 4, discount: 5, imageUrls: ['https://images.unsplash.com/photo-1615755718244-99385b73d7be?w=600&h=600&fit=crop'], status: 'aktif' },
   { id: 12, name: 'Jasa Desain Logo UMKM', price: 400000, category: 'Jasa', description: 'Jasa desain logo profesional termasuk 3 revisi.', stock: 0, sellerId: 6, imageUrls: ['https://images.unsplash.com/photo-1558655146-d09347e92766?w=600&h=600&fit=crop'], status: 'habis stok' }
@@ -58,7 +67,7 @@ export const reviews: Review[] = [
   { id: 3, productId: 2, userName: 'Agus Wijaya', userEmail: 'agus@example.com', rating: 5, comment: 'Kain batiknya halus, motifnya juga unik dan khas Karawang. Bangga pakai produk lokal!', date: '2024-05-18T09:15:00Z' },
   { id: 4, productId: 4, userName: 'Dewi Anggraini', userEmail: 'dewi@example.com', rating: 5, comment: 'Berasnya pulen dan wangi. Sehat karena organik. Keluarga jadi suka makan di rumah.', date: '2024-05-21T11:00:00Z' },
   { id: 5, productId: 4, userName: 'Eko Prasetyo', userEmail: 'eko@example.com', rating: 5, comment: 'Pengiriman cepat, kualitas berasnya konsisten. Sudah langganan di sini.', date: '2024-05-15T18:00:00Z' },
-  { id: 6, productId: 1, userName: 'Fitriani', userEmail: 'fitri@example.com', rating: 5, comment: 'The best serabi in town!', date: '2024-05-22T08:45:00Z' },
+  { id: 6, productId: 1, userName: 'Fitriani', userEmail: 'fitri@example.com', rating: 5, comment: 'The best serabi in town!', date: '2024-07-28T08:45:00Z' },
 ];
 
 export let orders: Order[] = [
@@ -195,6 +204,15 @@ export const addLiveSession = (session: Omit<LiveSession, 'id' | 'status'>): Liv
   return newSession;
 };
 
+export const endLiveSession = (sessionId: number): boolean => {
+  const sessionIndex = liveSessions.findIndex(s => s.id === sessionId);
+  if (sessionIndex !== -1) {
+    liveSessions[sessionIndex].status = 'replay';
+    return true;
+  }
+  return false;
+};
+
 export const virtualGifts: VirtualGift[] = [
     { id: 1, name: 'Rose', icon: '🌹', price: 10 },
     { id: 2, name: 'Like', icon: '👍', price: 25 },
@@ -254,4 +272,28 @@ export const addMessageToConversation = (conversationId: number, message: ChatMe
         // If the sender is the seller, there are no unreads for them.
         // If it was the buyer, we would increment unreadCount.
     }
+};
+
+export const financialTransactions: FinancialTransaction[] = [
+    { id: 'TRX001', date: '2024-07-28T10:35:00Z', type: 'Penjualan', description: 'Pesanan #KODIK-7892A', amount: 65250, status: 'Selesai' },
+    { id: 'TRX002', date: '2024-07-27T14:05:00Z', type: 'Penjualan', description: 'Pesanan #KODIK-7890C', amount: 250000, status: 'Selesai' },
+    { id: 'WD001', date: '2024-07-26T09:00:00Z', type: 'Pencairan Dana', description: 'Pencairan ke Bank ABC', amount: -5000000, status: 'Selesai' },
+    { id: 'TRX003', date: '2024-07-26T18:50:00Z', type: 'Penjualan', description: 'Pesanan #KODIK-7889D', amount: 222500, status: 'Selesai' },
+    { id: 'TRX004', date: '2024-07-25T11:25:00Z', type: 'Penjualan', description: 'Pesanan #KODIK-7888E', amount: 300000, status: 'Selesai' },
+];
+
+export let promotions: Promotion[] = [
+    { id: 1, type: 'Voucher', code: 'UMKMHEBAT', title: 'Diskon 10% Akhir Bulan', discountValue: 10, discountType: 'persen', minPurchase: 50000, startDate: '2024-07-25T00:00:00Z', endDate: '2024-07-31T23:59:59Z', status: 'Aktif' },
+    { id: 2, type: 'Voucher', code: 'KODIKSERU', title: 'Potongan Harga Rp15.000', discountValue: 15000, discountType: 'nominal', minPurchase: 100000, startDate: '2024-08-01T00:00:00Z', endDate: '2024-08-10T23:59:59Z', status: 'Akan Datang' },
+    { id: 3, type: 'Voucher', code: 'HEMATJULI', title: 'Diskon Spesial Juli', discountValue: 20, discountType: 'persen', minPurchase: 75000, startDate: '2024-07-01T00:00:00Z', endDate: '2024-07-15T23:59:59Z', status: 'Kadaluarsa' },
+];
+
+export const addPromotion = (promo: Omit<Promotion, 'id' | 'status'>) => {
+  const newId = Math.max(0, ...promotions.map(p => p.id)) + 1;
+  const newPromo: Promotion = { 
+    id: newId, 
+    ...promo,
+    status: 'Aktif' // Assume new promos are active
+  };
+  promotions.unshift(newPromo);
 };

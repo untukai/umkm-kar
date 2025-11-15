@@ -124,3 +124,25 @@ export interface Conversation {
   unreadCount: number;
   messages: ChatMessage[];
 }
+
+export interface FinancialTransaction {
+  id: string;
+  date: string;
+  type: 'Penjualan' | 'Pencairan Dana' | 'Refund';
+  description: string;
+  amount: number; // positive for income, negative for outcome
+  status: 'Selesai' | 'Tertunda';
+}
+
+export interface Promotion {
+  id: number;
+  type: 'Voucher' | 'Diskon Produk';
+  code?: string; // for vouchers
+  title: string;
+  discountValue: number; // percentage or fixed amount
+  discountType: 'persen' | 'nominal';
+  minPurchase: number;
+  startDate: string;
+  endDate: string;
+  status: 'Aktif' | 'Kadaluarsa' | 'Akan Datang';
+}

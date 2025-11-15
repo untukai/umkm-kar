@@ -1,8 +1,4 @@
 
-
-
-
-
 import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -35,6 +31,11 @@ import LivePage from './pages/LivePage';
 import LiveDetailPage from './pages/LiveDetailPage';
 import SellerLivePage from './pages/seller/SellerLivePage';
 import SellerChatPage from './pages/seller/SellerChatPage';
+import SellerFinancePage from './pages/seller/SellerFinancePage';
+import SellerPromoPage from './pages/seller/SellerPromoPage';
+import SellerReviewsPage from './pages/seller/SellerReviewsPage';
+import SellerAnalyticsPage from './pages/seller/SellerAnalyticsPage';
+import SellerSettingsPage from './pages/seller/SellerSettingsPage';
 
 const App: React.FC = () => {
   return (
@@ -75,6 +76,11 @@ const App: React.FC = () => {
                       <Route path="products/edit/:id" element={<ProductFormPage />} />
                       <Route path="live" element={<SellerLivePage />} />
                       <Route path="chat" element={<SellerChatPage />} />
+                      <Route path="finance" element={<SellerFinancePage />} />
+                      <Route path="promo" element={<SellerPromoPage />} />
+                      <Route path="reviews" element={<SellerReviewsPage />} />
+                      <Route path="analytics" element={<SellerAnalyticsPage />} />
+                      <Route path="settings" element={<SellerSettingsPage />} />
                     </Route>
                   </Route>
                 </Routes>
