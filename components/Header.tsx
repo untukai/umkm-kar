@@ -1,4 +1,6 @@
 
+
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -51,6 +53,8 @@ const Header: React.FC = () => {
 
   const navLinks = [
     { name: 'Kategori', path: '/products' },
+    { name: 'Feed', path: '/feed' },
+    { name: 'Live', path: '/live' },
     { name: 'Artikel Lokal', path: '/articles' },
     { name: 'Kolaborasi', path: '/collaboration' },
   ];

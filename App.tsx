@@ -1,5 +1,7 @@
 
 
+
+
 import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -27,6 +29,9 @@ import MyProductsPage from './pages/seller/MyProductsPage';
 import ProductFormPage from './pages/seller/ProductFormPage';
 import SellerOrdersPage from './pages/seller/SellerOrdersPage'; // Import SellerOrdersPage
 import SellerOrderDetailPage from './pages/seller/SellerOrderDetailPage'; // Import SellerOrderDetailPage
+import FeedPage from './pages/FeedPage';
+import LivePage from './pages/LivePage';
+import LiveDetailPage from './pages/LiveDetailPage';
 
 const App: React.FC = () => {
   return (
@@ -51,6 +56,9 @@ const App: React.FC = () => {
                     <Route path="articles/:id" element={<ArticleDetailPage />} />
                     <Route path="collaboration" element={<CollaborationPage />} />
                     <Route path="wishlist" element={<WishlistPage />} />
+                    <Route path="feed" element={<FeedPage />} />
+                    <Route path="live" element={<LivePage />} />
+                    <Route path="live/:id" element={<LiveDetailPage />} />
                   </Route>
 
                   {/* Seller Protected Routes with its own Layout */}

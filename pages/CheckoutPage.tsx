@@ -19,6 +19,17 @@ const CheckoutPage: React.FC = () => {
     phone: '',
   });
 
+  const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [tenor, setTenor] = useState(3); // Default tenor for BNPL
+
+  const installmentOptions = [
+    { months: 3, label: '3 Bulan' },
+    { months: 6, label: '6 Bulan' },
+    { months: 12, label: '12 Bulan' },
+  ];
+  const monthlyPayment = totalPrice > 0 ? totalPrice / tenor : 0;
+
+
   if (!isAuthenticated) {
     return (
       <div className="text-center bg-white p-8 rounded-lg shadow-lg max-w-lg mx-auto">
@@ -110,11 +121,65 @@ const CheckoutPage: React.FC = () => {
 
             <h2 className="text-xl font-bold mt-8 mb-4 border-b pb-2">Metode Pembayaran</h2>
             <div className="space-y-3">
-              <label htmlFor="cod" className="flex items-center border p-4 rounded-lg has-[:checked]:bg-primary-dark/10 has-[:checked]:border-primary transition-all">
-                <input type="radio" id="cod" name="payment" value="cod" defaultChecked className="h-4 w-4 text-primary focus:ring-primary"/>
+              {/* COD Option */}
+              <label htmlFor="cod" className="flex items-center border p-4 rounded-lg has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-all cursor-pointer">
+                <input 
+                  type="radio" 
+                  id="cod" 
+                  name="payment" 
+                  value="cod" 
+                  checked={paymentMethod === 'cod'} 
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="h-4 w-4 text-primary focus:ring-primary"
+                />
                 <span className="ml-3 font-medium text-neutral-700">Cash on Delivery (COD)</span>
               </label>
-               <label htmlFor="transfer" className="flex items-center border p-4 rounded-lg bg-neutral-100 text-neutral-500 cursor-not-allowed">
+
+              {/* BNPL Option Container */}
+              <div className={`border rounded-lg transition-all ${paymentMethod === 'bnpl' ? 'bg-primary/10 border-primary' : 'border-neutral-300'}`}>
+                <label htmlFor="bnpl" className="flex items-center p-4 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    id="bnpl" 
+                    name="payment" 
+                    value="bnpl" 
+                    checked={paymentMethod === 'bnpl'}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="h-4 w-4 text-primary focus:ring-primary"
+                  />
+                  <span className="ml-3 font-medium text-neutral-700">Bayar Nanti (Cicilan)</span>
+                </label>
+                
+                {paymentMethod === 'bnpl' && (
+                  <div className="px-4 pb-4 animate-fade-in">
+                    <div className="pl-8 pt-4 space-y-3 border-t border-neutral-200 border-dashed">
+                      <h4 className="text-sm font-semibold text-neutral-700">Pilih Tenor Cicilan</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {installmentOptions.map(option => (
+                          <button
+                            key={option.months}
+                            type="button"
+                            onClick={() => setTenor(option.months)}
+                            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                              tenor === option.months
+                                ? 'bg-primary text-white shadow'
+                                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="mt-3 p-3 bg-white rounded-lg text-center border">
+                        <p className="text-sm text-neutral-600">Anda akan membayar (0% Bunga)</p>
+                        <p className="text-lg font-bold text-primary">{formatRupiah(monthlyPayment)} / bulan</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+               
+              <label htmlFor="transfer" className="flex items-center border p-4 rounded-lg bg-neutral-100 text-neutral-500 cursor-not-allowed">
                 <input type="radio" id="transfer" name="payment" value="transfer" disabled className="h-4 w-4"/>
                 <span className="ml-3 font-medium">Bank Transfer (Segera Hadir)</span>
               </label>

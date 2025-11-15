@@ -1,11 +1,19 @@
 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { orders, updateOrderStatus } from '../../data/dummyData';
 import { Order } from '../../types';
 import Button from '../../components/Button';
 import { useNotification } from '../../hooks/useNotification';
+import { MailIcon } from '../../components/Icons'; // Import MailIcon for chat
+import Input from '../../components/Input'; // Import Input for chat
+
+interface ChatMessage {
+  sender: 'penjual' | 'pembeli';
+  text: string;
+  timestamp: string;
+}
 
 const SellerOrderDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,15 +24,30 @@ const SellerOrderDetailPage: React.FC = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [statusToConfirm, setStatusToConfirm] = useState<Order['status'] | null>(null);
   
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const foundOrder = orders.find(o => o.id === id);
     if (foundOrder) {
       setOrder(foundOrder);
+      // Dummy chat history for demonstration
+      setChatMessages([
+        { sender: 'pembeli', text: 'Halo, Kak. Pesanan saya sudah diproses?', timestamp: '10:30' },
+        { sender: 'penjual', text: 'Halo, Kak. Sudah kami terima ya pesanannya, sedang disiapkan untuk dikemas.', timestamp: '10:31' },
+        { sender: 'pembeli', text: 'Baik, terima kasih infonya!', timestamp: '10:32' },
+      ]);
     } else {
       showNotification("Error", "Pesanan tidak ditemukan.", "error");
       navigate('/seller/orders');
     }
   }, [id, navigate, showNotification]);
+  
+  // Auto-scroll to the latest message
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
 
   const handleInitiateStatusChange = (newStatus: Order['status']) => {
     setStatusToConfirm(newStatus);
@@ -44,6 +67,20 @@ const SellerOrderDetailPage: React.FC = () => {
   const handleCancelStatusChange = () => {
     setIsConfirmModalOpen(false);
     setStatusToConfirm(null);
+  };
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newMessage.trim() === '') return;
+    
+    const message: ChatMessage = {
+      sender: 'penjual',
+      text: newMessage,
+      timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+    };
+    
+    setChatMessages(prev => [...prev, message]);
+    setNewMessage('');
   };
 
   const formatRupiah = (number: number) => {
@@ -125,7 +162,7 @@ const SellerOrderDetailPage: React.FC = () => {
               })}
           </div>
           
-          {/* Right Column: Summary & Shipping */}
+          {/* Right Column: Summary, Shipping & Chat */}
           <div className="space-y-6">
               <div>
                   <h3 className="text-lg font-bold text-neutral-800 mb-2">Ringkasan</h3>
@@ -167,6 +204,37 @@ const SellerOrderDetailPage: React.FC = () => {
                     )}
                 </div>
               )}
+              
+              {/* Chat with Buyer Section */}
+              <div className="border rounded-lg overflow-hidden flex flex-col h-96">
+                <div className="flex items-center gap-3 p-3 border-b bg-neutral-50">
+                    <MailIcon className="w-5 h-5 text-neutral-600" />
+                    <h3 className="text-lg font-bold text-neutral-800">Chat dengan {order.customerName}</h3>
+                </div>
+                <div className="flex-1 p-4 space-y-3 overflow-y-auto bg-white">
+                    {chatMessages.map((msg, index) => (
+                        <div key={index} className={`flex ${msg.sender === 'penjual' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-xs rounded-lg px-3 py-2 ${msg.sender === 'penjual' ? 'bg-primary text-white' : 'bg-neutral-200 text-neutral-800'}`}>
+                                <p className="text-sm">{msg.text}</p>
+                                <p className={`text-xs mt-1 ${msg.sender === 'penjual' ? 'text-white/70 text-right' : 'text-neutral-500 text-left'}`}>{msg.timestamp}</p>
+                            </div>
+                        </div>
+                    ))}
+                    <div ref={chatEndRef} />
+                </div>
+                <form onSubmit={handleSendMessage} className="p-3 border-t bg-neutral-50 flex items-center gap-2">
+                    <Input 
+                        type="text" 
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="Ketik pesan..." 
+                        className="flex-1"
+                        autoComplete="off"
+                    />
+                    <Button type="submit" className="flex-shrink-0">Kirim</Button>
+                </form>
+              </div>
+
           </div>
         </div>
       </div>

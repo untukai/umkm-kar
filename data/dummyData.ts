@@ -1,6 +1,6 @@
 
 
-import { Product, Category, Article, Seller, Review, Order } from '../types';
+import { Product, Category, Article, Seller, Review, Order, Post, LiveSession, VirtualGift } from '../types';
 
 export const categories: Category[] = [
   { id: 'kuliner', name: 'Kuliner' },
@@ -129,3 +129,65 @@ export const updateOrderStatus = (orderId: string, newStatus: Order['status']) =
   }
   return false;
 };
+
+export let posts: Post[] = [
+  {
+    id: 1,
+    sellerId: 1, // UMKM Serabi Maknyus
+    content: 'Pagi KODIKers! Serabi hijau siap menemani sarapanmu. Baru matang, anget-anget, saus kincanya lumer banget di mulut. Yuk, diorder!',
+    imageUrl: 'https://images.unsplash.com/photo-1563889958723-5a507119999a?w=600&h=600&fit=crop',
+    timestamp: '2024-07-29T08:00:00Z',
+    likes: 125,
+    comments: [
+      { id: 1, userName: 'Budi Santoso', userEmail: 'budi@example.com', text: 'Langganan tiap pagi nih!' },
+      { id: 2, userName: 'Citra Lestari', userEmail: 'citra@example.com', text: 'Kincanya emang juara! 👍' },
+    ]
+  },
+  {
+    id: 2,
+    sellerId: 2, // Batik Jaya
+    content: 'Proses membatik itu butuh kesabaran dan cinta. Setiap goresan canting adalah doa. Inilah salah satu motif terbaru kami, terinspirasi dari Sungai Citarum.',
+    imageUrl: 'https://images.unsplash.com/photo-1583311833017-11202e2e935b?w=600&h=600&fit=crop',
+    timestamp: '2024-07-28T15:30:00Z',
+    likes: 210,
+    comments: [
+      { id: 3, userName: 'Agus Wijaya', userEmail: 'agus@example.com', text: 'Keren banget filosofinya. Makin bangga sama batik Karawang.' },
+    ]
+  },
+  {
+    id: 3,
+    sellerId: 9, // Distro Karawang
+    content: 'Stok kaos "Karawang Pride" ready lagi! Bahan katun combed 30s, adem dan nyaman. Desain simpel tapi ngena. Sikat sebelum kehabisan!',
+    imageUrl: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&h=600&fit=crop',
+    timestamp: '2024-07-28T11:00:00Z',
+    likes: 88,
+    comments: []
+  },
+];
+
+export const addPost = (post: Omit<Post, 'id' | 'likes' | 'comments' | 'timestamp'>) => {
+  const newId = Math.max(...posts.map(p => p.id)) + 1;
+  const newPost: Post = { 
+    id: newId, 
+    ...post, 
+    likes: 0, 
+    comments: [],
+    timestamp: new Date().toISOString()
+  };
+  posts.unshift(newPost); // Add to the beginning of the array
+};
+
+export const liveSessions: LiveSession[] = [
+  { id: 1, sellerId: 1, title: 'Promo Serabi Kinca Durian!', status: 'live', thumbnailUrl: 'https://images.unsplash.com/photo-1563889958723-5a507119999a?w=600&h=600&fit=crop', productIds: [1, 8] },
+  { id: 2, sellerId: 9, title: 'Unboxing Kaos Karawang Pride Edisi Baru', status: 'live', thumbnailUrl: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&h=600&fit=crop', productIds: [9] },
+  { id: 3, sellerId: 2, title: 'Proses Membatik Langsung dari Studio', status: 'replay', thumbnailUrl: 'https://images.unsplash.com/photo-1622542910436-15772a153257?w=600&h=600&fit=crop', productIds: [2] },
+  { id: 4, sellerId: 10, title: 'Workshop Membuat Gerabah Unik', status: 'replay', thumbnailUrl: 'https://images.unsplash.com/photo-1554228498-84752c288924?w=600&h=600&fit=crop', productIds: [10] },
+];
+
+export const virtualGifts: VirtualGift[] = [
+    { id: 1, name: 'Rose', icon: '🌹', price: 10 },
+    { id: 2, name: 'Like', icon: '👍', price: 25 },
+    { id: 3, name: 'KODIK Love', icon: '💚', price: 50 },
+    { id: 4, name: 'Diamond', icon: '💎', price: 100 },
+    { id: 5, name: 'Crown', icon: '👑', price: 500 },
+];

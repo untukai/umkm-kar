@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -7,6 +8,7 @@ import {
   BoxIcon,
   CurrencyDollarIcon,
   UserIcon,
+  VideoCameraIcon,
 } from '../Icons'; // Assuming more icons will be added here
 
 const navLinks = [
@@ -16,6 +18,7 @@ const navLinks = [
 ];
 
 const futureLinks = [
+    { name: 'Live Jualan', icon: VideoCameraIcon },
     { name: 'Keuangan', icon: CurrencyDollarIcon },
     { name: 'Promo & Marketing', icon: UserIcon },
     { name: 'Chat', icon: UserIcon },

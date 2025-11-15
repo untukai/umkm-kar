@@ -55,6 +55,7 @@ export interface Order {
 export interface User {
   email: string;
   role: 'pembeli' | 'penjual';
+  coins?: number;
 }
 
 export interface Review {
@@ -65,4 +66,45 @@ export interface Review {
   rating: number; // 1 to 5
   comment: string;
   date: string; // ISO 8601 format
+}
+
+export interface Comment {
+  id: number;
+  userName: string;
+  userEmail: string;
+  text: string;
+}
+
+export interface Post {
+  id: number;
+  sellerId: number;
+  content: string;
+  imageUrl?: string;
+  timestamp: string; // ISO 8601 format
+  likes: number;
+  comments: Comment[];
+}
+
+export interface LiveChatMessage {
+  id: number;
+  userName: string;
+  text: string;
+  isGift?: boolean;
+  giftIcon?: string;
+}
+
+export interface LiveSession {
+  id: number;
+  sellerId: number;
+  title: string;
+  status: 'live' | 'replay';
+  thumbnailUrl: string;
+  productIds: number[];
+}
+
+export interface VirtualGift {
+  id: number;
+  name: string;
+  icon: string;
+  price: number; // in coins
 }
