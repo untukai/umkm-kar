@@ -12,6 +12,17 @@ import signalingService from '../services/signalingService';
 
 let heartCounter = 0;
 
+// Enhanced configuration with redundant STUN servers for better reliability
+const configuration = { 
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+  ] 
+};
+
+type QualitySetting = 'high' | 'medium' | 'low';
+
 const LiveDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user, isAuthenticated } = useAuth();
@@ -22,11 +33,12 @@ const LiveDetailPage: React.FC = () => {
   const chatEndRef = useRef<HTMLDivElement>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
-  // Host manages multiple connections; Viewer only manages one.
   const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const localStreamRef = useRef<MediaStream | null>(null);
   
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [pendingViewers, setPendingViewers] = useState<string[]>([]);
+  const [quality, setQuality] = useState<QualitySetting>('high');
 
   const session = useMemo(() => liveSessions.find(s => s.id === parseInt(id || '')), [id]);
   const seller = useMemo(() => session ? sellers.find(s => s.id === session.sellerId) : null, [session]);
@@ -45,23 +57,51 @@ const LiveDetailPage: React.FC = () => {
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number }[]>([]);
   const [isSessionEnded, setIsSessionEnded] = useState(false);
   
+  const qualityProfiles = {
+      high: {
+          videoConstraints: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
+          encodingParams: { maxBitrate: 2500000, scaleResolutionDownBy: 1.0 },
+      },
+      medium: {
+          videoConstraints: { width: { ideal: 640 }, height: { ideal: 360 }, frameRate: { ideal: 24 } },
+          encodingParams: { maxBitrate: 800000, scaleResolutionDownBy: 2.0 },
+      },
+      low: {
+          videoConstraints: { width: { ideal: 320 }, height: { ideal: 180 }, frameRate: { ideal: 15 } },
+          encodingParams: { maxBitrate: 300000, scaleResolutionDownBy: 4.0 },
+      },
+  };
+
   const pinnedProduct = useMemo(() => {
     if (!pinnedProductId) return null;
     return products.find(p => p.id === pinnedProductId) || null;
   }, [pinnedProductId]);
 
+  // Reliable remote stream playback for viewers
+  useEffect(() => {
+    if (remoteStream && videoRef.current) {
+        videoRef.current.srcObject = remoteStream;
+        videoRef.current.play().catch(error => {
+            console.warn("Autoplay was prevented:", error);
+            if (videoRef.current) {
+                videoRef.current.muted = true;
+                videoRef.current.play();
+            }
+        });
+    }
+  }, [remoteStream]);
+
   useEffect(() => {
     if (!session || !id) return;
-
-    const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
     
     // Function to create a peer connection for a specific viewer
     const createPeerConnectionForViewer = async (viewerId: string) => {
         if (!localStreamRef.current) {
-            console.error("Host stream not ready.");
+            console.error("Host stream not ready when trying to connect viewer:", viewerId);
             return;
         }
 
+        console.log(`Creating peer connection for viewer ${viewerId}`);
         const pc = new RTCPeerConnection(configuration);
         peerConnectionsRef.current.set(viewerId, pc);
 
@@ -70,14 +110,63 @@ const LiveDetailPage: React.FC = () => {
                 signalingService.sendMessage({ type: 'ice-candidate', payload: event.candidate, sessionId: id, targetPeerId: viewerId });
             }
         };
+        
+        // Handle ICE connection state changes for debugging and auto-recovery
+        pc.oniceconnectionstatechange = () => {
+            console.log(`ICE connection state for viewer ${viewerId} changed to: ${pc.iceConnectionState}`);
+            if (pc.iceConnectionState === 'failed') {
+                showNotification('Koneksi Gagal', `Koneksi dengan penonton terputus. Mencoba menyambungkan kembali...`, 'error');
+                // The host should initiate the restart
+                pc.restartIce();
+            }
+        };
+        
+        // Use onnegotiationneeded to handle initial offer and subsequent offers for ICE restarts
+        pc.onnegotiationneeded = async () => {
+            console.log(`Negotiation needed for viewer ${viewerId}. Creating offer...`);
+            try {
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                signalingService.sendMessage({ type: 'offer', payload: offer, sessionId: id, targetPeerId: viewerId });
+            } catch (err) {
+                console.error(`Error creating offer for ${viewerId}:`, err);
+            }
+        };
 
         localStreamRef.current.getTracks().forEach(track => pc.addTrack(track, localStreamRef.current!));
-        
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        signalingService.sendMessage({ type: 'offer', payload: offer, sessionId: id, targetPeerId: viewerId });
     };
 
+    const handleVisibilityChange = async () => {
+        if (document.visibilityState === 'visible' && isHost && localStreamRef.current) {
+            const videoTrack = localStreamRef.current.getVideoTracks()[0];
+            if (videoTrack && videoTrack.readyState === 'ended') {
+                console.log("Camera track ended. Restarting broadcast.");
+                showNotification("Info", "Menyalakan kembali kamera Anda...");
+                try {
+                    const newStream = await navigator.mediaDevices.getUserMedia({ video: qualityProfiles['high'].videoConstraints, audio: true });
+                    const newVideoTrack = newStream.getVideoTracks()[0];
+                    const newAudioTrack = newStream.getAudioTracks()[0];
+
+                    for (const pc of peerConnectionsRef.current.values()) {
+                        const videoSender = pc.getSenders().find(s => s.track?.kind === 'video');
+                        if (videoSender) await videoSender.replaceTrack(newVideoTrack);
+                        const audioSender = pc.getSenders().find(s => s.track?.kind === 'audio');
+                        if (audioSender) await audioSender.replaceTrack(newAudioTrack);
+                    }
+
+                    localStreamRef.current.getTracks().forEach(track => track.stop());
+                    localStreamRef.current = newStream;
+                    if (videoRef.current) videoRef.current.srcObject = newStream;
+
+                } catch (err) {
+                    console.error("Failed to restart media stream:", err);
+                    showNotification('Gagal Memuat Kamera', 'Tidak bisa mengakses ulang kamera.', 'error');
+                }
+            }
+        }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     const handleSignalingMessage = async (message: any) => {
         if (message.sessionId !== id) return;
@@ -89,10 +178,15 @@ const LiveDetailPage: React.FC = () => {
         try {
             if (isHost) {
                 const pc = peerConnectionsRef.current.get(fromPeerId);
-
+                
                 if (message.type === 'viewer-join') {
-                    console.log(`Viewer ${fromPeerId} wants to join. Creating connection.`);
-                    await createPeerConnectionForViewer(fromPeerId);
+                    if (localStreamRef.current && localStreamRef.current.active) {
+                        console.log(`Viewer ${fromPeerId} joining. Stream ready. Creating connection.`);
+                        await createPeerConnectionForViewer(fromPeerId);
+                    } else {
+                        console.log(`Viewer ${fromPeerId} joining. Stream not ready. Queuing.`);
+                        setPendingViewers(prev => [...prev, fromPeerId]);
+                    }
                 } else if (message.type === 'answer' && pc) {
                     await pc.setRemoteDescription(new RTCSessionDescription(message.payload));
                 } else if (message.type === 'ice-candidate' && pc) {
@@ -110,14 +204,13 @@ const LiveDetailPage: React.FC = () => {
                                 signalingService.sendMessage({ type: 'ice-candidate', payload: event.candidate, sessionId: id, targetPeerId: fromPeerId });
                             }
                         };
+                        
+                        pc.oniceconnectionstatechange = () => {
+                            console.log(`Viewer ICE connection state changed to: ${pc.iceConnectionState}`);
+                        };
 
                         pc.ontrack = (event) => {
-                            const stream = event.streams[0];
-                            setRemoteStream(stream);
-                            if (videoRef.current) {
-                                videoRef.current.srcObject = stream;
-                                videoRef.current.play().catch(e => console.error("Remote stream play failed", e));
-                            }
+                            setRemoteStream(event.streams[0]);
                         };
                     }
 
@@ -126,19 +219,21 @@ const LiveDetailPage: React.FC = () => {
                     await pc.setLocalDescription(answer);
                     signalingService.sendMessage({ type: 'answer', payload: answer, sessionId: id, targetPeerId: fromPeerId });
                 } else if (message.type === 'ice-candidate' && targetPeerId === myPeerId && pc) {
-                     await pc.addIceCandidate(new RTCIceCandidate(message.payload));
+                    try {
+                        await pc.addIceCandidate(new RTCIceCandidate(message.payload));
+                    } catch (e) {
+                        console.error('Error adding received ICE candidate', e);
+                    }
                 }
             }
 
-            // Common logic for both host and viewer
-            if (message.type === 'pin-product') {
-                setPinnedProductId(message.payload.productId);
-            } else if (message.type === 'unpin-product') {
-                setPinnedProductId(null);
-            } else if (message.type === 'end-session') {
+            if (message.type === 'pin-product') setPinnedProductId(message.payload.productId);
+            else if (message.type === 'unpin-product') setPinnedProductId(null);
+            else if (message.type === 'end-session') {
                 setIsSessionEnded(true);
                 peerConnectionsRef.current.forEach(pc => pc.close());
                 peerConnectionsRef.current.clear();
+                if (localStreamRef.current) localStreamRef.current.getTracks().forEach(t => t.stop());
                 setTimeout(() => navigate('/live'), 3000);
             }
         } catch (error) {
@@ -151,13 +246,18 @@ const LiveDetailPage: React.FC = () => {
 
     const startBroadcast = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            // Always request high quality to have a good source stream to manipulate
+            const stream = await navigator.mediaDevices.getUserMedia({ video: qualityProfiles['high'].videoConstraints, audio: true });
             localStreamRef.current = stream;
             if (videoRef.current) {
                 videoRef.current.srcObject = stream;
                 videoRef.current.muted = true;
                 videoRef.current.play().catch(e => console.error("Local stream play failed", e));
             }
+            // Process any viewers who joined before the stream was ready
+            console.log(`Stream ready. Processing ${pendingViewers.length} pending viewers.`);
+            pendingViewers.forEach(viewerId => createPeerConnectionForViewer(viewerId));
+            setPendingViewers([]);
         } catch (err) {
             console.error("Failed to get media stream:", err);
             showNotification('Gagal Memuat Kamera', 'Tidak bisa mengakses kamera.', 'error');
@@ -169,10 +269,9 @@ const LiveDetailPage: React.FC = () => {
       if (isHost) {
         startBroadcast();
       } else {
-        // Viewer sends a message to announce its presence
         signalingService.sendMessage({ type: 'viewer-join', sessionId: id });
       }
-    } else { // Replay logic
+    } else {
         if (videoRef.current) {
             videoRef.current.src = 'https://videos.pexels.com/video-files/855352/855352-hd_720_1366_25fps.mp4';
             videoRef.current.muted = false;
@@ -182,15 +281,15 @@ const LiveDetailPage: React.FC = () => {
     }
 
     return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
         if (localStreamRef.current) {
             localStreamRef.current.getTracks().forEach(track => track.stop());
-            localStreamRef.current = null;
         }
         peerConnectionsRef.current.forEach(pc => pc.close());
         peerConnectionsRef.current.clear();
         signalingService.disconnect();
     };
-  }, [id, session, isHost, navigate, showNotification]);
+  }, [id, session, isHost, navigate, showNotification, pendingViewers]);
 
   const sampleChats: Omit<LiveChatMessage, 'id'>[] = [
     { userName: 'Andi', text: 'Keren banget produknya!' }, { userName: 'Sari', text: 'Diskonnya sampai kapan kak?' }, { userName: 'Rina', text: 'Baru join, lagi bahas apa nih?' }, { userName: 'Budi', text: '💚', isGift: true, giftIcon: '💚' }, { userName: 'Joko', text: 'Pengirimannya aman kan?' }, { userName: 'Wati', text: 'Langsung checkout ah! 👍' },
@@ -209,6 +308,36 @@ const LiveDetailPage: React.FC = () => {
   }, [isHost, session?.status]);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMessages]);
+
+  const updateStreamQuality = async (newQuality: QualitySetting) => {
+    if (!isHost) return;
+    setQuality(newQuality);
+
+    const { encodingParams } = qualityProfiles[newQuality];
+    
+    showNotification('Mengubah Kualitas...', `Mengatur stream ke kualitas ${newQuality}.`);
+
+    for (const pc of peerConnectionsRef.current.values()) {
+      const sender = pc.getSenders().find(s => s.track?.kind === 'video');
+      if (sender) {
+        try {
+          const params = sender.getParameters();
+          if (!params.encodings || params.encodings.length === 0) {
+            params.encodings = [{}];
+          }
+          // Apply new bitrate and resolution scaling
+          params.encodings[0].maxBitrate = encodingParams.maxBitrate;
+          params.encodings[0].scaleResolutionDownBy = encodingParams.scaleResolutionDownBy;
+          
+          await sender.setParameters(params);
+          console.log(`Updated stream quality for a peer to ${newQuality}`);
+        } catch (error) {
+          console.error("Failed to set stream parameters:", error);
+           showNotification('Gagal', 'Tidak bisa mengubah kualitas stream.', 'error');
+        }
+      }
+    }
+  };
 
   const handleSendMessage = (e: React.FormEvent) => { e.preventDefault(); if (!newMessage.trim()) return; if (!isAuthenticated) { showNotification('Gagal', 'Anda harus masuk untuk mengirim komentar.', 'error', { label: 'Masuk', path: '/login' }); return; } const msg: LiveChatMessage = { id: Date.now(), userName: 'Anda', text: newMessage }; setChatMessages(prev => [...prev, msg]); setNewMessage(''); };
   const handleAddToCart = (product: Product) => { addToCart(product); showNotification('Berhasil', `'${product.name}' ditambahkan ke keranjang.`, 'success', { label: 'Lihat Keranjang', path: '/cart' }); };
@@ -243,7 +372,6 @@ const LiveDetailPage: React.FC = () => {
             showNotification('Berhasil', 'Tautan live berhasil dibagikan!');
         } catch (error) {
             console.error('Error sharing:', error);
-            // Pengguna kemungkinan membatalkan, tidak perlu notifikasi error
         }
     } else {
         try {
@@ -282,6 +410,22 @@ const LiveDetailPage: React.FC = () => {
                 {pinnedProductId === product.id ? 'Tersemat' : 'Pin'}
               </button>
             </div>
+          ))}
+        </div>
+      </div>
+      <div className="bg-white/10 backdrop-blur-sm p-2 rounded-lg">
+        <p className="text-xs font-bold mb-2 text-center">Kualitas</p>
+        <div className="flex items-center justify-center gap-1">
+          {(['low', 'medium', 'high'] as QualitySetting[]).map(q => (
+            <button
+              key={q}
+              onClick={() => updateStreamQuality(q)}
+              className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors capitalize ${
+                quality === q ? 'bg-primary text-white shadow' : 'bg-black/30 hover:bg-black/50'
+              }`}
+            >
+              {q === 'low' ? 'Rendah' : q === 'medium' ? 'Sedang' : 'Tinggi'}
+            </button>
           ))}
         </div>
       </div>

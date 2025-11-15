@@ -21,8 +21,9 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ categories }) => {
       newParams.delete(paramName);
     }
 
-    // Reset search query 'q' for a clearer user experience when changing filters
-    newParams.delete('q');
+    // BUG FIX: Removed line that was deleting the search query 'q'.
+    // This now allows filtering by category while preserving an active search.
+    // newParams.delete('q');
     
     return `/products?${newParams.toString()}`;
   };
