@@ -1,15 +1,16 @@
 
-
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { articles } from '../data/dummyData';
 import Button from '../components/Button';
 import { useNotification } from '../hooks/useNotification';
-import { ShareIcon, TwitterIcon, LinkedInIcon } from '../components/Icons';
+import { useShare } from '../hooks/useShare';
+import { ShareIcon } from '../components/Icons';
 
 const ArticleDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { showNotification } = useNotification();
+  const { showShareModal } = useShare();
   
   // In a real app, you might fetch this from localStorage or an API
   const article = articles.find(a => a.id === parseInt(id || ''));
@@ -25,26 +26,25 @@ const ArticleDetailPage: React.FC = () => {
     );
   }
 
-  const handleShare = (platform: 'copy' | 'twitter' | 'linkedin') => {
+  const handleShare = async () => {
     const articleUrl = window.location.href;
-    const articleTitle = article.title;
-    
-    if (platform === 'copy') {
-      navigator.clipboard.writeText(articleUrl).then(() => {
-        showNotification('Berhasil Disalin', 'Tautan artikel berhasil disalin!');
-      });
-      return;
-    }
-    
-    let shareUrl = '';
-    if (platform === 'twitter') {
-      shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(articleUrl)}&text=${encodeURIComponent(articleTitle)}`;
-    } else if (platform === 'linkedin') {
-      shareUrl = `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(articleUrl)}&title=${encodeURIComponent(articleTitle)}&summary=${encodeURIComponent(article.summary)}`;
-    }
+    const shareData = {
+      title: article.title,
+      text: `Baca artikel menarik ini di KODIK: "${article.summary}"`,
+      url: articleUrl,
+    };
 
-    if (shareUrl) {
-      window.open(shareUrl, '_blank', 'noopener,noreferrer');
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (error) {
+        if (error instanceof DOMException && error.name !== 'AbortError') {
+          console.error('Error sharing natively:', error);
+          showShareModal(shareData);
+        }
+      }
+    } else {
+      showShareModal(shareData);
     }
   };
   
@@ -76,18 +76,10 @@ const ArticleDetailPage: React.FC = () => {
       </div>
       
       <div className="mt-10 pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span className="font-semibold">Bagikan:</span>
-          <button onClick={() => handleShare('copy')} className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors" title="Salin Tautan">
-            <ShareIcon className="w-5 h-5 text-neutral-600" />
-          </button>
-          <button onClick={() => handleShare('twitter')} className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors" title="Bagikan ke Twitter">
-            <TwitterIcon className="w-5 h-5 text-[#1DA1F2]" />
-          </button>
-          <button onClick={() => handleShare('linkedin')} className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors" title="Bagikan ke LinkedIn">
-            <LinkedInIcon className="w-5 h-5 text-[#0A66C2]" />
-          </button>
-        </div>
+        <Button onClick={handleShare} variant="outline" className="flex items-center gap-2">
+          <ShareIcon className="w-5 h-5" />
+          Bagikan Artikel
+        </Button>
         <Link to="/articles">
           <Button variant="outline">Kembali ke Semua Artikel</Button>
         </Link>

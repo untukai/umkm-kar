@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Product } from '../types';
@@ -6,6 +7,7 @@ import { useCart } from '../hooks/useCart';
 import { useNotification } from '../hooks/useNotification';
 import { useSeller } from '../hooks/useSeller';
 import { useWishlist } from '../hooks/useWishlist';
+import { useShare } from '../hooks/useShare';
 import { sellers, reviews } from '../data/dummyData';
 import { StoreIcon, HeartIcon, ShareIcon, StarIcon } from './Icons';
 import StarRating from './StarRating'; // Import StarRating
@@ -19,6 +21,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { showNotification } = useNotification();
   const { showSellerModal } = useSeller();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const { showShareModal } = useShare();
   const navigate = useNavigate();
   
   const seller = sellers.find(s => s.id === product.sellerId);
@@ -80,16 +83,27 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     }
   };
 
-  const handleShare = (e: React.MouseEvent) => {
+  const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const productUrl = `${window.location.origin}${window.location.pathname}#/products/${product.id}`;
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(productUrl).then(() => {
-        showNotification('Berhasil Disalin', 'Tautan produk berhasil disalin!');
-      });
+    const shareData = {
+      title: `KODIK: ${product.name}`,
+      text: `Cek produk keren ini dari ${seller?.name} di KODIK!`,
+      url: productUrl,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (error) {
+        if (error instanceof DOMException && error.name !== 'AbortError') {
+          console.error('Error sharing natively:', error);
+          showShareModal(shareData);
+        }
+      }
     } else {
-      showNotification('Gagal', 'Gagal menyalin tautan.', 'error');
+      showShareModal(shareData);
     }
   };
 

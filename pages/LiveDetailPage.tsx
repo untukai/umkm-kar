@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { liveSessions, sellers, products, endLiveSession } from '../data/dummyData';
@@ -6,6 +7,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 import { useNotification } from '../hooks/useNotification';
 import { useFollow } from '../hooks/useFollow';
+import { useShare } from '../hooks/useShare';
 import Button from '../components/Button';
 import { ShoppingCartIcon, XIcon, ShareIcon, StoreIcon, EyeIcon, HeartIcon, VideoCameraIcon } from '../components/Icons';
 import signalingService from '../services/signalingService';
@@ -20,8 +22,6 @@ const configuration = {
     { urls: 'stun:stun2.l.google.com:19302' },
   ] 
 };
-
-type QualitySetting = 'high' | 'medium' | 'low';
 
 // NEW MODAL COMPONENT
 const PermissionModal: React.FC<{
@@ -61,16 +61,17 @@ const LiveDetailPage: React.FC = () => {
   const { addToCart } = useCart();
   const { showNotification } = useNotification();
   const { isFollowing, followSeller, unfollowSeller } = useFollow();
+  const { showShareModal } = useShare();
   const navigate = useNavigate();
   const chatEndRef = useRef<HTMLDivElement>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const localStreamRef = useRef<MediaStream | null>(null);
+  const candidateQueueRef = useRef<RTCIceCandidateInit[]>([]);
   
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [pendingViewers, setPendingViewers] = useState<string[]>([]);
-  const [quality, setQuality] = useState<QualitySetting>('high');
 
   const session = useMemo(() => liveSessions.find(s => s.id === parseInt(id || '')), [id]);
   const seller = useMemo(() => session ? sellers.find(s => s.id === session.sellerId) : null, [session]);
@@ -95,15 +96,6 @@ const LiveDetailPage: React.FC = () => {
   const qualityProfiles = {
       high: {
           videoConstraints: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
-          encodingParams: { maxBitrate: 2500000, scaleResolutionDownBy: 1.0 },
-      },
-      medium: {
-          videoConstraints: { width: { ideal: 640 }, height: { ideal: 360 }, frameRate: { ideal: 24 } },
-          encodingParams: { maxBitrate: 800000, scaleResolutionDownBy: 2.0 },
-      },
-      low: {
-          videoConstraints: { width: { ideal: 320 }, height: { ideal: 180 }, frameRate: { ideal: 15 } },
-          encodingParams: { maxBitrate: 300000, scaleResolutionDownBy: 4.0 },
       },
   };
 
@@ -267,8 +259,8 @@ const LiveDetailPage: React.FC = () => {
                      await pc.addIceCandidate(new RTCIceCandidate(message.payload));
                 }
             } else { // Viewer logic
-                let pc = peerConnectionsRef.current.get('host');
                 if (message.type === 'offer' && targetPeerId === myPeerId) {
+                    let pc = peerConnectionsRef.current.get('host');
                     if (!pc) {
                         pc = new RTCPeerConnection(configuration);
                         peerConnectionsRef.current.set('host', pc);
@@ -289,14 +281,23 @@ const LiveDetailPage: React.FC = () => {
                     }
 
                     await pc.setRemoteDescription(new RTCSessionDescription(message.payload));
+                    
+                    // Process any queued candidates
+                    candidateQueueRef.current.forEach(candidate => {
+                        pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.error("Error adding queued ICE candidate", e));
+                    });
+                    candidateQueueRef.current = [];
+
                     const answer = await pc.createAnswer();
                     await pc.setLocalDescription(answer);
                     signalingService.sendMessage({ type: 'answer', payload: answer, sessionId: id, targetPeerId: fromPeerId });
-                } else if (message.type === 'ice-candidate' && targetPeerId === myPeerId && pc) {
-                    try {
+                } else if (message.type === 'ice-candidate' && targetPeerId === myPeerId) {
+                    const pc = peerConnectionsRef.current.get('host');
+                    if (pc && pc.remoteDescription) {
                         await pc.addIceCandidate(new RTCIceCandidate(message.payload));
-                    } catch (e) {
-                        console.error('Error adding received ICE candidate', e);
+                    } else {
+                        // Queue candidate if remote description is not set yet
+                        candidateQueueRef.current.push(message.payload);
                     }
                 }
             }
@@ -362,36 +363,6 @@ const LiveDetailPage: React.FC = () => {
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMessages]);
 
-  const updateStreamQuality = async (newQuality: QualitySetting) => {
-    if (!isHost) return;
-    setQuality(newQuality);
-
-    const { encodingParams } = qualityProfiles[newQuality];
-    
-    showNotification('Mengubah Kualitas...', `Mengatur stream ke kualitas ${newQuality}.`);
-
-    for (const pc of peerConnectionsRef.current.values()) {
-      const sender = pc.getSenders().find(s => s.track?.kind === 'video');
-      if (sender) {
-        try {
-          const params = sender.getParameters();
-          if (!params.encodings || params.encodings.length === 0) {
-            params.encodings = [{}];
-          }
-          // Apply new bitrate and resolution scaling
-          params.encodings[0].maxBitrate = encodingParams.maxBitrate;
-          params.encodings[0].scaleResolutionDownBy = encodingParams.scaleResolutionDownBy;
-          
-          await sender.setParameters(params);
-          console.log(`Updated stream quality for a peer to ${newQuality}`);
-        } catch (error) {
-          console.error("Failed to set stream parameters:", error);
-           showNotification('Gagal', 'Tidak bisa mengubah kualitas stream.', 'error');
-        }
-      }
-    }
-  };
-
   const handleSendMessage = (e: React.FormEvent) => { e.preventDefault(); if (!newMessage.trim()) return; if (!isAuthenticated) { showNotification('Gagal', 'Anda harus masuk untuk mengirim komentar.', 'error', { label: 'Masuk', path: '/login' }); return; } const msg: LiveChatMessage = { id: Date.now(), userName: 'Anda', text: newMessage }; setChatMessages(prev => [...prev, msg]); setNewMessage(''); };
   const handleAddToCart = (product: Product) => { addToCart(product); showNotification('Berhasil', `'${product.name}' ditambahkan ke keranjang.`, 'success', { label: 'Lihat Keranjang', path: '/cart' }); };
   const handleCloseClick = () => { if (isHost) { setShowEndLiveModal(true); } else { navigate('/live'); } };
@@ -412,31 +383,25 @@ const LiveDetailPage: React.FC = () => {
     if (!session || !seller) return;
 
     const shareUrl = `${window.location.origin}${window.location.pathname}#/live/${session.id}`;
-    const shareTitle = `${seller.name} sedang live di KODIK!`;
-    const shareText = `Tonton keseruan live shopping dari ${seller.name} dan dapatkan promo spesial!`;
+    const shareData = {
+      title: `${seller.name} sedang live di KODIK!`,
+      text: `Tonton keseruan live shopping dari ${seller.name} dan dapatkan promo spesial!`,
+      url: shareUrl,
+    };
 
     if (navigator.share) {
-        try {
-            await navigator.share({
-                title: shareTitle,
-                text: shareText,
-                url: shareUrl,
-            });
-            showNotification('Berhasil', 'Tautan live berhasil dibagikan!');
-        } catch (error) {
-            console.error('Error sharing:', error);
+      try {
+        await navigator.share(shareData);
+      } catch (error) {
+        if (error instanceof DOMException && error.name !== 'AbortError') {
+          console.error('Error sharing natively:', error);
+          showShareModal(shareData);
         }
+      }
     } else {
-        try {
-            await navigator.clipboard.writeText(shareUrl);
-            showNotification('Berhasil Disalin', 'Tautan live berhasil disalin ke clipboard!');
-        } catch (error) {
-            console.error('Error copying to clipboard:', error);
-            showNotification('Gagal', 'Gagal menyalin tautan.', 'error');
-        }
+      showShareModal(shareData);
     }
   };
-
 
   if (!session || !seller) { return <div className="h-screen w-screen flex flex-col items-center justify-center bg-neutral-100 text-center p-4"><h1 className="text-2xl font-bold">Sesi live tidak ditemukan.</h1><Button onClick={() => navigate('/live')} className="mt-4">Kembali ke Live</Button></div>; }
 
@@ -463,22 +428,6 @@ const LiveDetailPage: React.FC = () => {
                 {pinnedProductId === product.id ? 'Tersemat' : 'Pin'}
               </button>
             </div>
-          ))}
-        </div>
-      </div>
-      <div className="bg-white/10 backdrop-blur-sm p-2 rounded-lg">
-        <p className="text-xs font-bold mb-2 text-center">Kualitas</p>
-        <div className="flex items-center justify-center gap-1">
-          {(['low', 'medium', 'high'] as QualitySetting[]).map(q => (
-            <button
-              key={q}
-              onClick={() => updateStreamQuality(q)}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors capitalize ${
-                quality === q ? 'bg-primary text-white shadow' : 'bg-black/30 hover:bg-black/50'
-              }`}
-            >
-              {q === 'low' ? 'Rendah' : q === 'medium' ? 'Sedang' : 'Tinggi'}
-            </button>
           ))}
         </div>
       </div>

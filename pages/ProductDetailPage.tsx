@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { products, sellers, reviews as initialReviews } from '../data/dummyData';
@@ -6,11 +7,12 @@ import { useNotification } from '../hooks/useNotification';
 import { useSeller } from '../hooks/useSeller';
 import { useWishlist } from '../hooks/useWishlist';
 import { useAuth } from '../hooks/useAuth';
+import { useShare } from '../hooks/useShare';
 import Button from '../components/Button';
 import ProductCard from '../components/ProductCard';
 import StarRating from '../components/StarRating';
 import { generateProductDescription } from '../services/geminiService';
-import { XIcon, HeartIcon, UserIcon } from '../components/Icons';
+import { XIcon, HeartIcon, UserIcon, ShareIcon } from '../components/Icons';
 import { Review } from '../types';
 
 const ProductDetailPage: React.FC = () => {
@@ -20,6 +22,7 @@ const ProductDetailPage: React.FC = () => {
   const { showSellerModal } = useSeller();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { user, isAuthenticated } = useAuth();
+  const { showShareModal } = useShare();
   const navigate = useNavigate();
   
   const product = products.find(p => p.id === parseInt(id || ''));
@@ -100,6 +103,29 @@ const ProductDetailPage: React.FC = () => {
         'success',
         { label: 'Lihat Wishlist', path: '/wishlist' }
       );
+    }
+  };
+
+  const handleShare = async () => {
+    if (!product || !seller) return;
+    const productUrl = window.location.href;
+    const shareData = {
+      title: `KODIK: ${product.name}`,
+      text: `Cek produk keren ini dari ${seller.name} di KODIK!`,
+      url: productUrl,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (error) {
+        if (error instanceof DOMException && error.name !== 'AbortError') {
+          console.error('Error sharing natively:', error);
+          showShareModal(shareData);
+        }
+      }
+    } else {
+      showShareModal(shareData);
     }
   };
 
@@ -284,6 +310,13 @@ const ProductDetailPage: React.FC = () => {
                         aria-label="Tambah ke wishlist"
                       >
                         <HeartIcon className="w-6 h-6" fill={isWishlisted ? 'currentColor' : 'none'} />
+                      </button>
+                      <button 
+                        onClick={handleShare} 
+                        className="p-3 rounded-lg border-2 border-neutral-300 text-neutral-500 hover:border-primary hover:text-primary transition-colors"
+                        aria-label="Bagikan produk"
+                      >
+                        <ShareIcon className="w-6 h-6" />
                       </button>
                     </div>
                   </div>
