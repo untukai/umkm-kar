@@ -19,6 +19,7 @@ const LiveDetailPage: React.FC = () => {
   const { isFollowing, followSeller, unfollowSeller } = useFollow();
   const navigate = useNavigate();
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const session = liveSessions.find(s => s.id === parseInt(id || ''));
   const seller = session ? sellers.find(s => s.id === session.sellerId) : null;
@@ -40,6 +41,38 @@ const LiveDetailPage: React.FC = () => {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
+
+  useEffect(() => {
+    if (!session || !seller) return;
+
+    const currentSeller = user ? sellers.find(s => s.email === user.email) : null;
+    const isHost = session.status === 'live' && currentSeller?.id === seller.id;
+
+    let stream: MediaStream;
+
+    if (isHost) {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(mediaStream => {
+          stream = mediaStream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+        })
+        .catch(err => {
+          console.error("Failed to get camera stream:", err);
+          showNotification('Gagal Memuat Kamera', 'Tidak bisa mengakses kamera. Pastikan Anda telah memberikan izin.', 'error');
+          navigate('/seller/live'); // Navigate back if camera fails for the host
+        });
+    }
+
+    // Cleanup function to stop the camera stream when the component unmounts
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [session, seller, user, navigate, showNotification]);
+
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,11 +142,24 @@ const LiveDetailPage: React.FC = () => {
     }
     return num.toString();
   };
+  
+  const currentSeller = user ? sellers.find(s => s.email === user.email) : null;
+  const isHost = session.status === 'live' && currentSeller?.id === seller.id;
 
   return (
     <div className="h-screen w-screen bg-black text-white relative flex flex-col font-sans overflow-hidden">
       {/* Background Image/Video */}
-      <img src={products.find(p => p.id === 9)?.imageUrls[0] || session.thumbnailUrl} alt={session.title} className="absolute inset-0 w-full h-full object-cover z-0" />
+      {isHost ? (
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="absolute inset-0 w-full h-full object-cover z-0 transform scale-x-[-1]"
+        />
+      ) : (
+        <img src={session.thumbnailUrl} alt={session.title} className="absolute inset-0 w-full h-full object-cover z-0" />
+      )}
 
       {/* Top Bar */}
       <header className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between gap-2">

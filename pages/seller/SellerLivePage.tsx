@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -43,6 +44,7 @@ const NewLiveSessionModal: React.FC<{
   const { showNotification } = useNotification();
   const [title, setTitle] = useState('');
   const [selectedProductIds, setSelectedProductIds] = useState<Set<number>>(new Set());
+  const [isStarting, setIsStarting] = useState(false);
 
   const handleProductToggle = (productId: number) => {
     setSelectedProductIds(prev => {
@@ -56,7 +58,7 @@ const NewLiveSessionModal: React.FC<{
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const currentSeller = sellers.find(s => s.email === user?.email);
     if (!title.trim() || selectedProductIds.size === 0 || !currentSeller) {
@@ -64,16 +66,35 @@ const NewLiveSessionModal: React.FC<{
       return;
     }
 
-    const newSession = addLiveSession({
-      sellerId: currentSeller.id,
-      title,
-      thumbnailUrl: products.find(p => p.id === Array.from(selectedProductIds)[0])?.imageUrls[0] || '',
-      productIds: Array.from(selectedProductIds),
-    });
+    setIsStarting(true);
+    
+    try {
+      // Request camera permission before creating the session
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      // We got permission, stop the tracks immediately as we don't need them here.
+      stream.getTracks().forEach(track => track.stop());
 
-    showNotification('Berhasil!', 'Sesi live Anda telah dimulai.');
-    onClose();
-    navigate(`/live/${newSession.id}`);
+      const newSession = addLiveSession({
+        sellerId: currentSeller.id,
+        title,
+        thumbnailUrl: products.find(p => p.id === Array.from(selectedProductIds)[0])?.imageUrls[0] || '',
+        productIds: Array.from(selectedProductIds),
+      });
+
+      showNotification('Berhasil!', 'Sesi live Anda telah dimulai.');
+      onClose();
+      navigate(`/live/${newSession.id}`);
+
+    } catch (err) {
+      console.error("Camera access denied:", err);
+      showNotification(
+          'Akses Kamera Ditolak',
+          'Anda harus mengizinkan akses kamera untuk memulai sesi live.',
+          'error'
+      );
+    } finally {
+        setIsStarting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -105,7 +126,9 @@ const NewLiveSessionModal: React.FC<{
             </div>
           </div>
           <div className="p-4 border-t bg-neutral-50 text-right">
-            <Button type="submit">Mulai Live Sekarang</Button>
+            <Button type="submit" disabled={isStarting}>
+              {isStarting ? 'Memulai...' : 'Mulai Live Sekarang'}
+            </Button>
           </div>
         </form>
       </div>
