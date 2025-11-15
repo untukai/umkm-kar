@@ -1,22 +1,20 @@
 
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { liveSessions, sellers, products, virtualGifts, endLiveSession } from '../data/dummyData';
+import { useParams, useNavigate } from 'react-router-dom';
+import { liveSessions, sellers, products } from '../data/dummyData';
 import { LiveChatMessage, Product } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 import { useNotification } from '../hooks/useNotification';
-import { useFollow } from '../hooks/useFollow';
 import Button from '../components/Button';
-import { UserIcon, StoreIcon, SendIcon, GiftIcon, ShoppingCartIcon, XCircleIcon, UserPlusIcon, XIcon, ShareIcon } from '../components/Icons';
+import { ShoppingCartIcon, XIcon, ShareIcon, MenuIcon, HeartIcon, SunIcon } from '../components/Icons';
 
 const LiveDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { addToCart } = useCart();
   const { showNotification } = useNotification();
-  const { isFollowing, followSeller, unfollowSeller } = useFollow();
   const navigate = useNavigate();
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -26,26 +24,17 @@ const LiveDetailPage: React.FC = () => {
 
   const [chatMessages, setChatMessages] = useState<LiveChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [isConfirmEndLiveOpen, setIsConfirmEndLiveOpen] = useState(false);
   const [pinnedProduct, setPinnedProduct] = useState<Product | null>(sessionProducts[0] || null);
 
   useEffect(() => {
-    // Initial dummy chat messages
+    // Initial dummy chat messages from data
     setChatMessages([
-      { id: 1, userName: 'Budi', text: 'Wah, serabinya kelihatan enak banget!' },
-      { id: 2, userName: 'Citra', text: 'Ada promo apa aja nih, kak?' },
+        { id: 1, userName: 'Budi', text: 'Wah, serabinya kelihatan enak banget!' },
+        { id: 2, userName: 'Citra', text: 'Ada promo apa aja nih, kak?' },
+        { id: 3, userName: 'Dewi', text: 'Harganya berapa?' },
     ]);
-
-    // Simulate new messages appearing
-    const interval = setInterval(() => {
-      const randomUser = ['Dewi', 'Agus', 'Eko'][Math.floor(Math.random() * 3)];
-      const randomMessage = ['Harganya berapa?', 'Bisa kirim hari ini?', 'Stoknya banyak?'][Math.floor(Math.random() * 3)];
-      setChatMessages(prev => [...prev, { id: Date.now(), userName: randomUser, text: randomMessage }]);
-    }, 8000);
-
-    return () => clearInterval(interval);
   }, []);
-  
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
@@ -54,10 +43,11 @@ const LiveDetailPage: React.FC = () => {
     e.preventDefault();
     if (!newMessage.trim()) return;
     if (!isAuthenticated) {
-        showNotification('Gagal', 'Anda harus masuk untuk mengirim komentar.', 'error', {label: 'Masuk', path: '/login'});
+        showNotification('Gagal', 'Anda harus masuk untuk mengirim komentar.', 'error', { label: 'Masuk', path: '/login' });
         return;
     }
-    const msg: LiveChatMessage = { id: Date.now(), userName: user.email.split('@')[0], text: newMessage };
+    // This is a dummy implementation
+    const msg: LiveChatMessage = { id: Date.now(), userName: 'Anda', text: newMessage };
     setChatMessages(prev => [...prev, msg]);
     setNewMessage('');
   };
@@ -72,173 +62,91 @@ const LiveDetailPage: React.FC = () => {
     );
   };
 
-  const handleEndLive = () => {
-    if (session && endLiveSession(session.id)) {
-      showNotification('Berhasil', 'Sesi live telah diakhiri.');
-      navigate('/seller/live');
-    } else {
-      showNotification('Gagal', 'Tidak dapat mengakhiri sesi live.', 'error');
-    }
-    setIsConfirmEndLiveOpen(false);
-  };
-
   if (!session || !seller) {
-    return <div className="text-center p-8">Sesi live tidak ditemukan.</div>;
+    return (
+        <div className="text-center p-8 bg-white rounded-lg shadow-lg">
+            <h1 className="text-2xl font-bold">Sesi live tidak ditemukan.</h1>
+            <Button onClick={() => navigate('/live')} className="mt-4">Kembali ke Live</Button>
+        </div>
+    );
   }
-  
+
   const formatRupiah = (number: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
 
-  const isSellerOwner = isAuthenticated && user?.role === 'penjual' && user.email === seller.email;
-  const isSessionLive = session.status === 'live';
-  const isFollowingSeller = isFollowing(seller.id);
-
-  const handleFollowToggle = () => {
-    if (!isAuthenticated) {
-        showNotification('Gagal', 'Anda harus masuk untuk mengikuti penjual.', 'error');
-        return;
-    }
-    if (isFollowingSeller) {
-      unfollowSeller(seller.id);
-    } else {
-      followSeller(seller.id);
-      showNotification('Berhasil', `Anda sekarang mengikuti ${seller.name}`);
-    }
-  };
-
   return (
-    <>
-      <div className="fixed inset-0 bg-black text-white font-sans">
-        {/* Background Video/Image */}
-        <img src={session.thumbnailUrl} alt="Live Thumbnail" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/60"></div>
+    <div className="flex justify-center items-center py-4">
+      {/* Mobile-like Container */}
+      <div className="w-full max-w-sm h-[calc(100vh-10rem)] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col font-sans">
+        
+        {/* Top Header Bar */}
+        <header className="p-3 border-b flex justify-between items-center bg-white flex-shrink-0 z-10">
+          <button onClick={() => navigate('/live')} className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-bold text-white text-lg">
+              K
+            </div>
+          </button>
+          <div className="flex items-center gap-4 text-neutral-700">
+            <HeartIcon className="w-6 h-6 cursor-pointer" onClick={() => navigate('/wishlist')} />
+            <ShoppingCartIcon className="w-6 h-6 cursor-pointer" onClick={() => navigate('/cart')} />
+            <MenuIcon className="w-6 h-6 cursor-pointer" onClick={() => showNotification('Info', 'Menu navigasi sedang disiapkan!')} />
+          </div>
+        </header>
 
-        {/* Main Overlay Container */}
-        <div className="relative z-10 h-full w-full flex flex-col p-4">
-
-          {/* Top Bar */}
-          <header className="w-full flex justify-between items-start">
-            <div className="flex items-center gap-3 bg-black/40 backdrop-blur-sm p-1.5 rounded-full">
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                <StoreIcon className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <h2 className="font-bold text-sm leading-tight">{seller.name}</h2>
-                <p className="text-xs text-neutral-300">
-                  {session.likes && session.likes > 1000 
-                    ? `${(session.likes / 1000).toFixed(1)}K` 
-                    : session.likes} likes
-                </p>
-              </div>
-              {!isSellerOwner && (
-                <button 
-                  onClick={handleFollowToggle}
-                  className={`ml-2 px-4 py-1.5 text-sm font-bold rounded-full transition-colors flex items-center gap-1.5 ${
-                    isFollowingSeller 
-                    ? 'bg-white/20 text-white' 
-                    : 'bg-red-500 text-white hover:bg-red-600'
-                  }`}
-                >
-                  {isFollowingSeller ? 'Diikuti' : 'Ikuti'}
-                </button>
-              )}
+        {/* Main Content Area */}
+        <main className="flex-1 flex flex-col bg-black relative">
+            {/* Likes text */}
+            <div className="absolute top-2 left-4 text-white/50 text-xs">
+              {session.likes} likes
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                <UserIcon className="w-4 h-4" />
-                <span className="text-sm font-semibold">{session.viewers}</span>
-              </div>
-              {isSellerOwner && isSessionLive && (
-                <button onClick={() => setIsConfirmEndLiveOpen(true)} className="bg-red-500 text-white hover:bg-red-600 px-3 py-1.5 rounded-full text-sm font-bold">
-                  Akhiri
-                </button>
-              )}
-              <button onClick={() => navigate('/live')} className="bg-black/40 backdrop-blur-sm p-1.5 rounded-full">
-                <XIcon className="w-5 h-5" />
-              </button>
+            {/* Chat Message Overlays */}
+            <div className="absolute bottom-4 left-4 right-4 text-white text-sm space-y-2 pb-20">
+                {chatMessages.map(msg => (
+                    <p key={msg.id} className="drop-shadow-md animate-fade-in">
+                        <span className="font-bold mr-1">{msg.userName}</span>
+                        <span>{msg.text}</span>
+                    </p>
+                ))}
+                <div ref={chatEndRef} />
             </div>
-          </header>
 
-          {/* Spacer to push content to the bottom */}
-          <div className="flex-1"></div>
-
-          {/* Bottom Section (Chat, Pinned Product, Actions) */}
-          <footer className="w-full flex flex-col items-start">
-            {/* Live Chat */}
-            <div className="w-full md:w-3/4 lg:w-1/2 h-48 overflow-y-auto space-y-2 pb-4 scrollbar-hide [mask-image:linear-gradient(to_bottom,transparent,black_20%,black_100%)]">
-                  {chatMessages.map(msg => (
-                <div key={msg.id} className="flex gap-2 items-start text-sm animate-fade-in">
-                  <div className="bg-black/40 backdrop-blur-sm p-2 rounded-lg max-w-xs">
-                    <span className="font-semibold text-neutral-400 mr-2">{msg.userName}</span>
-                    <span className="text-white leading-tight">{msg.text}</span>
-                  </div>
+            {/* Pinned Product at the bottom of the main content */}
+            <div className="mt-auto p-3">
+                {pinnedProduct && (
+                <div className="bg-neutral-100/95 backdrop-blur-sm text-black p-2 rounded-lg flex items-center gap-3 animate-fade-in shadow-lg">
+                    <img src={pinnedProduct.imageUrls[0]} alt={pinnedProduct.name} className="w-12 h-12 rounded-md object-cover"/>
+                    <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm truncate">{pinnedProduct.name}</p>
+                    <p className="font-semibold text-primary">{formatRupiah(pinnedProduct.price)}</p>
+                    </div>
+                    <Button onClick={() => handleAddToCart(pinnedProduct)} className="!px-5 !py-2 !font-bold !text-sm flex-shrink-0">Beli</Button>
+                    <button onClick={() => setPinnedProduct(null)} className="p-1 text-neutral-500 hover:text-black">
+                    <XIcon className="w-4 h-4"/>
+                    </button>
                 </div>
-              ))}
-              <div ref={chatEndRef} />
+                )}
             </div>
+        </main>
 
-            {/* Pinned Product */}
-            {pinnedProduct && (
-              <div className="bg-white/90 backdrop-blur-sm text-black p-2 rounded-lg flex items-center gap-3 animate-fade-in mb-4 w-full max-w-sm shadow-lg">
-                <img src={pinnedProduct.imageUrls[0]} alt={pinnedProduct.name} className="w-16 h-16 rounded-md object-cover"/>
-                <div className="flex-1">
-                  <p className="font-bold text-sm line-clamp-2">{pinnedProduct.name}</p>
-                  <p className="font-bold text-primary">{formatRupiah(pinnedProduct.price)}</p>
-                </div>
-                <Button onClick={() => handleAddToCart(pinnedProduct)} className="!px-6 !font-bold">Beli</Button>
-                <button onClick={() => setPinnedProduct(null)} className="p-1 text-neutral-500 hover:text-black">
-                  <XIcon className="w-5 h-5"/>
-                </button>
-              </div>
-            )}
+        {/* Bottom Action Bar */}
+        <footer className="p-3 border-t flex items-center gap-3 bg-white flex-shrink-0">
+          <ShoppingCartIcon className="w-6 h-6 text-neutral-600 cursor-pointer" onClick={() => showNotification('Info', 'Toko produk live sedang disiapkan!')} />
+          <form onSubmit={handleSendMessage} className="flex-1">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={e => setNewMessage(e.target.value)}
+              placeholder="Tambah komentar..."
+              className="w-full bg-transparent text-sm focus:outline-none"
+              autoComplete="off"
+            />
+          </form>
+          <SunIcon className="w-6 h-6 text-neutral-600 cursor-pointer" onClick={() => showNotification('Info', 'Fitur hadiah sedang disiapkan!')} />
+          <ShareIcon className="w-6 h-6 text-neutral-600 cursor-pointer" onClick={() => showNotification('Info', 'Fitur bagikan sedang disiapkan!')} />
+        </footer>
 
-            {/* Action Bar */}
-            <div className="w-full flex items-center gap-3">
-              <button className="h-12 w-12 flex-shrink-0 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-lg" onClick={() => showNotification('Info', 'Fitur toko sedang disiapkan!')}>
-                <ShoppingCartIcon className="w-6 h-6"/>
-              </button>
-              <form onSubmit={handleSendMessage} className="flex-1">
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={e => setNewMessage(e.target.value)}
-                  placeholder="Tambah komentar..."
-                  className="w-full h-12 bg-black/40 backdrop-blur-sm rounded-lg px-4 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                  autoComplete="off"
-                />
-              </form>
-              <button className="h-12 w-12 flex-shrink-0 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-lg" onClick={() => showNotification('Info', 'Fitur hadiah sedang disiapkan!')}>
-                <GiftIcon className="w-6 h-6"/>
-              </button>
-                <button className="h-12 w-12 flex-shrink-0 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-lg" onClick={() => showNotification('Info', 'Fitur bagikan sedang disiapkan!')}>
-                <ShareIcon className="w-6 h-6"/>
-              </button>
-            </div>
-          </footer>
-        </div>
       </div>
-      
-      {/* End Live Confirmation Modal */}
-      {isConfirmEndLiveOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 animate-fade-in-overlay" onClick={() => setIsConfirmEndLiveOpen(false)}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm text-center text-neutral-800 animate-popup-in" onClick={e => e.stopPropagation()}>
-                <XCircleIcon className="w-16 h-16 text-red-500 mx-auto mb-4"/>
-                <h2 className="text-xl font-bold mb-2">Akhiri Sesi Live?</h2>
-                <p className="text-neutral-600 mb-6">
-                    Apakah Anda yakin ingin mengakhiri sesi live ini? Sesi ini akan disimpan sebagai siaran ulang.
-                </p>
-                <div className="flex justify-center gap-4">
-                    <Button variant="outline" onClick={() => setIsConfirmEndLiveOpen(false)}>
-                        Batal
-                    </Button>
-                    <Button onClick={handleEndLive} className="bg-red-500 hover:bg-red-600 focus:ring-red-500">
-                        Ya, Akhiri
-                    </Button>
-                </div>
-            </div>
-        </div>
-      )}
-    </>
+    </div>
   );
 };
 
