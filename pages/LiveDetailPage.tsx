@@ -1,20 +1,58 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { liveSessions, sellers, products, endLiveSession } from '../data/dummyData';
-import { LiveChatMessage, Product } from '../types';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { liveSessions, sellers, products, endLiveSession, virtualGifts } from '../data/dummyData';
+import { LiveChatMessage, Product, VirtualGift } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 import { useNotification } from '../hooks/useNotification';
 import { useFollow } from '../hooks/useFollow';
 import { useShare } from '../hooks/useShare';
 import Button from '../components/Button';
-import { ShoppingCartIcon, XIcon, ShareIcon, StoreIcon, EyeIcon, HeartIcon } from '../components/Icons';
+import { ShoppingCartIcon, XIcon, ShareIcon, StoreIcon, EyeIcon, HeartIcon, GiftIcon, CurrencyDollarIcon } from '../components/Icons';
 
 let heartCounter = 0;
+let giftCounter = 0;
+
+const GiftPanel: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onSendGift: (gift: VirtualGift) => void;
+}> = ({ isOpen, onClose, onSendGift }) => {
+  const { user } = useAuth();
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="absolute inset-0 bg-black/50 z-40 flex flex-col justify-end" onClick={onClose}>
+      <div className="bg-neutral-800 p-4 rounded-t-2xl animate-popup-in" onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-bold text-lg">Kirim Hadiah</h3>
+          <Link to="/profile" className="bg-yellow-400/20 text-yellow-300 text-sm font-bold px-3 py-1 rounded-full flex items-center gap-2 hover:bg-yellow-400/30 transition-colors">
+            <CurrencyDollarIcon className="w-4 h-4" />
+            <span>{user?.coins || 0}</span>
+          </Link>
+        </div>
+        <div className="grid grid-cols-4 gap-4 text-center">
+          {virtualGifts.map(gift => (
+            <div key={gift.id} onClick={() => onSendGift(gift)} className="p-2 rounded-lg hover:bg-white/10 cursor-pointer transition-colors">
+              <span className="text-4xl drop-shadow-lg">{gift.icon}</span>
+              <p className="text-xs mt-1 truncate">{gift.name}</p>
+              <p className="text-xs font-bold text-yellow-400 flex items-center justify-center gap-1">
+                <CurrencyDollarIcon className="w-3 h-3" />
+                {gift.price}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 const LiveDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, spendCoins } = useAuth();
   const { addToCart } = useCart();
   const { showNotification } = useNotification();
   const { isFollowing, followSeller, unfollowSeller } = useFollow();
@@ -41,11 +79,40 @@ const LiveDetailPage: React.FC = () => {
   const [viewers, setViewers] = useState(session?.viewers || 0);
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number }[]>([]);
   const [isSessionEnded, setIsSessionEnded] = useState(false);
+  const [isGiftPanelOpen, setIsGiftPanelOpen] = useState(false);
+  const [floatingGifts, setFloatingGifts] = useState<{ id: number; icon: string; x: number }[]>([]);
 
   const pinnedProduct = useMemo(() => {
     if (!pinnedProductId) return null;
     return products.find(p => p.id === pinnedProductId) || null;
   }, [pinnedProductId]);
+  
+  const jitsiUrl = useMemo(() => {
+    if (!session || !seller) return '';
+
+    const roomName = `KODIK-Live-Session-${session.id}`;
+    const baseUrl = `https://meet.jit.si/${roomName}`;
+    let configString = '#config.prejoinPageEnabled=false';
+    configString += '&interfaceConfig.SHOW_JITSI_WATERMARK=false';
+    configString += '&interfaceConfig.SHOW_WATERMARK_FOR_GUESTS=false';
+    configString += '&interfaceConfig.SHOW_BRAND_WATERMARK=false';
+    configString += '&interfaceConfig.SHOW_POWERED_BY=false';
+    configString += '&interfaceConfig.DISABLE_JOIN_LEAVE_NOTIFICATIONS=true';
+
+
+    if (isHost) {
+        configString += `&userInfo.displayName="${encodeURIComponent(seller.name)}"`;
+        configString += '&interfaceConfig.TOOLBAR_BUTTONS=["microphone","camera","hangup"]';
+    } else {
+        const displayName = user?.email?.split('@')[0] || 'Penonton';
+        configString += `&userInfo.displayName="${encodeURIComponent(displayName)}"`;
+        configString += '&interfaceConfig.TOOLBAR_BUTTONS=[]';
+        configString += '&config.startWithVideoMuted=true';
+        configString += '&config.startWithAudioMuted=true';
+    }
+
+    return `${baseUrl}${configString}`;
+  }, [session, seller, isHost, user]);
 
   useEffect(() => {
     const currentSession = liveSessions.find(s => s.id === parseInt(id || ''));
@@ -86,6 +153,34 @@ const LiveDetailPage: React.FC = () => {
   const handleCloseClick = () => { if (isHost) { setShowEndLiveModal(true); } else { navigate('/live'); } };
   const handleEndLive = () => { if (session) { endLiveSession(session.id); showNotification('Berhasil', 'Sesi live telah diakhiri.'); navigate('/seller/live'); } setShowEndLiveModal(false); };
   const handleAddHeart = () => { setLikes(l => l + 1); const newHeart = { id: heartCounter++, x: Math.random() * 50 + 25 }; setFloatingHearts(prev => [...prev, newHeart]); setTimeout(() => setFloatingHearts(prev => prev.filter(h => h.id !== newHeart.id)), 2000); };
+
+  const handleSendGift = (gift: VirtualGift) => {
+    if (!isAuthenticated) {
+      showNotification('Gagal', 'Anda harus masuk untuk mengirim hadiah.', 'error', { label: 'Masuk', path: '/login' });
+      return;
+    }
+
+    if (spendCoins(gift.price)) {
+      const msg: LiveChatMessage = {
+        id: Date.now(),
+        userName: user?.email?.split('@')[0] || 'Anda',
+        text: `mengirimkan ${gift.name}`,
+        isGift: true,
+        giftIcon: gift.icon,
+      };
+      setChatMessages(prev => [...prev, msg]);
+
+      const newGiftAnimation = { id: giftCounter++, icon: gift.icon, x: Math.random() * 50 + 25 };
+      setFloatingGifts(prev => [...prev, newGiftAnimation]);
+      setTimeout(() => {
+        setFloatingGifts(prev => prev.filter(g => g.id !== newGiftAnimation.id));
+      }, 2000);
+
+      setIsGiftPanelOpen(false);
+    } else {
+      showNotification('Koin Tidak Cukup', 'Koin Anda tidak cukup untuk mengirim hadiah ini.', 'error', { label: 'Isi Ulang', path: '/profile' });
+    }
+  };
 
   const handlePinProduct = (productId: number) => {
     if (isHost) {
@@ -182,9 +277,8 @@ const LiveDetailPage: React.FC = () => {
         {session.status === 'live' ? (
           <iframe
             allow="camera; microphone; display-capture"
-            src={`https://meet.jit.si/KODIK-Live-Session-${session.id}`}
+            src={jitsiUrl}
             className="absolute inset-0 w-full h-full object-cover z-0 border-0"
-            style={{ transform: isHost ? 'scaleX(-1)' : 'none' }}
           ></iframe>
         ) : (
           <video ref={videoRef} autoPlay playsInline controls className="absolute inset-0 w-full h-full object-cover z-0" poster={session.thumbnailUrl} />
@@ -197,6 +291,11 @@ const LiveDetailPage: React.FC = () => {
           </div>
         )}
         <div className="absolute bottom-20 right-4 h-64 w-20 pointer-events-none z-20">
+          {floatingGifts.map(gift => (
+            <div key={gift.id} className="absolute bottom-0 animate-float-up" style={{ left: `${gift.x}%` }}>
+              <span className="text-4xl drop-shadow-md">{gift.icon}</span>
+            </div>
+          ))}
           {floatingHearts.map(heart => (<div key={heart.id} className="absolute bottom-0 animate-float-up" style={{ left: `${heart.x}%` }}><HeartIcon className="w-8 h-8 text-red-500" fill="currentColor" style={{ filter: `hue-rotate(${Math.random() * 360}deg)` }} /></div>))}
         </div>
         <header className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between gap-2">
@@ -212,7 +311,22 @@ const LiveDetailPage: React.FC = () => {
 
         <div className="absolute bottom-0 left-0 right-0 p-4 z-10 mt-auto flex flex-col justify-end bg-gradient-to-t from-black/70 to-transparent">
           <div className="w-full max-h-48 overflow-y-auto text-sm space-y-2 mb-4 scrollbar-hide">
-            {chatMessages.map(msg => (<p key={msg.id} className="drop-shadow-md animate-fade-in">{msg.isGift ? (<span className="bg-yellow-400/20 text-yellow-300 p-2 rounded-lg"><span className="font-bold mr-1.5 opacity-80">{msg.userName}</span> mengirimkan {msg.giftIcon}</span>) : (<><span className="font-bold mr-1.5 opacity-80">{msg.userName}:</span><span>{msg.text}</span></>)}</p>))}
+            {chatMessages.map(msg => (
+              <div key={msg.id} className="drop-shadow-md animate-fade-in text-sm">
+                {msg.isGift ? (
+                    <div className="bg-yellow-400/20 text-yellow-300 p-2 rounded-lg inline-flex items-center gap-2">
+                        <span className="font-bold opacity-90">{msg.userName}</span>
+                        <span className="opacity-80">{msg.text}</span>
+                        <span className="text-lg">{msg.giftIcon}</span>
+                    </div>
+                ) : (
+                    <p>
+                        <span className="font-bold mr-1.5 opacity-80">{msg.userName}:</span>
+                        <span>{msg.text}</span>
+                    </p>
+                )}
+              </div>
+            ))}
             <div ref={chatEndRef} />
           </div>
           
@@ -228,6 +342,11 @@ const LiveDetailPage: React.FC = () => {
           <footer className="flex items-center gap-3">
             {isHost ? renderHostFooter() : renderBuyerFooter()}
             <div className="flex items-center gap-3 ml-auto">
+              {!isHost && (
+                <button onClick={() => setIsGiftPanelOpen(true)} className="p-2.5 bg-neutral-800/60 backdrop-blur-sm rounded-full hover:bg-black/60 transition-colors">
+                  <GiftIcon className="w-6 h-6 text-yellow-300" />
+                </button>
+              )}
               <button className="p-2.5 bg-neutral-800/60 backdrop-blur-sm rounded-full hover:bg-black/60 transition-colors"><ShoppingCartIcon className="w-6 h-6" /></button>
               {!isHost && <button onClick={handleAddHeart} className="p-2.5 bg-neutral-800/60 backdrop-blur-sm rounded-full hover:bg-black/60 transition-colors"><HeartIcon className="w-6 h-6 text-red-400" /></button>}
               <button onClick={handleShare} className="p-2.5 bg-neutral-800/60 backdrop-blur-sm rounded-full hover:bg-black/60 transition-colors"><ShareIcon className="w-6 h-6" /></button>
@@ -245,6 +364,11 @@ const LiveDetailPage: React.FC = () => {
           </div>
         )}
       </div>
+      <GiftPanel
+        isOpen={isGiftPanelOpen}
+        onClose={() => setIsGiftPanelOpen(false)}
+        onSendGift={handleSendGift}
+      />
     </>
   );
 };

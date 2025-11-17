@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotification } from '../../hooks/useNotification';
 import { liveSessions, sellers, products, addLiveSession } from '../../data/dummyData';
 import { LiveSession, Product } from '../../types';
 import Button from '../../components/Button';
-import { PlusIcon, VideoCameraIcon, XIcon, StoreIcon } from '../../components/Icons';
+import { PlusIcon, VideoCameraIcon, XIcon } from '../../components/Icons';
 
 const LiveSessionCard: React.FC<{ session: LiveSession }> = ({ session }) => {
   const navigate = useNavigate();
