@@ -1,5 +1,5 @@
 # File: .github/workflows/main.yml
-# Alur kerja GitHub Actions yang disederhanakan untuk membangun APK Android
+# Alur kerja GitHub Actions untuk membangun APK Android
 
 name: Build KODIK Android APK
 
@@ -11,6 +11,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Tetapkan direktori kerja default untuk semua langkah 'run'
+    defaults:
+      run:
+        working-directory: ./app
 
     steps:
       - name: Checkout repository
@@ -26,18 +30,16 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Grant execute permission for gradlew
-        # Pindah ke direktori 'app' sebelum menjalankan perintah
-        working-directory: ./app
+        # Perintah ini sekarang akan berjalan di dalam direktori './app'
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        # Jalankan build dari dalam direktori 'app'
-        working-directory: ./app
+        # Perintah ini juga akan berjalan di dalam direktori './app'
         run: ./gradlew assembleDebug
 
       - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
         with:
           name: KODIK-Android-APK
-          # Path ini relatif terhadap root workspace, jadi ini benar
-          path: app/build/outputs/apk/**/*.apk
+          # Path untuk 'upload-artifact' relatif terhadap root repositori, bukan 'working-directory'
+          path: app/build/outputs/apk/debug/app-debug.apk
