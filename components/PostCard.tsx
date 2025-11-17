@@ -1,6 +1,6 @@
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Post, Comment } from '../types';
 // FIX: Import `posts` as `initialPosts` to access the global posts array.
 import { sellers, addComment, posts as initialPosts } from '../data/dummyData';
@@ -24,6 +24,19 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
     const [isLiked, setIsLiked] = useState(false);
     const [showComments, setShowComments] = useState(false);
     const [replyingTo, setReplyingTo] = useState<number | null>(null);
+
+    // FIX: Add effect to revoke blob URLs on unmount to prevent memory leaks.
+    // The blob URL is created in CreatePostForm and its ownership is transferred here.
+    useEffect(() => {
+        const isBlobUrl = post.mediaUrl?.startsWith('blob:');
+
+        // This cleanup function will be called when the component is unmounted.
+        return () => {
+            if (isBlobUrl && post.mediaUrl) {
+                URL.revokeObjectURL(post.mediaUrl);
+            }
+        };
+    }, [post.mediaUrl]); // This effect depends only on the mediaUrl.
 
     const seller = sellers.find(s => s.id === post.sellerId);
 

@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { products, sellers, reviews as initialReviews } from '../data/dummyData';
@@ -12,7 +10,6 @@ import { useShare } from '../hooks/useShare';
 import Button from '../components/Button';
 import ProductCard from '../components/ProductCard';
 import StarRating from '../components/StarRating';
-import { generateProductDescription } from '../services/geminiService';
 import { XIcon, HeartIcon, UserIcon, ShareIcon } from '../components/Icons';
 import { Review } from '../types';
 
@@ -28,9 +25,6 @@ const ProductDetailPage: React.FC = () => {
   
   const product = products.find(p => p.id === parseInt(id || ''));
   const seller = product ? sellers.find(s => s.id === product.sellerId) : undefined;
-
-  const [aiDescription, setAiDescription] = useState<string | null>(null);
-  const [isLoadingDescription, setIsLoadingDescription] = useState<boolean>(true);
   
   // --- State untuk Ulasan ---
   const [productReviews, setProductReviews] = useState<Review[]>([]);
@@ -42,23 +36,9 @@ const ProductDetailPage: React.FC = () => {
 
   useEffect(() => {
     if (product) {
-      setIsLoadingDescription(true);
-      setAiDescription(null);
       setSelectedImageIndex(0);
-      
       // Load reviews for the product
       setProductReviews(initialReviews.filter(r => r.productId === product.id));
-
-      generateProductDescription(product as any) // Cast for now
-        .then(description => {
-          setAiDescription(description);
-        })
-        .catch(error => {
-          console.error("Failed to load AI description, falling back to default.", error);
-        })
-        .finally(() => {
-          setIsLoadingDescription(false);
-        });
     }
   }, [product]);
 
@@ -198,35 +178,6 @@ const ProductDetailPage: React.FC = () => {
 
   const discountedPrice = product.discount ? product.price * (1 - product.discount / 100) : product.price;
 
-  const renderDescription = () => {
-    if (isLoadingDescription) {
-      return (
-        <div className="min-h-[150px] flex flex-col justify-center">
-            <div className="space-y-3 animate-pulse">
-              <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-full"></div>
-              <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-5/6"></div>
-              <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-full"></div>
-              <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-3/4"></div>
-            </div>
-            <p className="text-sm text-center text-primary font-semibold pt-6">✨ Asisten AI sedang menulis deskripsi produk yang menarik...</p>
-        </div>
-      );
-    }
-    
-    if (aiDescription) {
-      return (
-        <>
-          <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">{aiDescription}</p>
-          <div className="text-right text-xs text-neutral-500 dark:text-neutral-400 italic mt-4">
-            Deskripsi ini dibuat dengan bantuan AI
-          </div>
-        </>
-      );
-    }
-
-    return <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed">{product.description}</p>;
-  };
-
   return (
     <>
       <div className="space-y-8">
@@ -329,7 +280,7 @@ const ProductDetailPage: React.FC = () => {
         
         <div className="bg-white dark:bg-neutral-800 p-6 md:p-8 rounded-lg shadow-lg">
           <h3 className="font-bold text-xl border-b dark:border-neutral-700 pb-3 mb-4">Deskripsi Produk</h3>
-          {renderDescription()}
+          <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">{product.description}</p>
           <div className="mt-6 border-t dark:border-neutral-700 pt-4">
                <button onClick={handleSellerClick} className="text-lg text-neutral-600 dark:text-neutral-300 hover:text-primary transition-colors">
                  Penjual: <span className="font-semibold underline">{seller.name}</span>

@@ -1,6 +1,7 @@
 // types.ts (Improved for Backend Architecture)
 
-export type UserRole = 'buyer' | 'seller' | 'admin';
+// FIX: Changed UserRole to use Indonesian words ('pembeli', 'penjual') to match its usage throughout the application.
+export type UserRole = 'pembeli' | 'penjual' | 'admin';
 // FIX: Updated ProductStatus to match values used in dummyData and components.
 export type ProductStatus = 'aktif' | 'habis stok' | 'nonaktif' | 'draft' | 'archived';
 // FIX: Updated OrderStatus to match values used in dummyData and components.

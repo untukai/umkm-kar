@@ -149,7 +149,8 @@ const LiveDetailPage: React.FC = () => {
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMessages]);
 
   const handleSendMessage = (e: React.FormEvent) => { e.preventDefault(); if (!newMessage.trim()) return; if (!isAuthenticated) { showNotification('Gagal', 'Anda harus masuk untuk mengirim komentar.', 'error', { label: 'Masuk', path: '/login' }); return; } const msg: LiveChatMessage = { id: Date.now(), userName: 'Anda', text: newMessage }; setChatMessages(prev => [...prev, msg]); setNewMessage(''); };
-  const handleAddToCart = (product: Product) => { addToCart(product); showNotification('Berhasil', `'${product.name}' ditambahkan ke keranjang.`, 'success', { label: 'Lihat Keranjang', path: '/cart' }); };
+  // FIX: Pass product.id to addToCart instead of the full product object.
+  const handleAddToCart = (product: Product) => { addToCart(product.id); showNotification('Berhasil', `'${product.name}' ditambahkan ke keranjang.`, 'success', { label: 'Lihat Keranjang', path: '/cart' }); };
   const handleCloseClick = () => { if (isHost) { setShowEndLiveModal(true); } else { navigate('/live'); } };
   const handleEndLive = () => { if (session) { endLiveSession(session.id); showNotification('Berhasil', 'Sesi live telah diakhiri.'); navigate('/seller/live'); } setShowEndLiveModal(false); };
   const handleAddHeart = () => { setLikes(l => l + 1); const newHeart = { id: heartCounter++, x: Math.random() * 50 + 25 }; setFloatingHearts(prev => [...prev, newHeart]); setTimeout(() => setFloatingHearts(prev => prev.filter(h => h.id !== newHeart.id)), 2000); };
