@@ -160,7 +160,7 @@ const ProductDetailPage: React.FC = () => {
 
   if (!product || !seller) {
     return (
-      <div className="text-center bg-white p-10 rounded-lg shadow-lg">
+      <div className="text-center bg-white dark:bg-neutral-800 p-10 rounded-lg shadow-lg">
         <h1 className="text-2xl font-bold">Produk atau Penjual tidak ditemukan</h1>
         <Link to="/products" className="text-primary hover:underline mt-4 inline-block">
           <Button>Kembali ke Halaman Produk</Button>
@@ -203,10 +203,10 @@ const ProductDetailPage: React.FC = () => {
       return (
         <div className="min-h-[150px] flex flex-col justify-center">
             <div className="space-y-3 animate-pulse">
-              <div className="h-4 bg-neutral-200 rounded w-full"></div>
-              <div className="h-4 bg-neutral-200 rounded w-5/6"></div>
-              <div className="h-4 bg-neutral-200 rounded w-full"></div>
-              <div className="h-4 bg-neutral-200 rounded w-3/4"></div>
+              <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-full"></div>
+              <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-5/6"></div>
+              <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-full"></div>
+              <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-3/4"></div>
             </div>
             <p className="text-sm text-center text-primary font-semibold pt-6">✨ Asisten AI sedang menulis deskripsi produk yang menarik...</p>
         </div>
@@ -216,25 +216,25 @@ const ProductDetailPage: React.FC = () => {
     if (aiDescription) {
       return (
         <>
-          <p className="text-neutral-700 leading-relaxed whitespace-pre-wrap">{aiDescription}</p>
-          <div className="text-right text-xs text-neutral-500 italic mt-4">
+          <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">{aiDescription}</p>
+          <div className="text-right text-xs text-neutral-500 dark:text-neutral-400 italic mt-4">
             Deskripsi ini dibuat dengan bantuan AI
           </div>
         </>
       );
     }
 
-    return <p className="text-neutral-700 leading-relaxed">{product.description}</p>;
+    return <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed">{product.description}</p>;
   };
 
   return (
     <>
       <div className="space-y-8">
-        <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg">
+        <div className="bg-white dark:bg-neutral-800 p-6 md:p-8 rounded-lg shadow-lg">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
             <div>
               <div 
-                className="w-full aspect-square bg-neutral-100 rounded-lg flex items-center justify-center overflow-hidden cursor-zoom-in group"
+                className="w-full aspect-square bg-neutral-100 dark:bg-neutral-700 rounded-lg flex items-center justify-center overflow-hidden cursor-zoom-in group"
                 onClick={() => setIsZoomModalOpen(true)}
               >
                 <img 
@@ -258,22 +258,22 @@ const ProductDetailPage: React.FC = () => {
             
             <div className="flex flex-col">
               <div className="flex items-center gap-3 flex-wrap mb-2">
-                <h1 className="text-2xl md:text-3xl font-bold text-neutral-900">{product.name}</h1>
+                <h1 className="text-2xl md:text-3xl font-bold text-neutral-900 dark:text-neutral-50">{product.name}</h1>
                 {product.discount && (
                   <span className="bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full">
                     DISKON {product.discount}%
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-4 text-sm text-neutral-600">
+              <div className="flex items-center gap-4 text-sm text-neutral-600 dark:text-neutral-300">
                 {productReviews.length > 0 && (
                     <div className="flex items-center gap-2">
-                        <span className="font-bold text-lg text-neutral-800">{avgRating.toFixed(1)}</span>
+                        <span className="font-bold text-lg text-neutral-800 dark:text-neutral-100">{avgRating.toFixed(1)}</span>
                         <StarRating rating={avgRating} />
-                        <span className="text-neutral-500">({productReviews.length} ulasan)</span>
+                        <span className="text-neutral-500 dark:text-neutral-400">({productReviews.length} ulasan)</span>
                     </div>
                 )}
-                <div className="border-l h-5"></div>
+                <div className="border-l dark:border-neutral-600 h-5"></div>
                 <span>Kategori: <span className="font-semibold text-primary">{product.category}</span></span>
               </div>
               <div className="my-6">
@@ -282,21 +282,21 @@ const ProductDetailPage: React.FC = () => {
                     <p className="text-3xl md:text-4xl font-bold text-red-600">
                       {formatRupiah(discountedPrice)}
                     </p>
-                    <p className="text-xl md:text-2xl text-neutral-500 line-through">
+                    <p className="text-xl md:text-2xl text-neutral-500 dark:text-neutral-400 line-through">
                       {formatRupiah(product.price)}
                     </p>
                   </div>
                 ) : (
-                  <p className="text-3xl md:text-4xl font-bold text-neutral-800">
+                  <p className="text-3xl md:text-4xl font-bold text-neutral-800 dark:text-neutral-100">
                     {formatRupiah(product.price)}
                   </p>
                 )}
               </div>
 
-              <div className="mt-auto border rounded-lg p-6 shadow-sm bg-neutral-50">
+              <div className="mt-auto border dark:border-neutral-700 rounded-lg p-6 shadow-sm bg-neutral-50 dark:bg-neutral-700/50">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="font-semibold">Atur Jumlah</h3>
-                    <p className="text-sm text-neutral-600">Stok: <span className="font-bold">{product.stock}</span></p>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-300">Stok: <span className="font-bold">{product.stock}</span></p>
                   </div>
                   <div className="space-y-3">
                     <Button onClick={handleBuyNow} disabled={product.stock === 0} className="w-full !text-base sm:!text-lg !py-3 !font-bold">
@@ -308,14 +308,14 @@ const ProductDetailPage: React.FC = () => {
                       </Button>
                       <button 
                         onClick={handleWishlistToggle} 
-                        className={`p-3 rounded-lg border-2 transition-colors ${isWishlisted ? 'bg-red-500 border-red-500 text-white' : 'bg-transparent border-neutral-300 text-neutral-500 hover:border-red-500 hover:text-red-500'}`}
+                        className={`p-3 rounded-lg border-2 transition-colors ${isWishlisted ? 'bg-red-500 border-red-500 text-white' : 'bg-transparent border-neutral-300 dark:border-neutral-600 text-neutral-500 dark:text-neutral-300 hover:border-red-500 hover:text-red-500'}`}
                         aria-label="Tambah ke wishlist"
                       >
                         <HeartIcon className="w-6 h-6" fill={isWishlisted ? 'currentColor' : 'none'} />
                       </button>
                       <button 
                         onClick={handleShare} 
-                        className="p-3 rounded-lg border-2 border-neutral-300 text-neutral-500 hover:border-primary hover:text-primary transition-colors"
+                        className="p-3 rounded-lg border-2 border-neutral-300 dark:border-neutral-600 text-neutral-500 dark:text-neutral-300 hover:border-primary hover:text-primary transition-colors"
                         aria-label="Bagikan produk"
                       >
                         <ShareIcon className="w-6 h-6" />
@@ -327,44 +327,44 @@ const ProductDetailPage: React.FC = () => {
           </div>
         </div>
         
-        <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg">
-          <h3 className="font-bold text-xl border-b pb-3 mb-4">Deskripsi Produk</h3>
+        <div className="bg-white dark:bg-neutral-800 p-6 md:p-8 rounded-lg shadow-lg">
+          <h3 className="font-bold text-xl border-b dark:border-neutral-700 pb-3 mb-4">Deskripsi Produk</h3>
           {renderDescription()}
-          <div className="mt-6 border-t pt-4">
-               <button onClick={handleSellerClick} className="text-lg text-neutral-600 hover:text-primary transition-colors">
+          <div className="mt-6 border-t dark:border-neutral-700 pt-4">
+               <button onClick={handleSellerClick} className="text-lg text-neutral-600 dark:text-neutral-300 hover:text-primary transition-colors">
                  Penjual: <span className="font-semibold underline">{seller.name}</span>
                </button>
           </div>
         </div>
 
         {/* Review Section */}
-        <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg">
+        <div className="bg-white dark:bg-neutral-800 p-6 md:p-8 rounded-lg shadow-lg">
           <h3 className="font-bold text-xl mb-4">Ulasan Produk ({productReviews.length})</h3>
           
           {/* Review Submission Form */}
-          <div className="mb-8 border-b pb-8">
+          <div className="mb-8 border-b dark:border-neutral-700 pb-8">
             {isAuthenticated ? (
               <form onSubmit={handleReviewSubmit} className="space-y-4">
                 <h4 className="font-semibold">Tulis Ulasan Anda</h4>
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">Peringkat Anda</label>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-200 mb-1">Peringkat Anda</label>
                   <StarRating rating={newRating} onRatingChange={setNewRating} />
                 </div>
                 <div>
-                  <label htmlFor="comment" className="block text-sm font-medium text-neutral-700 mb-1">Ulasan Anda</label>
+                  <label htmlFor="comment" className="block text-sm font-medium text-neutral-700 dark:text-neutral-200 mb-1">Ulasan Anda</label>
                   <textarea
                     id="comment"
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     rows={4}
                     placeholder={`Bagaimana pendapat Anda tentang ${product.name}?`}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-transparent dark:bg-neutral-700 dark:text-white"
                   ></textarea>
                 </div>
                 <Button type="submit">Kirim Ulasan</Button>
               </form>
             ) : (
-              <div className="text-center p-4 border rounded-lg bg-neutral-50">
+              <div className="text-center p-4 border dark:border-neutral-700 rounded-lg bg-neutral-50 dark:bg-neutral-700/50">
                 <p>Silakan <Link to="/login" className="text-primary font-semibold hover:underline">masuk</Link> untuk menulis ulasan.</p>
               </div>
             )}
@@ -375,27 +375,27 @@ const ProductDetailPage: React.FC = () => {
             {productReviews.length > 0 ? (
               productReviews.map(review => (
                 <div key={review.id} className="flex gap-4">
-                  <div className="w-10 h-10 rounded-full bg-neutral-200 flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center flex-shrink-0">
                     <UserIcon className="w-6 h-6 text-neutral-500" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <p className="font-semibold">{review.userName}</p>
-                      <p className="text-xs text-neutral-500">{new Date(review.date).toLocaleDateString('id-ID')}</p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">{new Date(review.date).toLocaleDateString('id-ID')}</p>
                     </div>
                     <StarRating rating={review.rating} />
-                    <p className="text-neutral-700 mt-2">{review.comment}</p>
+                    <p className="text-neutral-700 dark:text-neutral-300 mt-2">{review.comment}</p>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-neutral-500 text-center py-4">Belum ada ulasan untuk produk ini.</p>
+              <p className="text-neutral-500 dark:text-neutral-400 text-center py-4">Belum ada ulasan untuk produk ini.</p>
             )}
           </div>
         </div>
         
         {displayedRelatedProducts.length > 0 && (
-          <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg">
+          <div className="bg-white dark:bg-neutral-800 p-6 md:p-8 rounded-lg shadow-lg">
             <h3 className="font-bold text-xl mb-4">{relatedProductsTitle}</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
               {displayedRelatedProducts.map(relatedProduct => (

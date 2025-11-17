@@ -75,14 +75,14 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ categories }) => {
 
   return (
     <aside className="w-full lg:w-72 flex-shrink-0">
-      <div className="bg-white p-6 rounded-lg shadow-lg sticky top-24">
-        <div className="pb-4 mb-4 border-b">
+      <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-lg sticky top-24">
+        <div className="pb-4 mb-4 border-b dark:border-neutral-700">
           <h2 className="text-xl font-bold">Kategori Produk</h2>
           <nav className="space-y-1 mt-4">
             <Link
               to={getCategoryLink(null)}
               className={`block w-full text-left px-3 py-2 rounded-md transition-colors text-sm ${
-                !currentCategory ? 'bg-primary/10 text-primary font-semibold' : 'text-neutral-700 hover:bg-neutral-100'
+                !currentCategory ? 'bg-primary/10 text-primary font-semibold' : 'text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700'
               }`}
             >
               Semua Kategori
@@ -92,7 +92,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ categories }) => {
                 key={category.id}
                 to={getCategoryLink(category.id)}
                 className={`block w-full text-left px-3 py-2 rounded-md transition-colors text-sm ${
-                  currentCategory === category.id ? 'bg-primary/10 text-primary font-semibold' : 'text-neutral-700 hover:bg-neutral-100'
+                  currentCategory === category.id ? 'bg-primary/10 text-primary font-semibold' : 'text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700'
                 }`}
               >
                 {category.name}
@@ -114,7 +114,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ categories }) => {
               <div className="flex flex-col gap-1">
                 <button
                   onClick={() => updateSearchParams({ type: null })}
-                  className={`text-sm p-2 rounded-md text-left transition-colors ${!productType ? 'bg-primary/10 text-primary font-semibold' : 'text-neutral-700 hover:bg-neutral-100'}`}
+                  className={`text-sm p-2 rounded-md text-left transition-colors ${!productType ? 'bg-primary/10 text-primary font-semibold' : 'text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700'}`}
                 >
                   Semua Tipe
                 </button>
@@ -122,7 +122,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ categories }) => {
                   <button
                     key={type}
                     onClick={() => updateSearchParams({ type: type })}
-                    className={`text-sm p-2 rounded-md text-left transition-colors ${productType === type ? 'bg-primary/10 text-primary font-semibold' : 'text-neutral-700 hover:bg-neutral-100'}`}
+                    className={`text-sm p-2 rounded-md text-left transition-colors ${productType === type ? 'bg-primary/10 text-primary font-semibold' : 'text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700'}`}
                   >
                     {type}
                   </button>
@@ -136,9 +136,9 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ categories }) => {
                   type="checkbox"
                   checked={showInStock}
                   onChange={(e) => updateSearchParams({ showInStock: e.target.checked })}
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:bg-neutral-700 dark:border-neutral-600"
                 />
-                <span className="text-sm">Hanya stok tersedia</span>
+                <span className="text-sm dark:text-neutral-200">Hanya stok tersedia</span>
               </label>
             </div>
             <div>
@@ -148,10 +148,10 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ categories }) => {
                     <button
                         key={rating}
                         onClick={() => updateSearchParams({ minRating: String(rating) })}
-                        className={`flex items-center gap-2 text-sm p-2 rounded-md text-left transition-colors ${minRating === String(rating) ? 'bg-primary/10 font-semibold' : 'hover:bg-neutral-100'}`}
+                        className={`flex items-center gap-2 text-sm p-2 rounded-md text-left transition-colors ${minRating === String(rating) ? 'bg-primary/10 font-semibold' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700'}`}
                     >
                         <StarIcon className="w-4 h-4 text-yellow-400" fill="currentColor" />
-                        <span>{rating} ke atas</span>
+                        <span className="dark:text-neutral-200">{rating} ke atas</span>
                     </button>
                 ))}
               </div>

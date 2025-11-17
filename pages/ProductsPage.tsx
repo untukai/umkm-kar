@@ -130,14 +130,14 @@ const ProductsPage: React.FC = () => {
     <div className="flex flex-col lg:flex-row gap-8 items-start">
       <FilterSidebar categories={categories} />
       <div className="flex-1 w-full min-w-0">
-        <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
+        <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm mb-8">
           <h1 className="text-3xl font-bold">{pageTitle()}</h1>
-          <p className="text-neutral-600 mt-2">{filteredProducts.length} produk ditemukan</p>
+          <p className="text-neutral-600 dark:text-neutral-300 mt-2">{filteredProducts.length} produk ditemukan</p>
         </div>
         
         {isLoadingRecommendations && (
            <div className="mb-12">
-            <h2 className="text-xl font-bold mb-4 text-neutral-800">
+            <h2 className="text-xl font-bold mb-4 text-neutral-800 dark:text-neutral-100">
                 ✨ AI sedang mencari produk terbaik...
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
@@ -175,8 +175,8 @@ const ProductsPage: React.FC = () => {
         )}
 
         {noProductsFound && (
-           <div className="text-center py-10 bg-white rounded-lg shadow-sm">
-              <p className="text-neutral-500">Tidak ada produk yang cocok dengan kriteria Anda.</p>
+           <div className="text-center py-10 bg-white dark:bg-neutral-800 rounded-lg shadow-sm">
+              <p className="text-neutral-500 dark:text-neutral-400">Tidak ada produk yang cocok dengan kriteria Anda.</p>
           </div>
         )}
       </div>

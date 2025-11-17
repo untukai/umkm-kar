@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
@@ -30,9 +31,9 @@ const HomePage: React.FC = () => {
         <h2 className="text-2xl font-bold mb-6">Kategori Pilihan</h2>
         <div className="grid grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4">
           {categories.map((category) => (
-            <Link key={category.id} to={`/products?category=${category.id}`} className="block p-3 sm:p-4 bg-white border border-neutral-200 rounded-lg text-center hover:shadow-lg hover:border-primary transition-all duration-300 transform hover:-translate-y-1">
+            <Link key={category.id} to={`/products?category=${category.id}`} className="block p-3 sm:p-4 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg text-center hover:shadow-lg hover:border-primary dark:hover:border-primary transition-all duration-300 transform hover:-translate-y-1">
               <span className="text-3xl sm:text-4xl">{categoryIcons[category.name] || '🛍️'}</span>
-              <h3 className="font-semibold mt-2 text-xs sm:text-sm text-neutral-600">{category.name}</h3>
+              <h3 className="font-semibold mt-2 text-xs sm:text-sm text-neutral-600 dark:text-neutral-300">{category.name}</h3>
             </Link>
           ))}
         </div>
