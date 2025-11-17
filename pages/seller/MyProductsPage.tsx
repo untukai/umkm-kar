@@ -1,16 +1,14 @@
 
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { useAppData } from '../../hooks/useAppData';
+import { products, sellers } from '../../data/dummyData';
 import Button from '../../components/Button';
 import { PlusIcon } from '../../components/Icons';
 import { Product } from '../../types';
 
 const MyProductsPage: React.FC = () => {
   const { user } = useAuth();
-  const { products, sellers } = useAppData();
   
   const currentSeller = sellers.find(s => s.email === user?.email);
   const sellerProducts = currentSeller ? products.filter(p => p.sellerId === currentSeller.id) : [];

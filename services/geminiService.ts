@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { Product, Article } from '../types';
 
@@ -8,7 +7,6 @@ if (!API_KEY) {
   console.warn("API_KEY environment variable is not set. Gemini features will be disabled.");
 }
 
-// FIX: Initialize with named apiKey parameter.
 const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
 export const getAIRecommendations = async (query: string, products: Product[]): Promise<string[]> => {
@@ -79,8 +77,7 @@ Berikan jawaban langsung ke inti. Gunakan bahasa alami seperti manusia berbicara
   }
 };
 
-// FIX: Corrected return type to omit `_id` instead of `id` to match the Article type. This fixes the error where the returned object was missing the `_id` property.
-export const generateArticle = async (topic: string): Promise<Omit<Article, '_id' | 'author' | 'publishDate'>> => {
+export const generateArticle = async (topic: string): Promise<Omit<Article, 'id'>> => {
   if (!ai) {
     throw new Error("Gemini API key is not configured.");
   }
@@ -118,13 +115,7 @@ Buatlah sebuah artikel lengkap dengan format JSON yang berisi:
     const result = JSON.parse(jsonString);
 
     if (result && result.title && result.summary && result.content) {
-      // FIX: The AI might return an object with more properties than defined in the schema.
-      // We need to explicitly pick the required fields to match the function's return type.
-      return {
-        title: result.title,
-        summary: result.summary,
-        content: result.content,
-      };
+      return result as Omit<Article, 'id'>;
     }
 
     throw new Error("Invalid response format from AI.");

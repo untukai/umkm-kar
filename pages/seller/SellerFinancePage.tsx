@@ -1,12 +1,11 @@
 
-
 import React from 'react';
+import { financialTransactions } from '../../data/dummyData';
 import { FinancialTransaction } from '../../types';
 import Button from '../../components/Button';
-import { useAppData } from '../../hooks/useAppData';
+import { CurrencyDollarIcon } from '../../components/Icons';
 
 const SellerFinancePage: React.FC = () => {
-  const { financialTransactions, isLoading } = useAppData();
     
   const currentBalance = financialTransactions.reduce((acc, curr) => acc + curr.amount, 0);
 
@@ -26,10 +25,6 @@ const SellerFinancePage: React.FC = () => {
 
   const getAmountClass = (amount: number) => {
       return amount > 0 ? 'text-green-600' : 'text-red-600';
-  }
-  
-  if (isLoading) {
-      return <div>Memuat data keuangan...</div>
   }
 
   return (

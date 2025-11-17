@@ -1,9 +1,9 @@
 
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { useAppData } from '../../hooks/useAppData';
+import { orders, products, reviews } from '../../data/dummyData';
 import SalesChart from '../../components/seller/SalesChart';
 import { BoxIcon, StoreIcon, StarIcon, ClipboardListIcon } from '../../components/Icons';
 import Button from '../../components/Button';
@@ -19,19 +19,11 @@ const SalesSummaryItem = ({ title, value }: { title: string; value: string | Rea
 
 const SellerDashboardPage: React.FC = () => {
     const { user } = useAuth();
-    const { orders, products, reviews, sellers } = useAppData();
     const [chartView, setChartView] = useState<'harian' | 'mingguan' | 'bulanan'>('harian');
 
-    const seller = useMemo(() => sellers.find(s => s.email === user?.email), [sellers, user]);
-    const sellerId = seller?.id;
-
     // --- Data Calculation ---
-    const sellerProducts = useMemo(() => products.filter(p => p.sellerId === sellerId), [products, sellerId]);
-    const sellerProductIds = useMemo(() => new Set(sellerProducts.map(p => p.id)), [sellerProducts]);
-    const sellerReviews = useMemo(() => reviews.filter(r => sellerProductIds.has(r.productId)), [reviews, sellerProductIds]);
-
     const isSameDay = (d1: Date, d2: Date) => d1.toDateString() === d2.toDateString();
-    const today = new Date('2024-07-28T12:00:00Z'); // Using a fixed date for consistent demo data
+    const today = new Date('2024-07-28T12:00:00Z');
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
     
@@ -42,9 +34,7 @@ const SellerDashboardPage: React.FC = () => {
     const totalPesananBulanIni = monthlyOrders.length;
     
     const productSales = monthlyOrders.flatMap(o => o.items).reduce((acc, item) => {
-        if (sellerProductIds.has(item.product.id)) {
-            acc[item.product.id] = (acc[item.product.id] || 0) + item.quantity;
-        }
+        acc[item.product.id] = (acc[item.product.id] || 0) + item.quantity;
         return acc;
     }, {} as Record<number, number>);
 
@@ -53,8 +43,8 @@ const SellerDashboardPage: React.FC = () => {
     
     // Data for Quick Action Cards
     const pendingOrders = orders.filter(o => o.status === 'dikemas');
-    const lowStockProducts = sellerProducts.filter(p => p.stock > 0 && p.stock < 10);
-    const latestReview = sellerReviews.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+    const lowStockProducts = products.filter(p => p.sellerId === 1 && p.stock > 0 && p.stock < 10); // Assuming sellerId 1 for demo
+    const latestReview = reviews.filter(r => products.some(p => p.id === r.productId && p.sellerId === 1)).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
     const dailySalesData = [{ label: 'Sen', value: 450000 }, { label: 'Sel', value: 380000 }, { label: 'Rab', value: 620000 }, { label: 'Kam', value: 510000 }, { label: 'Jum', value: 850000 }, { label: 'Sab', value: 950000 }, { label: 'Min', value: 790000 }];
     const weeklySalesData = [{ label: 'M1', value: 2100000 }, { label: 'M2', value: 3250000 }, { label: 'M3', value: 2800000 }, { label: 'M4', value: 4100000 }];
@@ -67,7 +57,7 @@ const SellerDashboardPage: React.FC = () => {
         <div className="space-y-8">
             <div>
                 <h1 className="text-2xl font-bold">Dashboard Penjual</h1>
-                <p className="text-neutral-600 mt-1">Selamat datang, {seller?.name || user?.email}!</p>
+                <p className="text-neutral-600 mt-1">Selamat datang, {user?.email}!</p>
             </div>
             
             {/* Quick Action Cards */}

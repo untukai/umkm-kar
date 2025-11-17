@@ -1,54 +1,31 @@
-
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotification } from '../../hooks/useNotification';
-import { useAppData } from '../../hooks/useAppData';
+import { liveSessions, sellers, products, addLiveSession } from '../../data/dummyData';
 import { LiveSession, Product } from '../../types';
 import Button from '../../components/Button';
 import { PlusIcon, VideoCameraIcon, XIcon } from '../../components/Icons';
 
 const LiveSessionCard: React.FC<{ session: LiveSession }> = ({ session }) => {
   const navigate = useNavigate();
-  const { showNotification } = useNotification();
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(session.google_meet_link);
-    showNotification('Berhasil', 'Link Google Meet telah disalin!');
-  };
-
   return (
-    <div className="border rounded-lg p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+    <div
+      onClick={() => navigate(`/live/${session.id}`)}
+      className="border rounded-lg p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:bg-neutral-50 cursor-pointer transition-colors"
+    >
       <div className="flex items-center gap-4">
-        <img src={session.thumbnail_url} alt={session.title} className="w-16 h-16 rounded-md object-cover bg-neutral-200 flex-shrink-0" />
+        <img src={session.thumbnailUrl} alt={session.title} className="w-16 h-16 rounded-md object-cover bg-neutral-200 flex-shrink-0" />
         <div>
           <p className="font-bold text-neutral-800">{session.title}</p>
-          <p className="text-sm text-neutral-500">{session.product_ids.length} produk ditampilkan</p>
-          {session.status === 'ongoing' && (
-            <div className="mt-2">
-              <a href={session.google_meet_link} target="_blank" rel="noopener noreferrer" className="text-xs text-primary font-semibold hover:underline">
-                {session.google_meet_link}
-              </a>
-            </div>
-          )}
+          <p className="text-sm text-neutral-500">{session.productIds.length} produk ditampilkan</p>
         </div>
       </div>
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-shrink-0">
-        <div className="text-center">
-            {session.status === 'ongoing' ? (
-              <span className="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 animate-pulse">LIVE</span>
-            ) : (
-              <span className="px-3 py-1 text-xs font-semibold rounded-full bg-neutral-200 text-neutral-700 capitalize">{session.status}</span>
-            )}
-        </div>
-        <Button variant="outline" onClick={() => navigate(`/live/${session._id}`)} className="!text-sm !py-1.5">
-          Masuk
-        </Button>
-         {session.status === 'ongoing' && (
-            <Button variant="outline" onClick={handleCopyLink} className="!text-sm !py-1.5">
-                Salin Link
-            </Button>
+      <div className="flex-shrink-0">
+        {session.status === 'live' ? (
+          <span className="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 animate-pulse">LIVE</span>
+        ) : (
+          <span className="px-3 py-1 text-xs font-semibold rounded-full bg-neutral-200 text-neutral-700">Selesai</span>
         )}
       </div>
     </div>
@@ -63,12 +40,11 @@ const NewLiveSessionModal: React.FC<{
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showNotification } = useNotification();
-  const { sellers, addLiveSession } = useAppData();
   const [title, setTitle] = useState('');
-  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<number>>(new Set());
   const [isStarting, setIsStarting] = useState(false);
 
-  const handleProductToggle = (productId: string) => {
+  const handleProductToggle = (productId: number) => {
     setSelectedProductIds(prev => {
       const newSet = new Set(prev);
       if (newSet.has(productId)) {
@@ -80,7 +56,7 @@ const NewLiveSessionModal: React.FC<{
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const currentSeller = sellers.find(s => s.email === user?.email);
     if (!title.trim() || selectedProductIds.size === 0 || !currentSeller) {
@@ -89,35 +65,17 @@ const NewLiveSessionModal: React.FC<{
     }
   
     setIsStarting(true);
-    showNotification('Info', 'Membuat sesi live Anda... Ini mungkin memerlukan beberapa saat.');
-    
-    try {
-      const productIdsArray = [...selectedProductIds];
-      const selectedProducts = sellerProducts.filter(p => productIdsArray.includes(p._id));
-      
-      const newSessionData = {
-        seller_id: currentSeller._id,
-        title,
-        thumbnail_url: selectedProducts[0]?.imageUrls[0] || '',
-        product_ids: productIdsArray,
-      };
+  
+    const newSession = addLiveSession({
+      sellerId: currentSeller.id,
+      title,
+      thumbnailUrl: products.find(p => p.id === Array.from(selectedProductIds)[0])?.imageUrls[0] || '',
+      productIds: Array.from(selectedProductIds),
+    });
 
-      // Call the context function that now handles the backend API call
-      const newSession = await addLiveSession(newSessionData);
-
-      if (newSession) {
-          showNotification('Berhasil!', 'Sesi live berhasil dibuat. Mengarahkan Anda...');
-          onClose();
-          navigate(`/live/${newSession._id}`);
-      } else {
-          throw new Error("Gagal membuat sesi dari context.");
-      }
-
-    } catch (error) {
-      console.error("Gagal membuat sesi live:", error);
-      showNotification('Error', 'Gagal membuat sesi live. Silakan coba lagi.', 'error');
-      setIsStarting(false);
-    }
+    showNotification('Berhasil!', 'Mengarahkan Anda ke studio live...');
+    onClose();
+    navigate(`/live/${newSession.id}`);
   };
 
   if (!isOpen) return null;
@@ -140,8 +98,8 @@ const NewLiveSessionModal: React.FC<{
                 <h3 className="text-sm font-medium text-neutral-700 mb-2">Pilih Produk untuk Ditampilkan</h3>
                 <div className="space-y-2 max-h-60 overflow-y-auto border rounded-lg p-3 bg-neutral-50">
                   {sellerProducts.map(product => (
-                    <label key={product._id} className="flex items-center gap-3 p-2 rounded-md hover:bg-neutral-100 cursor-pointer">
-                      <input type="checkbox" checked={selectedProductIds.has(product._id)} onChange={() => handleProductToggle(product._id)} className="h-4 w-4 rounded text-primary focus:ring-primary" />
+                    <label key={product.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-neutral-100 cursor-pointer">
+                      <input type="checkbox" checked={selectedProductIds.has(product.id)} onChange={() => handleProductToggle(product.id)} className="h-4 w-4 rounded text-primary focus:ring-primary" />
                       <img src={product.imageUrls[0]} alt={product.name} className="w-10 h-10 rounded object-cover" />
                       <span className="text-sm font-medium text-neutral-800">{product.name}</span>
                     </label>
@@ -151,7 +109,7 @@ const NewLiveSessionModal: React.FC<{
             </div>
             <div className="p-4 border-t bg-neutral-50 text-right">
               <Button type="submit" disabled={isStarting}>
-                {isStarting ? 'Membuat Sesi...' : 'Mulai Live Sekarang'}
+                {isStarting ? 'Memulai...' : 'Mulai Live Sekarang'}
               </Button>
             </div>
           </form>
@@ -164,12 +122,11 @@ const NewLiveSessionModal: React.FC<{
 
 const SellerLivePage: React.FC = () => {
   const { user } = useAuth();
-  const { sellers, products, liveSessions } = useAppData();
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   const currentSeller = sellers.find(s => s.email === user?.email);
-  const sellerLiveSessions = currentSeller ? liveSessions.filter(s => s.seller_id === currentSeller._id) : [];
-  const sellerProducts = currentSeller ? products.filter(p => p.sellerId === currentSeller._id) : [];
+  const sellerLiveSessions = currentSeller ? liveSessions.filter(s => s.sellerId === currentSeller.id) : [];
+  const sellerProducts = currentSeller ? products.filter(p => p.sellerId === currentSeller.id) : [];
 
   return (
     <>
@@ -188,7 +145,7 @@ const SellerLivePage: React.FC = () => {
         <div className="space-y-4">
           <h2 className="text-lg font-bold">Riwayat Sesi Live</h2>
           {sellerLiveSessions.length > 0 ? (
-            sellerLiveSessions.map(session => <LiveSessionCard key={session._id} session={session} />)
+            sellerLiveSessions.map(session => <LiveSessionCard key={session.id} session={session} />)
           ) : (
             <div className="text-center py-10 border-2 border-dashed rounded-lg">
               <VideoCameraIcon className="w-12 h-12 mx-auto text-neutral-400" />

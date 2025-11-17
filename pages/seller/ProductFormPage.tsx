@@ -1,10 +1,10 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotification } from '../../hooks/useNotification';
-import { useAppData } from '../../hooks/useAppData';
+import { Product } from '../../types';
+import { products, sellers, categories, addProduct } from '../../data/dummyData';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 
@@ -13,7 +13,6 @@ const ProductFormPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showNotification } = useNotification();
-  const { products, sellers, categories, addProduct } = useAppData();
   
   const isEditing = Boolean(id);
   
@@ -28,7 +27,7 @@ const ProductFormPage: React.FC = () => {
 
   useEffect(() => {
     if (isEditing) {
-      const productToEdit = products.find(p => p.id === parseInt(id!));
+      const productToEdit = products.find(p => p.id === parseInt(id));
       if (productToEdit) {
         setFormData({
             name: productToEdit.name,
@@ -43,14 +42,14 @@ const ProductFormPage: React.FC = () => {
         navigate('/seller/products');
       }
     }
-  }, [id, isEditing, navigate, showNotification, products]);
+  }, [id, isEditing, navigate, showNotification]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     const currentSeller = sellers.find(s => s.email === user?.email);
@@ -66,15 +65,15 @@ const ProductFormPage: React.FC = () => {
         description: formData.description,
         stock: parseInt(formData.stock, 10),
         sellerId: currentSeller.id,
-        imageUrls: [formData.imageUrls],
+        imageUrls: [formData.imageUrls], // For now, just one URL as string
     };
     
+    // In a real app, you'd have separate add/update API calls.
     if (isEditing) {
-      // Logic for updating would go here via a context function.
-      // For now, we'll just notify.
+      // Logic for updating would go here. For now, we'll just notify.
       showNotification("Berhasil", `'${newProductData.name}' berhasil diperbarui.`);
     } else {
-      await addProduct(newProductData);
+      addProduct(newProductData);
       showNotification("Berhasil", `'${newProductData.name}' berhasil ditambahkan.`);
     }
 

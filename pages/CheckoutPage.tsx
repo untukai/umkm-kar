@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 import { useNotification } from '../hooks/useNotification';
-import { useAppData } from '../hooks/useAppData';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import { Order } from '../types';
@@ -12,7 +11,6 @@ const CheckoutPage: React.FC = () => {
   const { cartItems, totalPrice, clearCart } = useCart();
   const { isAuthenticated, user } = useAuth();
   const { showNotification } = useNotification();
-  const { addOrder } = useAppData();
   const navigate = useNavigate();
 
   const [shippingInfo, setShippingInfo] = useState({
@@ -67,28 +65,32 @@ const CheckoutPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!shippingInfo.name || !shippingInfo.address || !shippingInfo.phone) {
         alert("Harap isi semua informasi pengiriman.");
         return;
     }
 
-    // FIX: Corrected Omit type to use `_id` instead of `id` to match the Order type.
-    const newOrderData: Omit<Order, '_id' | 'date' | 'status'> = {
-      customerName: user?.name ?? shippingInfo.name,
+    const newOrder: Order = {
+      id: new Date().getTime().toString(),
+      // FIX: Added missing customerName property.
+      customerName: user?.email ?? shippingInfo.name,
       items: cartItems,
       total: totalPrice,
+      date: new Date().toISOString(),
+      status: 'dikemas',
       shippingAddress: shippingInfo
     };
     
-    await addOrder(newOrderData);
-    
+    const existingOrders: Order[] = JSON.parse(localStorage.getItem('kodik-orders') || '[]');
+    localStorage.setItem('kodik-orders', JSON.stringify([...existingOrders, newOrder]));
+
     showNotification('Pesanan Diterima!', 'Terima kasih! Pesanan Anda sedang kami proses.');
     clearCart();
     setTimeout(() => {
         navigate('/profile');
-    }, 1500);
+    }, 3000);
   };
 
   const formatRupiah = (number: number) => {
@@ -192,7 +194,7 @@ const CheckoutPage: React.FC = () => {
                     ? item.product.price * (1 - item.product.discount / 100)
                     : item.product.price;
                   return (
-                    <div key={item.product._id} className="flex justify-between items-start text-sm">
+                    <div key={item.product.id} className="flex justify-between items-start text-sm">
                       <span className="flex-1 text-neutral-600">{item.product.name} <span className="font-semibold">x{item.quantity}</span></span>
                       <span className="font-semibold text-neutral-800">{formatRupiah(itemPrice * item.quantity)}</span>
                     </div>

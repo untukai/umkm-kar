@@ -4,16 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import FilterSidebar from '../components/CategorySidebar';
-import SkeletonProductCard from '../components/SkeletonProductCard';
+import SkeletonProductCard from '../components/SkeletonProductCard'; // Import skeleton
+import { products, categories } from '../data/dummyData';
 import { Product } from '../types';
 import { getAIRecommendations } from '../services/geminiService';
-import { useAppData } from '../hooks/useAppData';
 
 const ProductsPage: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const { products, categories, isLoading: isAppDataLoading } = useAppData();
-  
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
   const [aiRecommendedProductNames, setAiRecommendedProductNames] = useState<string[]>([]);
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,9 +21,9 @@ const ProductsPage: React.FC = () => {
 
   const selectedCategory = categories.find(c => c.id === categoryId);
 
+  // This effect handles all product filtering and AI logic
   useEffect(() => {
-    if (isAppDataLoading) return;
-
+    // 1. Base filtering by category (provides context for AI)
     let baseProducts = [...products];
     if (categoryId) {
       const categoryName = categories.find(c => c.id === categoryId)?.name;
@@ -34,6 +32,7 @@ const ProductsPage: React.FC = () => {
       }
     }
     
+    // 2. Final filtering for display, adding the text search query
     let finalProductsForDisplay = [...baseProducts];
     if (query) {
       const lowercasedQuery = query.toLowerCase();
@@ -44,12 +43,14 @@ const ProductsPage: React.FC = () => {
     }
     setFilteredProducts(finalProductsForDisplay);
     
+    // 3. Trigger AI recommendations based on search query OR selected category
     const recommendationQuery = query || selectedCategory?.name;
     if (recommendationQuery) {
       setIsLoadingRecommendations(true);
       setError(null);
       setAiRecommendedProductNames([]);
       
+      // Pass the broader category-filtered list to the AI for better context
       getAIRecommendations(recommendationQuery, baseProducts)
         .then(recommendations => {
           setAiRecommendedProductNames(recommendations);
@@ -67,7 +68,7 @@ const ProductsPage: React.FC = () => {
         setError(null);
     }
 
-  }, [query, categoryId, selectedCategory, products, categories, isAppDataLoading]);
+  }, [query, categoryId, selectedCategory]);
 
   // Derive display lists from state
   const baseProducts = products.filter(p => {
@@ -84,26 +85,13 @@ const ProductsPage: React.FC = () => {
 
   const pageTitle = () => {
     if (query) return `Hasil pencarian untuk "${query}"`;
-    if (selectedCategory) return `Kategori: ${selectedCategory.name}`;
+    
+    if (selectedCategory) {
+        return `Kategori: ${selectedCategory.name}`;
+    }
+    
     return 'Semua Produk';
   };
-  
-  if (isAppDataLoading) {
-    return (
-      <div className="flex flex-col lg:flex-row gap-8 items-start">
-        <FilterSidebar categories={categories} />
-        <div className="flex-1 w-full min-w-0">
-          <div className="bg-white p-6 rounded-lg shadow-sm mb-8 animate-pulse">
-            <div className="h-9 bg-neutral-200 rounded w-3/4"></div>
-            <div className="h-6 bg-neutral-200 rounded w-1/4 mt-3"></div>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {[...Array(8)].map((_, index) => <SkeletonProductCard key={index} />)}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 items-start">
@@ -120,7 +108,9 @@ const ProductsPage: React.FC = () => {
                 ✨ AI sedang mencari produk terbaik...
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                {[...Array(4)].map((_, index) => <SkeletonProductCard key={index} />)}
+                {[...Array(4)].map((_, index) => (
+                    <SkeletonProductCard key={index} />
+                ))}
             </div>
           </div>
         )}
@@ -131,7 +121,9 @@ const ProductsPage: React.FC = () => {
           <div className="mb-12">
             <h2 className="text-xl font-bold mb-4">Rekomendasi AI Untuk Anda</h2>
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-              {aiRecommendedProducts.map(product => <ProductCard key={product.id} product={product} />)}
+              {aiRecommendedProducts.map(product => (
+                <ProductCard key={product.id} product={product} />
+              ))}
             </div>
           </div>
         )}
@@ -142,7 +134,9 @@ const ProductsPage: React.FC = () => {
                     {aiRecommendedProducts.length > 0 ? "Hasil Lainnya" : "Daftar Produk"}
                 </h2>
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                    {otherProducts.map(product => <ProductCard key={product.id} product={product} />)}
+                    {otherProducts.map(product => (
+                        <ProductCard key={product.id} product={product} />
+                    ))}
                 </div>
             </div>
         )}

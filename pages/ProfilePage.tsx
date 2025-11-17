@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useNotification } from '../hooks/useNotification';
-import { useAppData } from '../hooks/useAppData';
 import { Order } from '../types';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -396,15 +395,19 @@ const WithdrawModal: React.FC<{isOpen: boolean; onClose: () => void; onConfirm: 
 
 const ProfilePage: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
-  const { orders, isLoading } = useAppData();
   const navigate = useNavigate();
+  const [orders, setOrders] = useState<Order[]>([]);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
+
   useEffect(() => {
-    if (!isAuthenticated && !isLoading) {
+    if (!isAuthenticated) {
       navigate('/login');
+    } else {
+      const storedOrders = JSON.parse(localStorage.getItem('kodik-orders') || '[]');
+      setOrders(storedOrders.reverse());
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, navigate]);
 
   const handleLogout = () => {
     logout();
@@ -434,12 +437,6 @@ const ProfilePage: React.FC = () => {
     }
   }
 
-  const userOrders = orders.filter(o => o.customerName === user?.name).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-  if (isLoading) {
-      return <div>Memuat profil...</div>
-  }
-
   return (
     <div>
       <div className="bg-white p-6 rounded-lg shadow-lg mb-8">
@@ -447,8 +444,7 @@ const ProfilePage: React.FC = () => {
           <h1 className="text-3xl font-bold">Profil Saya</h1>
           <Button onClick={handleLogout} variant="outline">Keluar</Button>
         </div>
-        <p className="text-lg">Selamat datang, <span className="font-semibold">{user?.name}</span>!</p>
-        <p className="text-neutral-600">{user?.email}</p>
+        <p className="text-lg">Selamat datang, <span className="font-semibold">{user?.email}</span>!</p>
       </div>
 
       <KodikWallet />
@@ -456,8 +452,8 @@ const ProfilePage: React.FC = () => {
       <div className="bg-white p-6 rounded-lg shadow-lg">
         <h2 className="text-2xl font-bold mb-4">Riwayat Pesanan</h2>
         <div className="space-y-4">
-          {userOrders.length > 0 ? (
-            userOrders.map(order => (
+          {orders.length > 0 ? (
+            orders.map(order => (
               <div key={order.id} className="border rounded-lg overflow-hidden transition-shadow duration-300">
                 <button 
                   onClick={() => toggleOrderDetails(order.id)} 

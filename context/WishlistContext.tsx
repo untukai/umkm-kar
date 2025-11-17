@@ -1,12 +1,11 @@
-
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { Product } from '../types';
 
 interface WishlistContextType {
   wishlistItems: Product[];
   addToWishlist: (product: Product) => void;
-  removeFromWishlist: (productId: string) => void;
-  isInWishlist: (productId: string) => boolean;
+  removeFromWishlist: (productId: number) => void;
+  isInWishlist: (productId: number) => boolean;
   wishlistCount: number;
 }
 
@@ -28,19 +27,19 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const addToWishlist = (product: Product) => {
     setWishlistItems(prevItems => {
-      if (!prevItems.find(item => item._id === product._id)) {
+      if (!prevItems.find(item => item.id === product.id)) {
         return [...prevItems, product];
       }
       return prevItems;
     });
   };
 
-  const removeFromWishlist = (productId: string) => {
-    setWishlistItems(prevItems => prevItems.filter(item => item._id !== productId));
+  const removeFromWishlist = (productId: number) => {
+    setWishlistItems(prevItems => prevItems.filter(item => item.id !== productId));
   };
 
-  const isInWishlist = (productId: string) => {
-    return wishlistItems.some(item => item._id === productId);
+  const isInWishlist = (productId: number) => {
+    return wishlistItems.some(item => item.id === productId);
   };
 
   const wishlistCount = wishlistItems.length;

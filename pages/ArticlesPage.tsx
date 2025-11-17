@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
+import { Article } from '../types';
+import { articles as initialArticles } from '../data/dummyData';
 import ArticleCard from '../components/ArticleCard';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import { generateArticle } from '../services/geminiService';
-import { useAppData } from '../hooks/useAppData';
-import { useAuth } from '../hooks/useAuth';
 
 const ArticlesPage: React.FC = () => {
-  const { articles, addArticle, isLoading: isAppLoading } = useAppData();
-  const { user } = useAuth(); // To get author name
+  const [articles, setArticles] = useState<Article[]>(initialArticles);
   const [topic, setTopic] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleGenerateArticle = async (e: React.FormEvent) => {
@@ -20,18 +19,22 @@ const ArticlesPage: React.FC = () => {
       return;
     }
     
-    setIsGenerating(true);
+    setIsLoading(true);
     setError(null);
 
     try {
       const newArticleData = await generateArticle(topic);
-      await addArticle(newArticleData, user?.name || 'Tim KODIK');
+      const newArticle: Article = {
+        id: Math.max(0, ...articles.map(a => a.id)) + 1, // Simple ID generation
+        ...newArticleData,
+      };
+      setArticles(prevArticles => [newArticle, ...prevArticles]);
       setTopic(''); // Clear input after success
     } catch (err) {
       console.error(err);
       setError('Gagal membuat artikel. Silakan coba lagi.');
     } finally {
-      setIsGenerating(false);
+      setIsLoading(false);
     }
   };
   
@@ -56,11 +59,11 @@ const ArticlesPage: React.FC = () => {
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder="Contoh: Kisah sukses pengrajin batik Karawang"
-              disabled={isGenerating}
+              disabled={isLoading}
             />
           </div>
-          <Button type="submit" disabled={isGenerating} className="w-full sm:w-auto">
-            {isGenerating ? 'Sedang Membuat...' : 'Buat Artikel'}
+          <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
+            {isLoading ? 'Sedang Membuat...' : 'Buat Artikel'}
           </Button>
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
         </form>
@@ -68,15 +71,11 @@ const ArticlesPage: React.FC = () => {
 
       <div>
         <h2 className="text-2xl font-bold mb-6">Semua Artikel</h2>
-        {isAppLoading ? (
-            <p className="text-neutral-500">Memuat artikel...</p>
-        ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {articles.map(article => (
-                <ArticleCard key={article.id} article={article} />
-            ))}
-            </div>
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {articles.map(article => (
+            <ArticleCard key={article.id} article={article} />
+          ))}
+        </div>
       </div>
     </div>
   );

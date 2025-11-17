@@ -1,13 +1,12 @@
 
 import React, { useState } from 'react';
+import { promotions, addPromotion } from '../../data/dummyData';
 import { Promotion } from '../../types';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import { PlusIcon, XIcon, TagIcon } from '../../components/Icons';
-import { useAppData } from '../../hooks/useAppData';
 
-const NewPromoModal: React.FC<{ isOpen: boolean; onClose: () => void; }> = ({ isOpen, onClose }) => {
-  const { addPromotion } = useAppData();
+const NewPromoModal: React.FC<{ isOpen: boolean; onClose: () => void; onAdd: () => void; }> = ({ isOpen, onClose, onAdd }) => {
   const [formData, setFormData] = useState({
     title: '',
     code: '',
@@ -33,6 +32,7 @@ const NewPromoModal: React.FC<{ isOpen: boolean; onClose: () => void; }> = ({ is
       startDate: new Date().toISOString(),
       endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(),
     });
+    onAdd();
     onClose();
   };
 
@@ -93,7 +93,9 @@ const PromoCard: React.FC<{ promo: Promotion }> = ({ promo }) => {
 
 const SellerPromoPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { promotions, isLoading } = useAppData();
+  const [promoList, setPromoList] = useState(promotions);
+
+  const refreshPromos = () => setPromoList([...promotions]);
 
   return (
     <>
@@ -109,10 +111,8 @@ const SellerPromoPage: React.FC = () => {
           </Button>
         </div>
         <div className="space-y-4">
-          {isLoading ? (
-            <p>Memuat promo...</p>
-          ) : promotions.length > 0 ? (
-            promotions.map(promo => <PromoCard key={promo.id} promo={promo} />)
+          {promoList.length > 0 ? (
+            promoList.map(promo => <PromoCard key={promo.id} promo={promo} />)
           ) : (
             <div className="text-center py-10 border-2 border-dashed rounded-lg">
               <TagIcon className="w-12 h-12 mx-auto text-neutral-400" />
@@ -121,7 +121,7 @@ const SellerPromoPage: React.FC = () => {
           )}
         </div>
       </div>
-      <NewPromoModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <NewPromoModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAdd={refreshPromos} />
     </>
   );
 };

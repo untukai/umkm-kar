@@ -1,16 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
-import ArticleCard from '../components/ArticleCard';
-import { useAppData } from '../hooks/useAppData';
+import ArticleCard from '../components/ArticleCard'; // Import ArticleCard
+import { products, categories, articles } from '../data/dummyData';
 import Button from '../components/Button';
-import SkeletonProductCard from '../components/SkeletonProductCard';
 
 const HomePage: React.FC = () => {
-  const { products, categories, articles, isLoading } = useAppData();
-
   const featuredProducts = products.slice(0, 8);
-  const latestArticles = articles.slice(0, 3);
+  const latestArticles = articles.slice(0, 3); // Get latest 3 articles
   const categoryIcons: { [key: string]: string } = {
     Kuliner: '🍔', Fashion: '👕', Kerajinan: '🎨', Pertanian: '🌱', Teknologi: '💻', Jasa: '🛠️', Edukasi: '🎓',
   };
@@ -50,19 +47,11 @@ const HomePage: React.FC = () => {
         </div>
         <div className="relative">
           <div className="flex space-x-4 overflow-x-auto pb-4 scroll-snap-x-mandatory scrollbar-hide">
-            {isLoading ? (
-                [...Array(4)].map((_, i) => (
-                    <div key={i} className="scroll-snap-center flex-shrink-0 w-40 sm:w-48 md:w-1/4">
-                        <SkeletonProductCard />
-                    </div>
-                ))
-            ) : (
-                featuredProducts.map((product) => (
-                <div key={product.id} className="scroll-snap-center flex-shrink-0 w-40 sm:w-48 md:w-1/4">
-                    <ProductCard product={product} />
-                </div>
-                ))
-            )}
+            {featuredProducts.map((product) => (
+              <div key={product.id} className="scroll-snap-center flex-shrink-0 w-40 sm:w-48 md:w-1/4">
+                <ProductCard product={product} />
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -76,15 +65,11 @@ const HomePage: React.FC = () => {
         </div>
         <div className="relative">
           <div className="flex space-x-4 overflow-x-auto pb-4 scroll-snap-x-mandatory scrollbar-hide">
-            {isLoading ? (
-                <p className="text-neutral-500">Memuat artikel...</p>
-            ) : (
-                latestArticles.map((article) => (
-                <div key={article.id} className="scroll-snap-center flex-shrink-0 w-[80vw] sm:w-2/3 md:w-1/2 lg:w-1/3">
-                    <ArticleCard article={article} />
-                </div>
-                ))
-            )}
+            {latestArticles.map((article) => (
+              <div key={article.id} className="scroll-snap-center flex-shrink-0 w-[80vw] sm:w-2/3 md:w-1/2 lg:w-1/3">
+                <ArticleCard article={article} />
+              </div>
+            ))}
           </div>
         </div>
       </section>

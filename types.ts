@@ -1,20 +1,20 @@
 
 
 export interface Product {
-  _id: string; 
+  id: number;
   name: string;
   price: number;
   category: string;
   description: string;
   stock: number;
-  sellerId: string; 
-  discount?: number; 
+  sellerId: number; // Changed from seller: string
+  discount?: number; // Percentage off
   imageUrls: string[];
   status: 'aktif' | 'nonaktif' | 'habis stok';
 }
 
 export interface Seller {
-  _id: string; 
+  id: number;
   name: string;
   description: string;
   rating: number;
@@ -28,12 +28,12 @@ export interface Category {
 }
 
 export interface Article {
-  _id: string; 
+  id: number;
   title: string;
   summary: string;
   content: string;
   author: string;
-  publishDate: string; 
+  publishDate: string; // ISO 8601 format
 }
 
 export interface CartItem {
@@ -42,7 +42,7 @@ export interface CartItem {
 }
 
 export interface Order {
-  _id: string; 
+  id: string;
   customerName: string;
   items: CartItem[];
   total: number;
@@ -55,39 +55,37 @@ export interface Order {
   };
 }
 
-// Updated User type for Google OAuth and MongoDB
 export interface User {
-  google_id: string;
-  role: 'buyer' | 'seller';
-  name: string;
   email: string;
-  avatar_url?: string;
+  role: 'pembeli' | 'penjual';
+  coins?: number;
+  balance?: number;
 }
 
 export interface Review {
-  _id: string; 
-  productId: string; 
+  id: number;
+  productId: number;
   userName: string;
   userEmail: string;
-  rating: number; 
+  rating: number; // 1 to 5
   comment: string;
-  date: string; 
+  date: string; // ISO 8601 format
 }
 
 export interface Comment {
-  _id: string; 
-  parentId?: string | null; 
-  userName:string;
+  id: number;
+  parentId?: number | null;
+  userName: string;
   userEmail: string;
   text: string;
 }
 
 export interface Post {
-  _id: string; 
-  sellerId: string; 
+  id: number;
+  sellerId: number;
   content: string;
   imageUrl?: string;
-  timestamp: string; 
+  timestamp: string; // ISO 8601 format
   likes: number;
   comments: Comment[];
 }
@@ -100,27 +98,22 @@ export interface LiveChatMessage {
   giftIcon?: string;
 }
 
-// Updated LiveSession to match MongoDB schema
 export interface LiveSession {
-  _id: string;
-  seller_id: string;
+  id: number;
+  sellerId: number;
   title: string;
-  product_ids: string[];
-  start_time: string;
-  end_time: string;
-  status: 'scheduled' | 'ongoing' | 'finished';
-  google_calendar_event_id: string;
-  google_meet_link: string;
-  thumbnail_url: string;
-  seller_name?: string; 
+  status: 'live' | 'replay';
+  thumbnailUrl: string;
+  productIds: number[];
+  likes?: number;
+  viewers?: number;
 }
-
 
 export interface VirtualGift {
   id: number;
   name: string;
   icon: string;
-  price: number; 
+  price: number; // in coins
 }
 
 export interface ChatMessage {
@@ -130,8 +123,8 @@ export interface ChatMessage {
 }
 
 export interface Conversation {
-  _id: string; 
-  customerId: string; 
+  id: number;
+  customerId: number; // Assuming a customer ID exists, can link to a future customer type
   customerName: string;
   lastMessage: string;
   timestamp: string;
@@ -140,20 +133,20 @@ export interface Conversation {
 }
 
 export interface FinancialTransaction {
-  _id: string; 
+  id: string;
   date: string;
   type: 'Penjualan' | 'Pencairan Dana' | 'Refund';
   description: string;
-  amount: number; 
+  amount: number; // positive for income, negative for outcome
   status: 'Selesai' | 'Tertunda';
 }
 
 export interface Promotion {
-  _id: string; 
+  id: number;
   type: 'Voucher' | 'Diskon Produk';
-  code?: string; 
+  code?: string; // for vouchers
   title: string;
-  discountValue: number; 
+  discountValue: number; // percentage or fixed amount
   discountType: 'persen' | 'nominal';
   minPurchase: number;
   startDate: string;
@@ -162,7 +155,7 @@ export interface Promotion {
 }
 
 export interface Influencer {
-  _id: string; 
+  id: number;
   name: string;
   category: string;
   followers: {

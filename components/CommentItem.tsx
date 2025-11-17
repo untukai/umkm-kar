@@ -6,9 +6,9 @@ import CommentForm from './CommentForm';
 interface CommentItemProps {
   comment: Comment;
   allComments: Comment[];
-  onReply: (commentId: string) => void;
-  activeReplyId: string | null;
-  onSubmitReply: (text: string, parentId: string) => void;
+  onReply: (commentId: number) => void;
+  activeReplyId: number | null;
+  onSubmitReply: (text: string, parentId: number) => void;
   onCancelReply: () => void;
 }
 
@@ -20,11 +20,11 @@ const CommentItem: React.FC<CommentItemProps> = ({
   onSubmitReply,
   onCancelReply,
 }) => {
-  const replies = allComments.filter(c => c.parentId === comment._id);
-  const isReplying = activeReplyId === comment._id;
+  const replies = allComments.filter(c => c.parentId === comment.id);
+  const isReplying = activeReplyId === comment.id;
 
   const handleReplySubmit = (text: string) => {
-    onSubmitReply(text, comment._id);
+    onSubmitReply(text, comment.id);
   };
 
   return (
@@ -38,7 +38,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
           <p className="text-sm text-neutral-700">{comment.text}</p>
         </div>
         <div className="flex items-center gap-3 text-xs text-neutral-500 mt-1">
-          <button onClick={() => onReply(comment._id)} className="font-semibold hover:underline">Balas</button>
+          <button onClick={() => onReply(comment.id)} className="font-semibold hover:underline">Balas</button>
         </div>
         
         {isReplying && (
@@ -57,7 +57,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
           <div className="mt-3 space-y-3">
             {replies.map(reply => (
               <CommentItem
-                key={reply._id}
+                key={reply.id}
                 comment={reply}
                 allComments={allComments}
                 onReply={onReply}
