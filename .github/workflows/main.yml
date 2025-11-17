@@ -1,30 +1,14 @@
-File: .github/workflows/main.yml
-
-Alur kerja GitHub Actions untuk membangun APK Android
-
-name: Build KODIK Android APK
-
-on:
-push:
-# Menggunakan format list YAML standar
-branches:
-- main
-workflow_dispatch:
-
-jobs:
-build:
-runs-on: ubuntu-latest
 steps:
-# --- START: Semua list item (-) harus teridentasi 2 spasi dari 'steps' ---
-- name: Checkout repository
-uses: actions/checkout@v4
+  - name: Checkout repository
+    uses: actions/checkout@v4
 
   - name: Set up JDK 17
     uses: actions/setup-java@v4
     with:
       java-version: '17'
       distribution: 'temurin'
-      
+      cache: gradle
+
   - name: Setup Gradle
     uses: gradle/actions/setup-gradle@v3
 
@@ -32,27 +16,14 @@ uses: actions/checkout@v4
     run: chmod +x gradlew
 
   - name: Build with Gradle
-    run: ./gradlew assembleDebug
+    run: ./gradlew assembleDebug --stacktrace --info
 
-  # --- Langkah Fleksibel untuk Mengatasi Artifact Hilang ---
-  - name: Find generated APK
-    id: find_apk
-    run: |
-      # Cari file .apk apapun di dalam folder output utama
-      APK_PATH=$(find ${{ github.workspace }}/app/build/outputs/apk/ -name "*.apk" -print -quit)
-      
-      if [ -z "$APK_PATH" ]; then
-        echo "::error::APK file not found! Check your build logs. No APK was generated."
-        exit 1 
-      fi
-      
-      echo "Ditemukan APK pada jalur: $APK_PATH"
-      echo "APK_FILE_PATH=$APK_PATH" >> $GITHUB_OUTPUT
+  - name: List APK outputs
+    run: ls -R
 
   - name: Upload APK as artifact
     uses: actions/upload-artifact@v4
     with:
       name: KODIK-Android-APK
-      path: ${{ steps.find_apk.outputs.APK_FILE_PATH }}
-      retention-days: 7 
-  # --- END ---
+      path: |
+        **/build/outputs/apk/**/*.apk
