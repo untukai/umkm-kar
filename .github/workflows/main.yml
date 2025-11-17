@@ -26,20 +26,13 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Grant execute permission for gradlew
-        # gradlew seharusnya berada di root proyek, bukan di dalam modul 'app'
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        # Jalankan gradlew dari root. Ini akan secara otomatis menemukan modul 'app'.
         run: ./gradlew assembleDebug
-
-      # Langkah debug untuk memverifikasi lokasi file APK
-      - name: List output files
-        run: ls -R app/build/outputs/apk/debug
 
       - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
         with:
           name: KODIK-Android-APK
-          # Path yang diperbaiki ke APK, relatif terhadap root repositori
           path: app/build/outputs/apk/debug/app-debug.apk
