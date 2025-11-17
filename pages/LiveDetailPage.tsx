@@ -1,58 +1,16 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { liveSessions, sellers, products, endLiveSession, addOrUpdateLiveSession } from '../data/dummyData';
-import { LiveChatMessage, Product, LiveSession } from '../types';
+import { liveSessions, sellers, products, endLiveSession } from '../data/dummyData';
+import { LiveChatMessage, Product } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 import { useNotification } from '../hooks/useNotification';
 import { useFollow } from '../hooks/useFollow';
 import { useShare } from '../hooks/useShare';
 import Button from '../components/Button';
-import { ShoppingCartIcon, XIcon, ShareIcon, StoreIcon, EyeIcon, HeartIcon, VideoCameraIcon } from '../components/Icons';
-import signalingService from '../services/signalingService';
+import { ShoppingCartIcon, XIcon, ShareIcon, StoreIcon, EyeIcon, HeartIcon } from '../components/Icons';
 
 let heartCounter = 0;
-
-// Enhanced configuration with redundant STUN servers for better reliability
-const configuration = { 
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
-  ] 
-};
-
-// NEW MODAL COMPONENT
-const PermissionModal: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  onRetry: () => void;
-  errorMessage: string;
-}> = ({ isOpen, onClose, onRetry, errorMessage }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 animate-fade-in-overlay">
-      <div className="bg-white text-black rounded-lg shadow-xl w-full max-w-md animate-popup-in" onClick={e => e.stopPropagation()}>
-        <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-xl font-bold text-yellow-600">Izin Diperlukan</h2>
-          <button onClick={onClose} className="p-1 text-neutral-500 hover:text-neutral-800"><XIcon className="w-6 h-6"/></button>
-        </div>
-        <div className="p-6 text-center">
-            <VideoCameraIcon className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-            <p className="text-neutral-600 mb-2">{errorMessage}</p>
-            <p className="text-xs text-neutral-500">
-                Pastikan Anda mengklik "Allow" atau "Izinkan" saat browser meminta akses. Jika Anda tidak sengaja memblokirnya, Anda perlu mengubah pengaturan izin untuk situs ini di browser Anda.
-            </p>
-        </div>
-        <div className="p-4 border-t flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={onClose}>Tutup</Button>
-          <Button type="button" onClick={onRetry}>Coba Lagi</Button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const LiveDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -63,14 +21,7 @@ const LiveDetailPage: React.FC = () => {
   const { showShareModal } = useShare();
   const navigate = useNavigate();
   const chatEndRef = useRef<HTMLDivElement>(null);
-  
   const videoRef = useRef<HTMLVideoElement>(null);
-  const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
-  const localStreamRef = useRef<MediaStream | null>(null);
-  const candidateQueueRef = useRef<RTCIceCandidateInit[]>([]);
-  
-  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
-  const [pendingViewers, setPendingViewers] = useState<string[]>([]);
 
   const [session, setSession] = useState(() => liveSessions.find(s => s.id === parseInt(id || '')));
   const [isLoading, setIsLoading] = useState(!session);
@@ -90,296 +41,27 @@ const LiveDetailPage: React.FC = () => {
   const [viewers, setViewers] = useState(session?.viewers || 0);
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number }[]>([]);
   const [isSessionEnded, setIsSessionEnded] = useState(false);
-  
-  const [showPermissionModal, setShowPermissionModal] = useState(false);
-  const [permissionError, setPermissionError] = useState('');
-
-  const qualityProfiles = {
-      high: {
-          videoConstraints: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
-      },
-  };
 
   const pinnedProduct = useMemo(() => {
     if (!pinnedProductId) return null;
     return products.find(p => p.id === pinnedProductId) || null;
   }, [pinnedProductId]);
 
-  // Reliable remote stream playback for viewers
   useEffect(() => {
-    if (remoteStream && videoRef.current) {
-        videoRef.current.srcObject = remoteStream;
-        videoRef.current.play().catch(error => {
-            console.warn("Autoplay was prevented:", error);
-            if (videoRef.current) {
-                videoRef.current.muted = true;
-                videoRef.current.play();
-            }
-        });
-    }
-  }, [remoteStream]);
-
-  // FIX: Moved startBroadcast and its dependency createPeerConnectionForViewer out of useEffect
-  // and wrapped in useCallback to fix scope issue and prevent re-renders.
-  const createPeerConnectionForViewer = useCallback(async (viewerId: string) => {
-    if (!localStreamRef.current) {
-        console.error("Host stream not ready when trying to connect viewer:", viewerId);
-        return;
-    }
-    if (!id) return;
-
-    console.log(`Creating peer connection for viewer ${viewerId}`);
-    const pc = new RTCPeerConnection(configuration);
-    peerConnectionsRef.current.set(viewerId, pc);
-
-    pc.onicecandidate = (event) => {
-        if (event.candidate) {
-            signalingService.sendMessage({ type: 'ice-candidate', payload: event.candidate, sessionId: id, targetPeerId: viewerId });
-        }
-    };
-    
-    // Handle ICE connection state changes for debugging and auto-recovery
-    pc.oniceconnectionstatechange = () => {
-        console.log(`ICE connection state for viewer ${viewerId} changed to: ${pc.iceConnectionState}`);
-        if (pc.iceConnectionState === 'failed') {
-            showNotification('Koneksi Gagal', `Koneksi dengan penonton terputus. Mencoba menyambungkan kembali...`, 'error');
-            // The host should initiate the restart
-            pc.restartIce();
-        }
-    };
-    
-    // Use onnegotiationneeded to handle initial offer and subsequent offers for ICE restarts
-    pc.onnegotiationneeded = async () => {
-        console.log(`Negotiation needed for viewer ${viewerId}. Creating offer...`);
-        try {
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            signalingService.sendMessage({ type: 'offer', payload: offer, sessionId: id, targetPeerId: viewerId });
-        } catch (err) {
-            console.error(`Error creating offer for ${viewerId}:`, err);
-        }
-    };
-
-    localStreamRef.current.getTracks().forEach(track => pc.addTrack(track, localStreamRef.current!));
-  }, [id, showNotification]);
-
-  const startBroadcast = useCallback(async () => {
-    setShowPermissionModal(false);
-    try {
-        // Always request high quality to have a good source stream to manipulate
-        const stream = await navigator.mediaDevices.getUserMedia({ video: qualityProfiles['high'].videoConstraints, audio: true });
-        localStreamRef.current = stream;
-        if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            videoRef.current.muted = true;
-            videoRef.current.play().catch(e => console.error("Local stream play failed", e));
-        }
-        // Process any viewers who joined before the stream was ready by using functional update
-        setPendingViewers(currentPendingViewers => {
-            console.log(`Stream ready. Processing ${currentPendingViewers.length} pending viewers.`);
-            currentPendingViewers.forEach(viewerId => createPeerConnectionForViewer(viewerId));
-            return [];
-        });
-    } catch (err) {
-        console.error("Failed to get media stream:", err);
-        let errorMessage = 'Anda harus mengizinkan akses kamera dan mikrofon untuk memulai sesi live.';
-        if (err instanceof DOMException) {
-            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                errorMessage = 'Akses kamera dan mikrofon ditolak. Mohon izinkan akses di pengaturan browser Anda dan coba lagi.';
-            } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-                errorMessage = 'Tidak ada kamera atau mikrofon yang ditemukan di perangkat Anda.';
-            }
-        }
-        setPermissionError(errorMessage);
-        setShowPermissionModal(true);
-    }
-  }, [createPeerConnectionForViewer, setPendingViewers, setPermissionError, setShowPermissionModal]);
-
-  useEffect(() => {
-    if (!id) return;
-    
-    let timeoutId: number | null = null;
-    
-    const handleVisibilityChange = async () => {
-        if (document.visibilityState === 'visible' && isHost && localStreamRef.current) {
-            const videoTrack = localStreamRef.current.getVideoTracks()[0];
-            if (videoTrack && videoTrack.readyState === 'ended') {
-                console.log("Camera track ended. Restarting broadcast.");
-                showNotification("Info", "Menyalakan kembali kamera Anda...");
-                try {
-                    const newStream = await navigator.mediaDevices.getUserMedia({ video: qualityProfiles['high'].videoConstraints, audio: true });
-                    const newVideoTrack = newStream.getVideoTracks()[0];
-                    const newAudioTrack = newStream.getAudioTracks()[0];
-
-                    for (const pc of peerConnectionsRef.current.values()) {
-                        const videoSender = pc.getSenders().find(s => s.track?.kind === 'video');
-                        if (videoSender) await videoSender.replaceTrack(newVideoTrack);
-                        const audioSender = pc.getSenders().find(s => s.track?.kind === 'audio');
-                        if (audioSender) await audioSender.replaceTrack(newAudioTrack);
-                    }
-
-                    localStreamRef.current.getTracks().forEach(track => track.stop());
-                    localStreamRef.current = newStream;
-                    if (videoRef.current) videoRef.current.srcObject = newStream;
-
-                } catch (err) {
-                    console.error("Failed to restart media stream:", err);
-                    let errorMessage = 'Gagal mengakses ulang kamera dan mikrofon Anda.';
-                    if (err instanceof DOMException && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')) {
-                        errorMessage = 'Izin kamera/mikrofon dicabut. Mohon izinkan kembali di pengaturan browser.';
-                    }
-                    setPermissionError(errorMessage);
-                    setShowPermissionModal(true);
-                }
-            }
-        }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    const handleSignalingMessage = async (message: any) => {
-        if (message.sessionId !== id) return;
-
-        const fromPeerId = message.fromPeerId;
-        const targetPeerId = message.targetPeerId;
-        const myPeerId = signalingService.getPeerId();
-
-        try {
-            // isHost is a memoized value that depends on `session`. Ensure it's correct.
-            // Since this function is defined inside useEffect which depends on isHost, it should be fine.
-            if (isHost) {
-                const pc = peerConnectionsRef.current.get(fromPeerId);
-                
-                if (message.type === 'viewer-join') {
-                    if (localStreamRef.current && localStreamRef.current.active) {
-                        console.log(`Viewer ${fromPeerId} joining. Stream ready. Creating connection.`);
-                        await createPeerConnectionForViewer(fromPeerId);
-                    } else {
-                        console.log(`Viewer ${fromPeerId} joining. Stream not ready. Queuing.`);
-                        setPendingViewers(prev => [...prev, fromPeerId]);
-                    }
-                } else if (message.type === 'answer' && pc) {
-                    await pc.setRemoteDescription(new RTCSessionDescription(message.payload));
-                } else if (message.type === 'ice-candidate' && pc) {
-                     await pc.addIceCandidate(new RTCIceCandidate(message.payload));
-                } else if (message.type === 'request-session-data') {
-                    const currentSession = liveSessions.find(s => s.id === parseInt(id));
-                    if (currentSession) {
-                        signalingService.sendMessage({
-                            type: 'session-data-response',
-                            payload: currentSession,
-                            sessionId: id,
-                            targetPeerId: fromPeerId
-                        });
-                    }
-                }
-            } else { // Viewer logic
-                if (message.type === 'offer' && targetPeerId === myPeerId) {
-                    let pc = peerConnectionsRef.current.get('host');
-                    if (!pc) {
-                        pc = new RTCPeerConnection(configuration);
-                        peerConnectionsRef.current.set('host', pc);
-
-                        pc.onicecandidate = (event) => {
-                            if (event.candidate) {
-                                signalingService.sendMessage({ type: 'ice-candidate', payload: event.candidate, sessionId: id, targetPeerId: fromPeerId });
-                            }
-                        };
-                        
-                        pc.oniceconnectionstatechange = () => {
-                            console.log(`Viewer ICE connection state changed to: ${pc.iceConnectionState}`);
-                        };
-
-                        pc.ontrack = (event) => {
-                            setRemoteStream(event.streams[0]);
-                        };
-                    }
-
-                    await pc.setRemoteDescription(new RTCSessionDescription(message.payload));
-                    
-                    candidateQueueRef.current.forEach(candidate => {
-                        pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.error("Error adding queued ICE candidate", e));
-                    });
-                    candidateQueueRef.current = [];
-
-                    const answer = await pc.createAnswer();
-                    await pc.setLocalDescription(answer);
-                    signalingService.sendMessage({ type: 'answer', payload: answer, sessionId: id, targetPeerId: fromPeerId });
-                } else if (message.type === 'ice-candidate' && targetPeerId === myPeerId) {
-                    const pc = peerConnectionsRef.current.get('host');
-                    if (pc && pc.remoteDescription) {
-                        await pc.addIceCandidate(new RTCIceCandidate(message.payload));
-                    } else {
-                        candidateQueueRef.current.push(message.payload);
-                    }
-                }
-            }
-
-            if (message.type === 'session-data-response' && targetPeerId === myPeerId) {
-                const receivedSession = message.payload as LiveSession;
-                if (receivedSession) {
-                    addOrUpdateLiveSession(receivedSession); // Update global store
-                    setSession(receivedSession); // Update local state
-                    setIsLoading(false); // Stop loading
-                    if (timeoutId) clearTimeout(timeoutId); // Clear the timeout
-                }
-            }
-            if (message.type === 'pin-product') setPinnedProductId(message.payload.productId);
-            else if (message.type === 'unpin-product') setPinnedProductId(null);
-            else if (message.type === 'end-session') {
-                setIsSessionEnded(true);
-                peerConnectionsRef.current.forEach(pc => pc.close());
-                peerConnectionsRef.current.clear();
-                if (localStreamRef.current) localStreamRef.current.getTracks().forEach(t => t.stop());
-                setTimeout(() => navigate('/live'), 3000);
-            }
-        } catch (error) {
-            console.error("Error handling signaling message:", error, message);
-        }
-    };
-    
-    signalingService.connect(id);
-    signalingService.onMessage(handleSignalingMessage);
-
-    if (session) {
-      if (session.status === 'live') {
-        if (isHost) {
-          startBroadcast();
-        } else {
-          signalingService.sendMessage({ type: 'viewer-join', sessionId: id });
-        }
-      } else { // Replay
-        setIsLoading(false);
-        if (videoRef.current) {
-          videoRef.current.src = 'https://videos.pexels.com/video-files/855352/855352-hd_720_1366_25fps.mp4';
-          videoRef.current.muted = false;
-          videoRef.current.loop = true;
-          videoRef.current.play().catch(e => console.error("Replay autoplay failed", e));
-        }
+    const currentSession = liveSessions.find(s => s.id === parseInt(id || ''));
+    if (currentSession) {
+      setSession(currentSession);
+      setIsLoading(false);
+      if (currentSession.status === 'replay' && videoRef.current) {
+        videoRef.current.src = 'https://videos.pexels.com/video-files/855352/855352-hd_720_1366_25fps.mp4';
+        videoRef.current.muted = false;
+        videoRef.current.loop = true;
+        videoRef.current.play().catch(e => console.error("Replay autoplay failed", e));
       }
     } else {
-        // Session not found locally, request it from host
-        console.log("Session not found locally, requesting from host...");
-        signalingService.sendMessage({ type: 'request-session-data', sessionId: id });
-        // Set a timeout to prevent indefinite loading
-        timeoutId = window.setTimeout(() => {
-            if (!session) { // Check again in case a response came in right at the 5s mark
-                setIsLoading(false); // This will trigger the "not found" message if session is still null
-            }
-        }, 5000);
+        setIsLoading(false); // Session not found
     }
-
-    return () => {
-        if (timeoutId) clearTimeout(timeoutId);
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-        if (localStreamRef.current) {
-            localStreamRef.current.getTracks().forEach(track => track.stop());
-        }
-        peerConnectionsRef.current.forEach(pc => pc.close());
-        peerConnectionsRef.current.clear();
-        signalingService.disconnect();
-    };
-  }, [id, isHost, navigate, showNotification, createPeerConnectionForViewer, startBroadcast]);
+  }, [id]);
 
   const sampleChats: Omit<LiveChatMessage, 'id'>[] = [
     { userName: 'Andi', text: 'Keren banget produknya!' }, { userName: 'Sari', text: 'Diskonnya sampai kapan kak?' }, { userName: 'Rina', text: 'Baru join, lagi bahas apa nih?' }, { userName: 'Budi', text: '💚', isGift: true, giftIcon: '💚' }, { userName: 'Joko', text: 'Pengirimannya aman kan?' }, { userName: 'Wati', text: 'Langsung checkout ah! 👍' },
@@ -406,13 +88,15 @@ const LiveDetailPage: React.FC = () => {
   const handleAddHeart = () => { setLikes(l => l + 1); const newHeart = { id: heartCounter++, x: Math.random() * 50 + 25 }; setFloatingHearts(prev => [...prev, newHeart]); setTimeout(() => setFloatingHearts(prev => prev.filter(h => h.id !== newHeart.id)), 2000); };
 
   const handlePinProduct = (productId: number) => {
-    if (!isHost || !id) return;
-    signalingService.sendMessage({ type: 'pin-product', payload: { productId }, sessionId: id });
+    if (isHost) {
+      setPinnedProductId(productId);
+    }
   };
   
   const handleUnpinProduct = () => {
-    if (!isHost || !id) return;
-    signalingService.sendMessage({ type: 'unpin-product', sessionId: id });
+    if (isHost) {
+      setPinnedProductId(null);
+    }
   };
 
   const handleShare = async () => {
@@ -495,7 +179,17 @@ const LiveDetailPage: React.FC = () => {
   return (
     <>
       <div className="h-screen w-screen bg-black text-white relative flex flex-col font-sans overflow-hidden">
-        <video ref={videoRef} autoPlay playsInline controls={session.status === 'replay'} className="absolute inset-0 w-full h-full object-cover z-0" style={{ transform: isHost ? 'scaleX(-1)' : 'none' }} poster={session.thumbnailUrl} />
+        {session.status === 'live' ? (
+          <iframe
+            allow="camera; microphone; display-capture"
+            src={`https://meet.jit.si/KODIK-Live-Session-${session.id}`}
+            className="absolute inset-0 w-full h-full object-cover z-0 border-0"
+            style={{ transform: isHost ? 'scaleX(-1)' : 'none' }}
+          ></iframe>
+        ) : (
+          <video ref={videoRef} autoPlay playsInline controls className="absolute inset-0 w-full h-full object-cover z-0" poster={session.thumbnailUrl} />
+        )}
+
         {isSessionEnded && (
           <div className="absolute inset-0 bg-black/70 z-30 flex flex-col items-center justify-center text-center p-4 animate-fade-in">
             <h2 className="text-2xl font-bold">Siaran Langsung Telah Berakhir</h2>
@@ -551,19 +245,6 @@ const LiveDetailPage: React.FC = () => {
           </div>
         )}
       </div>
-      <PermissionModal 
-          isOpen={showPermissionModal}
-          onClose={() => {
-              setShowPermissionModal(false);
-              navigate('/seller/live');
-          }}
-          onRetry={() => {
-            if (isHost) {
-              startBroadcast();
-            }
-          }}
-          errorMessage={permissionError}
-      />
     </>
   );
 };

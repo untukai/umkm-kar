@@ -32,38 +32,6 @@ const LiveSessionCard: React.FC<{ session: LiveSession }> = ({ session }) => {
   );
 };
 
-// NEW MODAL COMPONENT
-const PermissionModal: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  onRetry: () => void;
-  errorMessage: string;
-}> = ({ isOpen, onClose, onRetry, errorMessage }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 animate-fade-in-overlay">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md animate-popup-in" onClick={e => e.stopPropagation()}>
-        <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-xl font-bold text-yellow-600">Izin Diperlukan</h2>
-          <button onClick={onClose} className="p-1 text-neutral-500 hover:text-neutral-800"><XIcon className="w-6 h-6"/></button>
-        </div>
-        <div className="p-6 text-center">
-            <VideoCameraIcon className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-            <p className="text-neutral-600 mb-2">{errorMessage}</p>
-            <p className="text-xs text-neutral-500">
-                Pastikan Anda mengklik "Allow" atau "Izinkan" saat browser meminta akses. Jika Anda tidak sengaja memblokirnya, Anda perlu mengubah pengaturan izin untuk situs ini di browser Anda.
-            </p>
-        </div>
-        <div className="p-4 border-t flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={onClose}>Tutup</Button>
-          <Button type="button" onClick={onRetry}>Coba Lagi</Button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const NewLiveSessionModal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
@@ -75,9 +43,6 @@ const NewLiveSessionModal: React.FC<{
   const [title, setTitle] = useState('');
   const [selectedProductIds, setSelectedProductIds] = useState<Set<number>>(new Set());
   const [isStarting, setIsStarting] = useState(false);
-  // NEW STATES
-  const [showPermissionModal, setShowPermissionModal] = useState(false);
-  const [permissionError, setPermissionError] = useState('');
 
   const handleProductToggle = (productId: number) => {
     setSelectedProductIds(prev => {
@@ -91,7 +56,8 @@ const NewLiveSessionModal: React.FC<{
     });
   };
 
-  const startLiveStream = async () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     const currentSeller = sellers.find(s => s.email === user?.email);
     if (!title.trim() || selectedProductIds.size === 0 || !currentSeller) {
       showNotification('Gagal', 'Judul dan minimal satu produk harus dipilih.', 'error');
@@ -99,45 +65,17 @@ const NewLiveSessionModal: React.FC<{
     }
   
     setIsStarting(true);
-    setShowPermissionModal(false);
   
-    try {
-      // Request camera AND microphone permission
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      // We got permission, stop the tracks immediately as we don't need them here.
-      stream.getTracks().forEach(track => track.stop());
-  
-      const newSession = addLiveSession({
-        sellerId: currentSeller.id,
-        title,
-        thumbnailUrl: products.find(p => p.id === Array.from(selectedProductIds)[0])?.imageUrls[0] || '',
-        productIds: Array.from(selectedProductIds),
-      });
-  
-      showNotification('Berhasil!', 'Sesi live Anda telah dimulai.');
-      onClose();
-      navigate(`/live/${newSession.id}`);
-  
-    } catch (err) {
-      console.error("Camera/Mic access denied:", err);
-      let errorMessage = 'Anda harus mengizinkan akses kamera dan mikrofon untuk memulai sesi live.';
-      if (err instanceof DOMException) {
-          if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-              errorMessage = 'Akses kamera dan mikrofon ditolak. Mohon izinkan akses di pengaturan browser Anda dan coba lagi.';
-          } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-              errorMessage = 'Tidak ada kamera atau mikrofon yang ditemukan di perangkat Anda.';
-          }
-      }
-      setPermissionError(errorMessage);
-      setShowPermissionModal(true);
-    } finally {
-        setIsStarting(false);
-    }
-  };
+    const newSession = addLiveSession({
+      sellerId: currentSeller.id,
+      title,
+      thumbnailUrl: products.find(p => p.id === Array.from(selectedProductIds)[0])?.imageUrls[0] || '',
+      productIds: Array.from(selectedProductIds),
+    });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    startLiveStream();
+    showNotification('Berhasil!', 'Mengarahkan Anda ke studio live...');
+    onClose();
+    navigate(`/live/${newSession.id}`);
   };
 
   if (!isOpen) return null;
@@ -177,12 +115,6 @@ const NewLiveSessionModal: React.FC<{
           </form>
         </div>
       </div>
-      <PermissionModal
-        isOpen={showPermissionModal}
-        onClose={() => setShowPermissionModal(false)}
-        onRetry={startLiveStream}
-        errorMessage={permissionError}
-      />
     </>
   );
 };
