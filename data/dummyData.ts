@@ -217,10 +217,10 @@ export const addComment = (postId: number, comment: Omit<Comment, 'id'>) => {
 };
 
 export let liveSessions: LiveSession[] = [
-  { id: 1, sellerId: 1, title: 'Promo Serabi Kinca Durian!', status: 'live', thumbnailUrl: 'https://images.unsplash.com/photo-1563889958723-5a507119999a?w=600&h=600&fit=crop', productIds: [1, 8], likes: 7200, viewers: 226 },
-  { id: 2, sellerId: 9, title: 'Unboxing Kaos Karawang Pride Edisi Baru', status: 'live', thumbnailUrl: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&h=600&fit=crop', productIds: [9], likes: 5100, viewers: 189 },
-  { id: 3, sellerId: 2, title: 'Proses Membatik Langsung dari Studio', status: 'replay', thumbnailUrl: 'https://images.unsplash.com/photo-1622542910436-15772a153257?w=600&h=600&fit=crop', productIds: [2], likes: 12000, viewers: 450 },
-  { id: 4, sellerId: 10, title: 'Workshop Membuat Gerabah Unik', status: 'replay', thumbnailUrl: 'https://images.unsplash.com/photo-1554228498-84752c288924?w=600&h=600&fit=crop', productIds: [10], likes: 3400, viewers: 150 },
+  { id: 1, sellerId: 1, title: 'Promo Serabi Kinca Durian!', status: 'live', thumbnailUrl: 'https://images.unsplash.com/photo-1563889958723-5a507119999a?w=600&h=600&fit=crop', productIds: [1, 8], likes: 7200, viewers: 226, meetUrl: 'https://meet.google.com/hgo-wjfe-euc' },
+  { id: 2, sellerId: 9, title: 'Unboxing Kaos Karawang Pride Edisi Baru', status: 'live', thumbnailUrl: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&h=600&fit=crop', productIds: [9], likes: 5100, viewers: 189, meetUrl: 'https://meet.google.com/hgo-wjfe-euc' },
+  { id: 3, sellerId: 2, title: 'Proses Membatik Langsung dari Studio', status: 'replay', thumbnailUrl: 'https://images.unsplash.com/photo-1622542910436-15772a153257?w=600&h=600&fit=crop', productIds: [2], likes: 12000, viewers: 450, meetUrl: 'https://meet.google.com/hgo-wjfe-euc' },
+  { id: 4, sellerId: 10, title: 'Workshop Membuat Gerabah Unik', status: 'replay', thumbnailUrl: 'https://images.unsplash.com/photo-1554228498-84752c288924?w=600&h=600&fit=crop', productIds: [10], likes: 3400, viewers: 150, meetUrl: 'https://meet.google.com/hgo-wjfe-euc' },
 ];
 
 export const addLiveSession = (session: Omit<LiveSession, 'id' | 'status'>): LiveSession => {

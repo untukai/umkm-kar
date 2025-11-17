@@ -87,33 +87,6 @@ const LiveDetailPage: React.FC = () => {
     return products.find(p => p.id === pinnedProductId) || null;
   }, [pinnedProductId]);
   
-  const jitsiUrl = useMemo(() => {
-    if (!session || !seller) return '';
-
-    const roomName = `KODIK-Live-Session-${session.id}`;
-    const baseUrl = `https://meet.jit.si/${roomName}`;
-    let configString = '#config.prejoinPageEnabled=false';
-    configString += '&interfaceConfig.SHOW_JITSI_WATERMARK=false';
-    configString += '&interfaceConfig.SHOW_WATERMARK_FOR_GUESTS=false';
-    configString += '&interfaceConfig.SHOW_BRAND_WATERMARK=false';
-    configString += '&interfaceConfig.SHOW_POWERED_BY=false';
-    configString += '&interfaceConfig.DISABLE_JOIN_LEAVE_NOTIFICATIONS=true';
-
-
-    if (isHost) {
-        configString += `&userInfo.displayName="${encodeURIComponent(seller.name)}"`;
-        configString += '&interfaceConfig.TOOLBAR_BUTTONS=["microphone","camera","hangup"]';
-    } else {
-        const displayName = user?.email?.split('@')[0] || 'Penonton';
-        configString += `&userInfo.displayName="${encodeURIComponent(displayName)}"`;
-        configString += '&interfaceConfig.TOOLBAR_BUTTONS=[]';
-        configString += '&config.startWithVideoMuted=true';
-        configString += '&config.startWithAudioMuted=true';
-    }
-
-    return `${baseUrl}${configString}`;
-  }, [session, seller, isHost, user]);
-
   useEffect(() => {
     const currentSession = liveSessions.find(s => s.id === parseInt(id || ''));
     if (currentSession) {
@@ -148,7 +121,7 @@ const LiveDetailPage: React.FC = () => {
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMessages]);
 
-  const handleSendMessage = (e: React.FormEvent) => { e.preventDefault(); if (!newMessage.trim()) return; if (!isAuthenticated) { showNotification('Gagal', 'Anda harus masuk untuk mengirim komentar.', 'error', { label: 'Masuk', path: '/login' }); return; } const msg: LiveChatMessage = { id: Date.now(), userName: 'Anda', text: newMessage }; setChatMessages(prev => [...prev, msg]); setNewMessage(''); };
+  const handleSendMessage = (e: React.FormEvent) => { e.preventDefault(); if (!newMessage.trim()) return; if (!isAuthenticated) { showNotification('Gagal', 'Anda harus masuk untuk mengirim komentar.', 'error', { label: 'Masuk', path: '/login' }); return; } const msg: LiveChatMessage = { id: Date.now(), userName: user?.name || 'Anda', text: newMessage }; setChatMessages(prev => [...prev, msg]); setNewMessage(''); };
   const handleAddToCart = (product: Product) => { addToCart(product); showNotification('Berhasil', `'${product.name}' ditambahkan ke keranjang.`, 'success', { label: 'Lihat Keranjang', path: '/cart' }); };
   const handleCloseClick = () => { if (isHost) { setShowEndLiveModal(true); } else { navigate('/live'); } };
   const handleEndLive = () => { if (session) { endLiveSession(session.id); showNotification('Berhasil', 'Sesi live telah diakhiri.'); navigate('/seller/live'); } setShowEndLiveModal(false); };
@@ -163,7 +136,7 @@ const LiveDetailPage: React.FC = () => {
     if (spendCoins(gift.price)) {
       const msg: LiveChatMessage = {
         id: Date.now(),
-        userName: user?.email?.split('@')[0] || 'Anda',
+        userName: user?.name || 'Anda',
         text: `mengirimkan ${gift.name}`,
         isGift: true,
         giftIcon: gift.icon,
@@ -276,8 +249,8 @@ const LiveDetailPage: React.FC = () => {
       <div className="h-screen w-screen bg-black text-white relative flex flex-col font-sans overflow-hidden">
         {session.status === 'live' ? (
           <iframe
-            allow="camera; microphone; display-capture"
-            src={jitsiUrl}
+            src={session.meetUrl}
+            allow="camera; microphone; fullscreen; display-capture"
             className="absolute inset-0 w-full h-full object-cover z-0 border-0"
           ></iframe>
         ) : (

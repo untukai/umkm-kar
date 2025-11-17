@@ -41,6 +41,7 @@ const NewLiveSessionModal: React.FC<{
   const { user } = useAuth();
   const { showNotification } = useNotification();
   const [title, setTitle] = useState('');
+  const [meetUrl, setMeetUrl] = useState('');
   const [selectedProductIds, setSelectedProductIds] = useState<Set<number>>(new Set());
   const [isStarting, setIsStarting] = useState(false);
 
@@ -59,8 +60,8 @@ const NewLiveSessionModal: React.FC<{
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const currentSeller = sellers.find(s => s.email === user?.email);
-    if (!title.trim() || selectedProductIds.size === 0 || !currentSeller) {
-      showNotification('Gagal', 'Judul dan minimal satu produk harus dipilih.', 'error');
+    if (!title.trim() || !meetUrl.trim() || selectedProductIds.size === 0 || !currentSeller) {
+      showNotification('Gagal', 'Judul, URL Google Meet, dan minimal satu produk harus diisi.', 'error');
       return;
     }
   
@@ -69,6 +70,7 @@ const NewLiveSessionModal: React.FC<{
     const newSession = addLiveSession({
       sellerId: currentSeller.id,
       title,
+      meetUrl,
       thumbnailUrl: products.find(p => p.id === Array.from(selectedProductIds)[0])?.imageUrls[0] || '',
       productIds: Array.from(selectedProductIds),
     });
@@ -93,6 +95,10 @@ const NewLiveSessionModal: React.FC<{
               <div>
                 <label htmlFor="title" className="block text-sm font-medium text-neutral-700 mb-1">Judul Sesi Live</label>
                 <input type="text" id="title" value={title} onChange={e => setTitle(e.target.value)} placeholder="Contoh: Promo Spesial Akhir Bulan!" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
+              </div>
+              <div>
+                <label htmlFor="meetUrl" className="block text-sm font-medium text-neutral-700 mb-1">URL Google Meet</label>
+                <input type="url" id="meetUrl" value={meetUrl} onChange={e => setMeetUrl(e.target.value)} placeholder="https://meet.google.com/xxx-xxxx-xxx" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
               </div>
               <div>
                 <h3 className="text-sm font-medium text-neutral-700 mb-2">Pilih Produk untuk Ditampilkan</h3>

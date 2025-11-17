@@ -5,7 +5,8 @@ import { User } from '../types';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, role: 'pembeli' | 'penjual') => void;
+  signInWithGoogle: () => void; // New method for Google Sign-In
+  loginAsSeller: (email: string) => void; // Specific method for seller login
   logout: () => void;
   isAuthenticated: boolean;
   spendCoins: (amount: number) => boolean;
@@ -27,16 +28,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const login = (email: string, role: 'pembeli' | 'penjual') => {
-    const newUser: User = { 
-      email, 
-      role, 
-      coins: 500, // Start with 500 coins
-      balance: 50000, // Start with Rp 50,000 balance
-    }; 
-    setUser(newUser);
-    localStorage.setItem('kodik-user', JSON.stringify(newUser));
+  const persistUser = (user: User) => {
+    setUser(user);
+    localStorage.setItem('kodik-user', JSON.stringify(user));
   };
+
+  // Simulated Google Sign-In for buyers
+  const signInWithGoogle = () => {
+    const newUser: User = { 
+      email: 'pembeli.google@example.com',
+      name: 'Pembeli KODIK',
+      role: 'pembeli', 
+      coins: 500,
+      balance: 50000,
+    }; 
+    persistUser(newUser);
+  };
+  
+  // Login for sellers (demo purpose)
+  const loginAsSeller = (email: string) => {
+      const newSellerUser: User = {
+          email: email,
+          name: 'Penjual Demo',
+          role: 'penjual',
+          coins: 1000,
+          balance: 5000000,
+      };
+      persistUser(newSellerUser);
+  };
+
 
   const logout = () => {
     setUser(null);
@@ -46,8 +66,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const spendCoins = (amount: number): boolean => {
     if (user && user.coins && user.coins >= amount) {
       const updatedUser = { ...user, coins: user.coins - amount };
-      setUser(updatedUser);
-      localStorage.setItem('kodik-user', JSON.stringify(updatedUser));
+      persistUser(updatedUser);
       return true;
     }
     return false;
@@ -62,8 +81,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         balance: user.balance - cost,
         coins: (user.coins || 0) + coinAmount,
       };
-      setUser(updatedUser);
-      localStorage.setItem('kodik-user', JSON.stringify(updatedUser));
+      persistUser(updatedUser);
       return true;
     }
     return false;
@@ -77,8 +95,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       balance: (user.balance || 0) + value,
       coins: user.coins - coinAmount,
     };
-    setUser(updatedUser);
-    localStorage.setItem('kodik-user', JSON.stringify(updatedUser));
+    persistUser(updatedUser);
     return true;
   };
   
@@ -88,8 +105,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         ...user,
         balance: (user.balance || 0) + amount,
       };
-      setUser(updatedUser);
-      localStorage.setItem('kodik-user', JSON.stringify(updatedUser));
+      persistUser(updatedUser);
     }
   };
   
@@ -102,8 +118,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         ...user,
         balance: user.balance - totalWithdrawal,
       };
-      setUser(updatedUser);
-      localStorage.setItem('kodik-user', JSON.stringify(updatedUser));
+      persistUser(updatedUser);
       return true;
     }
     return false;
@@ -112,7 +127,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated, spendCoins, topUpCoins, redeemCoins, topUpBalance, withdrawBalance }}>
+    <AuthContext.Provider value={{ user, signInWithGoogle, loginAsSeller, logout, isAuthenticated, spendCoins, topUpCoins, redeemCoins, topUpBalance, withdrawBalance }}>
       {children}
     </AuthContext.Provider>
   );

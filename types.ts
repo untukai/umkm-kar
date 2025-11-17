@@ -58,6 +58,8 @@ export interface Order {
 export interface User {
   email: string;
   role: 'pembeli' | 'penjual';
+  name?: string; // Added for Google Sign-In
+  picture?: string; // Added for Google Sign-In
   coins?: number;
   balance?: number;
 }
@@ -105,6 +107,7 @@ export interface LiveSession {
   status: 'live' | 'replay';
   thumbnailUrl: string;
   productIds: number[];
+  meetUrl: string; // Added to replace Jitsi
   likes?: number;
   viewers?: number;
 }
