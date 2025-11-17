@@ -1,13 +1,14 @@
 
 import React from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { reviews, products } from '../../data/dummyData';
 import { Review } from '../../types';
 import StarRating from '../../components/StarRating';
 import Button from '../../components/Button';
 import { UserIcon } from '../../components/Icons';
+import { useAppData } from '../../hooks/useAppData';
 
 const ReviewCard: React.FC<{ review: Review }> = ({ review }) => {
+  const { products } = useAppData();
   const product = products.find(p => p.id === review.productId);
   return (
     <div className="border rounded-lg p-4">
@@ -39,13 +40,17 @@ const ReviewCard: React.FC<{ review: Review }> = ({ review }) => {
 
 const SellerReviewsPage: React.FC = () => {
   const { user } = useAuth();
-  // In a real app, this would be a proper lookup
-  const sellerId = 1; // Assuming seller with email 'penjual@example.com' is ID 1
+  const { reviews, products, sellers, isLoading } = useAppData();
   
-  const sellerProductIds = products.filter(p => p.sellerId === sellerId).map(p => p.id);
+  const seller = sellers.find(s => s.email === user?.email);
+  const sellerProductIds = products.filter(p => p.sellerId === seller?.id).map(p => p.id);
   const sellerReviews = reviews.filter(r => sellerProductIds.includes(r.productId));
   
   const averageRating = sellerReviews.length > 0 ? sellerReviews.reduce((sum, r) => sum + r.rating, 0) / sellerReviews.length : 0;
+  
+  if (isLoading) {
+      return <div>Memuat ulasan...</div>
+  }
 
   return (
     <div className="space-y-8">

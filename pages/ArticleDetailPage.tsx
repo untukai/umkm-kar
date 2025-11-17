@@ -1,19 +1,24 @@
 
+
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { articles } from '../data/dummyData';
 import Button from '../components/Button';
 import { useNotification } from '../hooks/useNotification';
 import { useShare } from '../hooks/useShare';
 import { ShareIcon } from '../components/Icons';
+import { useAppData } from '../hooks/useAppData';
 
 const ArticleDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { showNotification } = useNotification();
   const { showShareModal } = useShare();
+  const { articles, isLoading } = useAppData();
   
-  // In a real app, you might fetch this from localStorage or an API
   const article = articles.find(a => a.id === parseInt(id || ''));
+  
+  if (isLoading) {
+      return <div>Memuat artikel...</div>;
+  }
 
   if (!article) {
     return (

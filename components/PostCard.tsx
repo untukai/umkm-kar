@@ -1,14 +1,15 @@
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Post, Comment } from '../types';
-// FIX: Import `posts` as `initialPosts` to access the global posts array.
-import { sellers, addComment, posts as initialPosts } from '../data/dummyData';
+// FIX: Remove import from deprecated dummyData.ts
 import { useAuth } from '../hooks/useAuth';
 import { HeartIcon, ChatBubbleIcon, StoreIcon, ShareIcon } from './Icons';
 import CommentItem from './CommentItem';
 import CommentForm from './CommentForm';
 import { useNotification } from '../hooks/useNotification';
+// FIX: Import useAppData to get data from the context
+import { useAppData } from '../hooks/useAppData';
 
 interface PostCardProps {
     post: Post;
@@ -17,13 +18,25 @@ interface PostCardProps {
 const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
     const { user, isAuthenticated } = useAuth();
     const { showNotification } = useNotification();
+    // FIX: Get sellers and addComment function from AppDataContext
+    const { sellers, addComment } = useAppData();
+
+    // NOTE: This component uses local state derived from props. This works here because
+    // the parent component (FeedPage) uses a `key` on PostCard, causing it to
+    // remount with new initial state when props change.
     const [post, setPost] = useState(initialPost);
     const [comments, setComments] = useState<Comment[]>(initialPost.comments);
     const [isLiked, setIsLiked] = useState(false);
     const [showComments, setShowComments] = useState(false);
-    const [replyingTo, setReplyingTo] = useState<number | null>(null);
+    const [replyingTo, setReplyingTo] = useState<string | null>(null);
+    
+    // FIX: Sync local state if the prop changes without a remount (e.g., after adding a comment).
+    useEffect(() => {
+        setPost(initialPost);
+        setComments(initialPost.comments);
+    }, [initialPost]);
 
-    const seller = sellers.find(s => s.id === post.sellerId);
+    const seller = sellers.find(s => s._id === post.sellerId);
 
     const timeAgo = (dateString: string): string => {
         const date = new Date(dateString);
@@ -72,7 +85,7 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
         setShowComments(!showComments);
     };
     
-    const handleSetReplyTo = (commentId: number) => {
+    const handleSetReplyTo = (commentId: string) => {
         if (!isAuthenticated) {
             showLoginNotification();
             return;
@@ -91,26 +104,24 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
         }
     };
     
-    const handleCommentSubmit = (text: string, parentId: number | null = null) => {
+    const handleCommentSubmit = async (text: string, parentId: string | null = null) => {
         if (!user) {
             showLoginNotification();
             return;
         }
 
-        const newCommentData: Omit<Comment, 'id'> = {
+        const newCommentData: Omit<Comment, '_id'> = {
             parentId: parentId || undefined,
-            userName: user.email.split('@')[0],
+            // FIX: Use user.name for consistency across the app
+            userName: user.name,
             userEmail: user.email,
             text: text,
         };
 
-        addComment(post.id, newCommentData);
-
-        // FIX: Use `initialPosts` (the imported global `posts` array) to get the updated comments.
-        const updatedPostComments = initialPosts.find(p => p.id === post.id)!.comments;
-        const addedComment = updatedPostComments[updatedPostComments.length - 1];
+        // FIX: Call the async addComment from context with the correct string-based post ID.
+        // The global state update will trigger a re-render of this component with new props.
+        await addComment(post._id, newCommentData);
         
-        setComments(prev => [...prev, addedComment]);
         setReplyingTo(null);
     };
 
@@ -167,7 +178,7 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
                         {topLevelComments.length > 0 ? (
                             topLevelComments.map(comment => (
                                 <CommentItem
-                                    key={comment.id}
+                                    key={comment._id}
                                     comment={comment}
                                     allComments={comments}
                                     onReply={handleSetReplyTo}

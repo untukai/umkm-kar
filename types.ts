@@ -1,20 +1,20 @@
 
 
 export interface Product {
-  id: number;
+  _id: string; 
   name: string;
   price: number;
   category: string;
   description: string;
   stock: number;
-  sellerId: number; // Changed from seller: string
-  discount?: number; // Percentage off
+  sellerId: string; 
+  discount?: number; 
   imageUrls: string[];
   status: 'aktif' | 'nonaktif' | 'habis stok';
 }
 
 export interface Seller {
-  id: number;
+  _id: string; 
   name: string;
   description: string;
   rating: number;
@@ -28,12 +28,12 @@ export interface Category {
 }
 
 export interface Article {
-  id: number;
+  _id: string; 
   title: string;
   summary: string;
   content: string;
   author: string;
-  publishDate: string; // ISO 8601 format
+  publishDate: string; 
 }
 
 export interface CartItem {
@@ -42,7 +42,7 @@ export interface CartItem {
 }
 
 export interface Order {
-  id: string;
+  _id: string; 
   customerName: string;
   items: CartItem[];
   total: number;
@@ -55,39 +55,39 @@ export interface Order {
   };
 }
 
+// Updated User type for Google OAuth and MongoDB
 export interface User {
+  google_id: string;
+  role: 'buyer' | 'seller';
+  name: string;
   email: string;
-  role: 'pembeli' | 'penjual';
-  name?: string; // Added for Google Sign-In
-  picture?: string; // Added for Google Sign-In
-  coins?: number;
-  balance?: number;
+  avatar_url?: string;
 }
 
 export interface Review {
-  id: number;
-  productId: number;
+  _id: string; 
+  productId: string; 
   userName: string;
   userEmail: string;
-  rating: number; // 1 to 5
+  rating: number; 
   comment: string;
-  date: string; // ISO 8601 format
+  date: string; 
 }
 
 export interface Comment {
-  id: number;
-  parentId?: number | null;
-  userName: string;
+  _id: string; 
+  parentId?: string | null; 
+  userName:string;
   userEmail: string;
   text: string;
 }
 
 export interface Post {
-  id: number;
-  sellerId: number;
+  _id: string; 
+  sellerId: string; 
   content: string;
   imageUrl?: string;
-  timestamp: string; // ISO 8601 format
+  timestamp: string; 
   likes: number;
   comments: Comment[];
 }
@@ -100,23 +100,27 @@ export interface LiveChatMessage {
   giftIcon?: string;
 }
 
+// Updated LiveSession to match MongoDB schema
 export interface LiveSession {
-  id: number;
-  sellerId: number;
+  _id: string;
+  seller_id: string;
   title: string;
-  status: 'live' | 'replay';
-  thumbnailUrl: string;
-  productIds: number[];
-  meetUrl: string; // Added to replace Jitsi
-  likes?: number;
-  viewers?: number;
+  product_ids: string[];
+  start_time: string;
+  end_time: string;
+  status: 'scheduled' | 'ongoing' | 'finished';
+  google_calendar_event_id: string;
+  google_meet_link: string;
+  thumbnail_url: string;
+  seller_name?: string; 
 }
+
 
 export interface VirtualGift {
   id: number;
   name: string;
   icon: string;
-  price: number; // in coins
+  price: number; 
 }
 
 export interface ChatMessage {
@@ -126,8 +130,8 @@ export interface ChatMessage {
 }
 
 export interface Conversation {
-  id: number;
-  customerId: number; // Assuming a customer ID exists, can link to a future customer type
+  _id: string; 
+  customerId: string; 
   customerName: string;
   lastMessage: string;
   timestamp: string;
@@ -136,20 +140,20 @@ export interface Conversation {
 }
 
 export interface FinancialTransaction {
-  id: string;
+  _id: string; 
   date: string;
   type: 'Penjualan' | 'Pencairan Dana' | 'Refund';
   description: string;
-  amount: number; // positive for income, negative for outcome
+  amount: number; 
   status: 'Selesai' | 'Tertunda';
 }
 
 export interface Promotion {
-  id: number;
+  _id: string; 
   type: 'Voucher' | 'Diskon Produk';
-  code?: string; // for vouchers
+  code?: string; 
   title: string;
-  discountValue: number; // percentage or fixed amount
+  discountValue: number; 
   discountType: 'persen' | 'nominal';
   minPurchase: number;
   startDate: string;
@@ -158,7 +162,7 @@ export interface Promotion {
 }
 
 export interface Influencer {
-  id: number;
+  _id: string; 
   name: string;
   category: string;
   followers: {

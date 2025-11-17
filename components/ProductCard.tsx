@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Product } from '../types';
@@ -8,9 +9,9 @@ import { useNotification } from '../hooks/useNotification';
 import { useSeller } from '../hooks/useSeller';
 import { useWishlist } from '../hooks/useWishlist';
 import { useShare } from '../hooks/useShare';
-import { sellers, reviews } from '../data/dummyData';
+import { useAppData } from '../hooks/useAppData';
 import { StoreIcon, HeartIcon, ShareIcon, StarIcon } from './Icons';
-import StarRating from './StarRating'; // Import StarRating
+import StarRating from './StarRating';
 
 interface ProductCardProps {
   product: Product;
@@ -22,13 +23,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { showSellerModal } = useSeller();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { showShareModal } = useShare();
+  const { sellers, reviews } = useAppData();
   const navigate = useNavigate();
   
   const seller = sellers.find(s => s.id === product.sellerId);
   const isWishlisted = isInWishlist(product.id);
-  const imageUrl = product.imageUrls?.[0]; // Safely access the first image URL
+  const imageUrl = product.imageUrls?.[0];
 
-  // Calculate average rating
   const productReviews = reviews.filter(r => r.productId === product.id);
   const avgRating = productReviews.length > 0
     ? productReviews.reduce((sum, review) => sum + review.rating, 0) / productReviews.length
@@ -64,6 +65,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const handleSellerClick = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     showSellerModal(product.sellerId);
   }
 
@@ -110,87 +112,67 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const discountedPrice = product.discount ? product.price * (1 - product.discount / 100) : product.price;
 
   return (
-    <div className="bg-white rounded-lg overflow-hidden transition-shadow duration-300 border border-neutral-200 hover:shadow-xl flex flex-col relative h-full">
-      {product.discount && (
-        <div className="absolute top-2 left-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md">
-          -{product.discount}%
-        </div>
-      )}
-      <button 
-        onClick={handleWishlistToggle} 
-        className="absolute top-2 right-2 z-10 p-1.5 bg-white/70 rounded-full text-neutral-600 hover:text-red-500 backdrop-blur-sm transition-colors" 
-        aria-label="Tambah ke wishlist"
-      >
-        <HeartIcon className={`w-6 h-6 ${isWishlisted ? 'text-red-500' : ''}`} fill={isWishlisted ? 'currentColor' : 'none'} />
-      </button>
-
-      <Link to={`/products/${product.id}`} className="block flex-grow">
-        <div className="w-full aspect-square bg-neutral-200 flex items-center justify-center">
-          {imageUrl ? (
-            <img src={imageUrl} alt={product.name} className="w-full h-full object-cover" loading="lazy" />
-          ) : (
-            <StoreIcon className="w-12 h-12 text-neutral-400" />
-          )}
-        </div>
-        <div className="p-3">
-          <h3 className="text-sm font-normal text-neutral-700 h-10 overflow-hidden">{product.name}</h3>
-          <div className="mt-2 h-12 flex items-center">
-            {product.discount ? (
-              <div className="flex items-baseline gap-2 flex-wrap">
-                <p className="text-base sm:text-lg font-bold text-red-600">
-                  {formatRupiah(discountedPrice)}
-                </p>
-                <p className="text-sm text-neutral-500 line-through">
-                  {formatRupiah(product.price)}
-                </p>
-              </div>
-            ) : (
-              <p className="text-base sm:text-lg font-bold text-neutral-900">{formatRupiah(product.price)}</p>
-            )}
-          </div>
-          <div className="mt-2 space-y-1">
-            <button onClick={handleSellerClick} className="flex items-center justify-between text-xs text-neutral-500 hover:text-primary transition-colors w-full text-left group">
-                <div className="flex items-center truncate">
-                    <StoreIcon className="w-4 h-4 mr-1.5 flex-shrink-0" />
-                    <span className="truncate group-hover:underline font-medium">{seller?.name || 'Penjual tidak ditemukan'}</span>
-                </div>
-                {seller && (
-                    <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                        <StarIcon className="w-4 h-4 text-yellow-400" fill="currentColor" />
-                        <span className="font-semibold text-neutral-600">{seller.rating.toFixed(1)}</span>
-                    </div>
-                )}
+    <Link to={`/products/${product.id}`} className="block bg-white rounded-lg overflow-hidden transition-all duration-300 border border-neutral-200 hover:shadow-xl hover:-translate-y-1 group flex flex-col h-full">
+      <div className="relative w-full aspect-square bg-neutral-100 overflow-hidden">
+        {imageUrl && (
+          <img src={imageUrl} alt={product.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+        )}
+        {product.discount && (
+            <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md">
+                {product.discount}%
+            </span>
+        )}
+        <div className="absolute top-2 right-2 flex flex-col gap-2">
+            <button onClick={handleWishlistToggle} className="p-2 bg-white/80 backdrop-blur-sm rounded-full text-neutral-600 hover:text-red-500 transition-colors" aria-label="Wishlist">
+                <HeartIcon className="w-5 h-5" fill={isWishlisted ? 'currentColor' : 'none'} />
             </button>
-            {productReviews.length > 0 && (
-                <div className="flex items-center gap-1">
-                    <StarRating rating={avgRating} />
-                    <span className="text-xs text-neutral-500 ml-1">({productReviews.length})</span>
-                </div>
-            )}
-          </div>
-        </div>
-      </Link>
-      <div className="p-3 pt-0 mt-auto">
-        <div className="space-y-2">
-          <Button onClick={handleBuyNow} className="w-full !font-bold !text-sm" disabled={product.stock === 0}>
-            {product.stock > 0 ? 'Beli Sekarang' : 'Stok Habis'}
-          </Button>
-          <div className="flex items-center gap-2">
-            <Button onClick={handleAddToCart} variant="outline" className="flex-grow !font-bold !text-sm" disabled={product.stock === 0}>
-              Tambah Keranjang
-            </Button>
-            <button
-              onClick={handleShare}
-              className="p-2 border border-neutral-300 rounded-lg text-neutral-600 hover:bg-neutral-100 hover:text-primary transition-colors flex-shrink-0"
-              aria-label="Bagikan produk"
-              title="Bagikan Produk"
-            >
-              <ShareIcon className="w-5 h-5" />
+            <button onClick={handleShare} className="p-2 bg-white/80 backdrop-blur-sm rounded-full text-neutral-600 hover:text-primary transition-colors" aria-label="Share">
+                <ShareIcon className="w-5 h-5" />
             </button>
-          </div>
         </div>
       </div>
-    </div>
+      <div className="p-3 flex flex-col flex-grow">
+        <h3 className="font-semibold text-sm text-neutral-800 group-hover:text-primary transition-colors h-10 line-clamp-2">{product.name}</h3>
+        
+        <div className="mt-2">
+          {product.discount ? (
+            <div className="flex items-baseline gap-2">
+              <p className="text-base font-bold text-red-600">{formatRupiah(discountedPrice)}</p>
+              <p className="text-xs text-neutral-500 line-through">{formatRupiah(product.price)}</p>
+            </div>
+          ) : (
+            <p className="text-base font-bold text-neutral-800">{formatRupiah(product.price)}</p>
+          )}
+        </div>
+        
+        <div className="flex items-center justify-between text-xs text-neutral-500 mt-2">
+          {avgRating > 0 ? (
+            <div className="flex items-center gap-1">
+              <StarIcon className="w-4 h-4 text-yellow-400 fill-current" />
+              <span>{avgRating.toFixed(1)}</span>
+              <span>({productReviews.length})</span>
+            </div>
+          ) : <div />}
+          <span>{product.stock} tersisa</span>
+        </div>
+
+        <button onClick={handleSellerClick} className="flex items-center gap-1.5 text-xs text-neutral-500 hover:text-primary mt-2 transition-colors w-full text-left">
+          <StoreIcon className="w-4 h-4" />
+          <span className="truncate">{seller?.name || 'Penjual'}</span>
+        </button>
+
+      </div>
+      <div className="p-3 pt-0 mt-auto">
+        <div className="space-y-2">
+           <Button onClick={handleBuyNow} disabled={product.stock === 0} className="w-full !text-sm !py-2">
+            {product.stock > 0 ? 'Beli Langsung' : 'Stok Habis'}
+          </Button>
+          <Button onClick={handleAddToCart} variant="outline" disabled={product.stock === 0} className="w-full !text-sm !py-2">
+            + Keranjang
+          </Button>
+        </div>
+      </div>
+    </Link>
   );
 };
 

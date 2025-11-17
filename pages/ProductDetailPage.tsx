@@ -1,13 +1,14 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { products, sellers, reviews as initialReviews } from '../data/dummyData';
 import { useCart } from '../hooks/useCart';
 import { useNotification } from '../hooks/useNotification';
 import { useSeller } from '../hooks/useSeller';
 import { useWishlist } from '../hooks/useWishlist';
 import { useAuth } from '../hooks/useAuth';
 import { useShare } from '../hooks/useShare';
+import { useAppData } from '../hooks/useAppData';
 import Button from '../components/Button';
 import ProductCard from '../components/ProductCard';
 import StarRating from '../components/StarRating';
@@ -23,21 +24,21 @@ const ProductDetailPage: React.FC = () => {
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { user, isAuthenticated } = useAuth();
   const { showShareModal } = useShare();
+  const { products, sellers, reviews, addReview, isLoading: isAppLoading } = useAppData();
   const navigate = useNavigate();
-  
-  const product = products.find(p => p.id === parseInt(id || ''));
-  const seller = product ? sellers.find(s => s.id === product.sellerId) : undefined;
 
   const [aiDescription, setAiDescription] = useState<string | null>(null);
   const [isLoadingDescription, setIsLoadingDescription] = useState<boolean>(true);
   
-  // --- State untuk Ulasan ---
-  const [productReviews, setProductReviews] = useState<Review[]>([]);
   const [newRating, setNewRating] = useState(0);
   const [newComment, setNewComment] = useState("");
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
+  
+  const product = products.find(p => p._id === id);
+  const seller = product ? sellers.find(s => s._id === product.sellerId) : undefined;
+  const productReviews = reviews.filter(r => r.productId === product?._id);
 
   useEffect(() => {
     if (product) {
@@ -45,9 +46,6 @@ const ProductDetailPage: React.FC = () => {
       setAiDescription(null);
       setSelectedImageIndex(0);
       
-      // Load reviews for the product
-      setProductReviews(initialReviews.filter(r => r.productId === product.id));
-
       generateProductDescription(product)
         .then(description => {
           setAiDescription(description);
@@ -61,7 +59,7 @@ const ProductDetailPage: React.FC = () => {
     }
   }, [product]);
 
-  const isWishlisted = product ? isInWishlist(product.id) : false;
+  const isWishlisted = product ? isInWishlist(product._id) : false;
 
   const handleAddToCart = () => {
     if (product) {
@@ -87,14 +85,14 @@ const ProductDetailPage: React.FC = () => {
   
   const handleSellerClick = () => {
     if (seller) {
-      showSellerModal(seller.id);
+      showSellerModal(seller._id);
     }
   };
   
   const handleWishlistToggle = () => {
     if (!product) return;
     if (isWishlisted) {
-      removeFromWishlist(product.id);
+      removeFromWishlist(product._id);
     } else {
       addToWishlist(product);
       showNotification(
@@ -129,32 +127,36 @@ const ProductDetailPage: React.FC = () => {
     }
   };
 
-  const handleReviewSubmit = (e: React.FormEvent) => {
+  const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newRating === 0) {
       showNotification("Peringatan", "Harap berikan peringkat bintang.", 'error');
       return;
     }
-    if (!user) {
+    if (!user || !product) {
         showNotification("Peringatan", "Anda harus masuk untuk memberikan ulasan.", 'error');
         return;
     }
 
-    const newReview: Review = {
-        id: new Date().getTime(), // simple unique id
-        productId: product!.id,
+    // FIX: Corrected Omit type to use `_id` instead of `id`. This ensures the object shape matches what `addReview` expects.
+    const newReviewData: Omit<Review, '_id' | 'date'> = {
+        productId: product._id,
         userEmail: user.email,
-        userName: user.email.split('@')[0], // simple username from email
+        userName: user.name,
         rating: newRating,
         comment: newComment,
-        date: new Date().toISOString(),
     };
+    
+    await addReview(newReviewData);
 
-    setProductReviews(prevReviews => [newReview, ...prevReviews]);
     setNewRating(0);
     setNewComment("");
     showNotification("Berhasil", "Ulasan berhasil dikirim. Terima kasih!");
   };
+
+  if (isAppLoading) {
+      return <div>Memuat produk...</div>
+  }
 
   if (!product || !seller) {
     return (
@@ -170,13 +172,13 @@ const ProductDetailPage: React.FC = () => {
   const productImages = product.imageUrls;
 
   let relatedProducts = products
-    .filter(p => p.sellerId === product.sellerId && p.id !== product.id);
+    .filter(p => p.sellerId === product.sellerId && p._id !== product._id);
   
   let relatedProductsTitle = "Produk Lain dari Penjual Ini";
 
   if (relatedProducts.length === 0) {
     relatedProducts = products
-      .filter(p => p.category === product.category && p.id !== product.id);
+      .filter(p => p.category === product.category && p._id !== product._id);
     relatedProductsTitle = "Produk Serupa Lainnya";
   }
 
@@ -372,7 +374,7 @@ const ProductDetailPage: React.FC = () => {
           <div className="space-y-6">
             {productReviews.length > 0 ? (
               productReviews.map(review => (
-                <div key={review.id} className="flex gap-4">
+                <div key={review._id} className="flex gap-4">
                   <div className="w-10 h-10 rounded-full bg-neutral-200 flex items-center justify-center flex-shrink-0">
                     <UserIcon className="w-6 h-6 text-neutral-500" />
                   </div>
@@ -397,7 +399,7 @@ const ProductDetailPage: React.FC = () => {
             <h3 className="font-bold text-xl mb-4">{relatedProductsTitle}</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
               {displayedRelatedProducts.map(relatedProduct => (
-                <ProductCard key={relatedProduct.id} product={relatedProduct} />
+                <ProductCard key={relatedProduct._id} product={relatedProduct} />
               ))}
             </div>
           </div>

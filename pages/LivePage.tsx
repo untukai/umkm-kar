@@ -1,11 +1,13 @@
 
+
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { liveSessions, sellers } from '../data/dummyData';
 import { LiveSession } from '../types';
 import { StoreIcon } from '../components/Icons';
+import { useAppData } from '../hooks/useAppData';
 
 const LiveSessionCard: React.FC<{ session: LiveSession }> = ({ session }) => {
+  const { sellers } = useAppData();
   const seller = sellers.find(s => s.id === session.sellerId);
 
   return (
@@ -36,8 +38,14 @@ const LiveSessionCard: React.FC<{ session: LiveSession }> = ({ session }) => {
 
 
 const LivePage: React.FC = () => {
+  const { liveSessions, isLoading } = useAppData();
+
   const ongoingSessions = liveSessions.filter(s => s.status === 'live');
   const replaySessions = liveSessions.filter(s => s.status === 'replay');
+  
+  if (isLoading) {
+      return <div>Memuat sesi live...</div>
+  }
 
   return (
     <div className="space-y-12">

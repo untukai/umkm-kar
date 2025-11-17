@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotification } from '../../hooks/useNotification';
-import { sellers, updateSellerDetails } from '../../data/dummyData';
+import { useAppData } from '../../hooks/useAppData';
 import { Seller } from '../../types';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
@@ -10,6 +10,8 @@ import Input from '../../components/Input';
 const SellerSettingsPage: React.FC = () => {
   const { user } = useAuth();
   const { showNotification } = useNotification();
+  const { sellers, updateSellerDetails, isLoading } = useAppData();
+  
   const [seller, setSeller] = useState<Seller | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -20,17 +22,19 @@ const SellerSettingsPage: React.FC = () => {
   });
 
   useEffect(() => {
-    const currentSeller = sellers.find(s => s.email === user?.email);
-    if (currentSeller) {
-      setSeller(currentSeller);
-      setFormData({
-        name: currentSeller.name,
-        description: currentSeller.description,
-        phone: currentSeller.phone || '',
-        email: currentSeller.email || '',
-      });
+    if (!isLoading) {
+        const currentSeller = sellers.find(s => s.email === user?.email);
+        if (currentSeller) {
+          setSeller(currentSeller);
+          setFormData({
+            name: currentSeller.name,
+            description: currentSeller.description,
+            phone: currentSeller.phone || '',
+            email: currentSeller.email || '',
+          });
+        }
     }
-  }, [user]);
+  }, [user, sellers, isLoading]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -42,15 +46,15 @@ const SellerSettingsPage: React.FC = () => {
     setIsConfirmModalOpen(true);
   };
 
-  const handleConfirmSave = () => {
+  const handleConfirmSave = async () => {
     if (seller) {
-      updateSellerDetails(seller.id, formData);
+      await updateSellerDetails(seller.id, formData);
       showNotification('Berhasil', 'Informasi toko berhasil diperbarui.');
     }
     setIsConfirmModalOpen(false);
   };
 
-  if (!seller) {
+  if (isLoading || !seller) {
     return <div>Memuat data toko...</div>;
   }
 

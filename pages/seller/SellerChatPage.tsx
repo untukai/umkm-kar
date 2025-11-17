@@ -1,19 +1,24 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { conversations as initialConversations, addMessageToConversation } from '../../data/dummyData';
 import { Conversation, ChatMessage } from '../../types';
-// FIX: Import ChatBubbleIcon to fix a component not found error.
+import { useAppData } from '../../hooks/useAppData';
 import { UserIcon, SendIcon, ChatBubbleIcon } from '../../components/Icons';
 
 const SellerChatPage: React.FC = () => {
   const { user } = useAuth();
-  const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(conversations[0] || null);
+  const { conversations, isLoading } = useAppData();
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to the latest message
+  useEffect(() => {
+      if (!selectedConversation && conversations.length > 0) {
+          setSelectedConversation(conversations[0]);
+      }
+  }, [conversations, selectedConversation]);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [selectedConversation?.messages]);
@@ -27,23 +32,22 @@ const SellerChatPage: React.FC = () => {
       text: newMessage,
       timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
     };
-
-    // Update state directly for UI reactivity
-    const updatedConversations = conversations.map(conv => {
-        if (conv.id === selectedConversation.id) {
-            const updatedMessages = [...conv.messages, message];
-            return { ...conv, messages: updatedMessages, lastMessage: message.text, timestamp: message.timestamp };
-        }
-        return conv;
-    });
-    setConversations(updatedConversations);
-    setSelectedConversation(updatedConversations.find(c => c.id === selectedConversation.id) || null);
     
-    // In a real app, this would be an API call. Here we mutate dummy data.
-    addMessageToConversation(selectedConversation.id, message);
+    // In a real app, this would be an API call. Here we just update the local state for now.
+    const updatedConv = {
+        ...selectedConversation,
+        messages: [...selectedConversation.messages, message],
+        lastMessage: message.text,
+        timestamp: message.timestamp,
+    };
+    setSelectedConversation(updatedConv);
 
     setNewMessage('');
   };
+
+  if (isLoading) {
+      return <div>Memuat pesan...</div>
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-lg h-[calc(100vh-12rem)] flex overflow-hidden">

@@ -1,13 +1,15 @@
 
+
 import React, { useState } from 'react';
 import PostCard from '../components/PostCard';
-import { posts as initialPosts, addPost, sellers } from '../data/dummyData';
 import { useAuth } from '../hooks/useAuth';
 import Button from '../components/Button';
 import { Post } from '../types';
+import { useAppData } from '../hooks/useAppData';
 
-const CreatePostForm: React.FC<{ onAddPost: (post: Omit<Post, 'id' | 'likes' | 'comments' | 'timestamp'>) => void }> = ({ onAddPost }) => {
+const CreatePostForm: React.FC = () => {
     const { user } = useAuth();
+    const { sellers, addPost } = useAppData();
     const [content, setContent] = useState('');
 
     const currentSeller = sellers.find(s => s.email === user?.email);
@@ -20,7 +22,7 @@ const CreatePostForm: React.FC<{ onAddPost: (post: Omit<Post, 'id' | 'likes' | '
         e.preventDefault();
         if (!content.trim()) return;
 
-        onAddPost({
+        addPost({
             sellerId: currentSeller.id,
             content: content,
         });
@@ -48,18 +50,16 @@ const CreatePostForm: React.FC<{ onAddPost: (post: Omit<Post, 'id' | 'likes' | '
 
 
 const FeedPage: React.FC = () => {
-    const [posts, setPosts] = useState<Post[]>(initialPosts);
-
-    const handleAddPost = (post: Omit<Post, 'id' | 'likes' | 'comments' | 'timestamp'>) => {
-        addPost(post);
-        // This is a hack to re-render. In a real app with a state manager, this would be automatic.
-        setPosts([...initialPosts]); 
-    };
+    const { posts, isLoading } = useAppData();
+    
+    if (isLoading) {
+        return <div className="text-center">Memuat feed...</div>
+    }
 
   return (
     <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold mb-6 text-center">Kabar Penjual</h1>
-        <CreatePostForm onAddPost={handleAddPost} />
+        <CreatePostForm />
         <div className="space-y-6">
             {posts.map(post => (
                 <PostCard key={post.id} post={post} />

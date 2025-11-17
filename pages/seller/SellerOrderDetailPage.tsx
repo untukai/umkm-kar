@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { orders, updateOrderStatus } from '../../data/dummyData';
 import { Order } from '../../types';
 import Button from '../../components/Button';
 import { useNotification } from '../../hooks/useNotification';
+import { useAppData } from '../../hooks/useAppData';
 import { MailIcon, PrinterIcon } from '../../components/Icons'; 
 import Input from '../../components/Input'; 
 
@@ -19,6 +19,7 @@ const SellerOrderDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
+  const { orders, updateOrderStatus, isLoading } = useAppData();
   
   const [order, setOrder] = useState<Order | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -29,20 +30,22 @@ const SellerOrderDetailPage: React.FC = () => {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const foundOrder = orders.find(o => o.id === id);
-    if (foundOrder) {
-      setOrder(foundOrder);
-      // Dummy chat history for demonstration
-      setChatMessages([
-        { sender: 'pembeli', text: 'Halo, Kak. Pesanan saya sudah diproses?', timestamp: '10:30' },
-        { sender: 'penjual', text: 'Halo, Kak. Sudah kami terima ya pesanannya, sedang disiapkan untuk dikemas.', timestamp: '10:31' },
-        { sender: 'pembeli', text: 'Baik, terima kasih infonya!', timestamp: '10:32' },
-      ]);
-    } else {
-      showNotification("Error", "Pesanan tidak ditemukan.", "error");
-      navigate('/seller/orders');
+    if (!isLoading) {
+      const foundOrder = orders.find(o => o.id === id);
+      if (foundOrder) {
+        setOrder(foundOrder);
+        // Dummy chat history for demonstration
+        setChatMessages([
+          { sender: 'pembeli', text: 'Halo, Kak. Pesanan saya sudah diproses?', timestamp: '10:30' },
+          { sender: 'penjual', text: 'Halo, Kak. Sudah kami terima ya pesanannya, sedang disiapkan untuk dikemas.', timestamp: '10:31' },
+          { sender: 'pembeli', text: 'Baik, terima kasih infonya!', timestamp: '10:32' },
+        ]);
+      } else {
+        showNotification("Error", "Pesanan tidak ditemukan.", "error");
+        navigate('/seller/orders');
+      }
     }
-  }, [id, navigate, showNotification]);
+  }, [id, navigate, showNotification, orders, isLoading]);
   
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -53,10 +56,10 @@ const SellerOrderDetailPage: React.FC = () => {
     setIsConfirmModalOpen(true);
   };
 
-  const handleConfirmStatusChange = () => {
+  const handleConfirmStatusChange = async () => {
     if (order && statusToConfirm) {
-      updateOrderStatus(order.id, statusToConfirm);
-      setOrder({ ...order, status: statusToConfirm });
+      await updateOrderStatus(order.id, statusToConfirm);
+      // The context update will trigger a re-render with the new status
       showNotification("Berhasil", `Status pesanan diubah menjadi "${statusToConfirm}".`);
     }
     setIsConfirmModalOpen(false);
@@ -107,7 +110,7 @@ const SellerOrderDetailPage: React.FC = () => {
     }
   };
 
-  if (!order) {
+  if (isLoading || !order) {
     return (
         <div className="bg-white p-6 rounded-lg shadow-lg text-center">
             Memuat detail pesanan...

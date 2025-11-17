@@ -1,29 +1,29 @@
 
-import React, { createContext, useState, ReactNode } from 'react';
+import React, { createContext, useState, ReactNode, useContext } from 'react';
 import { Seller } from '../types';
-import { sellers } from '../data/dummyData';
+import { AppDataContext } from './AppDataContext'; // Import the main data context
 
 interface SellerContextType {
   selectedSeller: Seller | null;
-  showSellerModal: (sellerId: number) => void;
+  showSellerModal: (sellerId: string) => void;
   hideSellerModal: () => void;
 }
 
 export const SellerContext = createContext<SellerContextType | undefined>(undefined);
 
 export const SellerProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
+  const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
+  const appData = useContext(AppDataContext);
 
-  const showSellerModal = (sellerId: number) => {
-    const sellerToShow = sellers.find(s => s.id === sellerId);
-    if (sellerToShow) {
-      setSelectedSeller(sellerToShow);
-    }
+  const showSellerModal = (sellerId: string) => {
+    setSelectedSellerId(sellerId);
   };
 
   const hideSellerModal = () => {
-    setSelectedSeller(null);
+    setSelectedSellerId(null);
   };
+  
+  const selectedSeller = appData?.sellers.find(s => s._id === selectedSellerId) || null;
 
   return (
     <SellerContext.Provider value={{ selectedSeller, showSellerModal, hideSellerModal }}>

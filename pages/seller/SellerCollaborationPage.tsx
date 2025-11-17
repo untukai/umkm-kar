@@ -1,11 +1,11 @@
 
 import React, { useState, useMemo } from 'react';
-import { influencers, categories } from '../../data/dummyData';
 import { Influencer } from '../../types';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import { UserIcon, UserPlusIcon } from '../../components/Icons';
 import { useNotification } from '../../hooks/useNotification';
+import { useAppData } from '../../hooks/useAppData';
 
 const InfluencerCard: React.FC<{ influencer: Influencer }> = ({ influencer }) => {
   const { showNotification } = useNotification();
@@ -47,6 +47,7 @@ const InfluencerCard: React.FC<{ influencer: Influencer }> = ({ influencer }) =>
 
 
 const SellerCollaborationPage: React.FC = () => {
+    const { influencers, categories, isLoading } = useAppData();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [followerRange, setFollowerRange] = useState('all');
@@ -59,6 +60,7 @@ const SellerCollaborationPage: React.FC = () => {
     };
 
     const filteredInfluencers = useMemo(() => {
+        if (isLoading) return [];
         const [min, max] = followerRanges[followerRange as keyof typeof followerRanges];
 
         return influencers.filter(inf => {
@@ -69,7 +71,7 @@ const SellerCollaborationPage: React.FC = () => {
 
             return matchesSearch && matchesCategory && matchesFollowers;
         });
-    }, [searchTerm, selectedCategory, followerRange]);
+    }, [searchTerm, selectedCategory, followerRange, influencers, isLoading]);
     
     return (
         <div className="space-y-8">
@@ -98,15 +100,21 @@ const SellerCollaborationPage: React.FC = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredInfluencers.length > 0 ? (
-                    filteredInfluencers.map(inf => <InfluencerCard key={inf.id} influencer={inf} />)
-                ) : (
-                    <div className="col-span-full text-center py-12 bg-white rounded-lg shadow-md">
-                        <p className="text-neutral-500">Tidak ada influencer yang cocok dengan kriteria Anda.</p>
-                    </div>
-                )}
-            </div>
+            {isLoading ? (
+                 <div className="col-span-full text-center py-12 bg-white rounded-lg shadow-md">
+                    <p className="text-neutral-500">Memuat data influencer...</p>
+                 </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredInfluencers.length > 0 ? (
+                        filteredInfluencers.map(inf => <InfluencerCard key={inf.id} influencer={inf} />)
+                    ) : (
+                        <div className="col-span-full text-center py-12 bg-white rounded-lg shadow-md">
+                            <p className="text-neutral-500">Tidak ada influencer yang cocok dengan kriteria Anda.</p>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

@@ -2,11 +2,11 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { orders } from '../../data/dummyData';
 import { Order } from '../../types';
+import { useAppData } from '../../hooks/useAppData';
 
 const SellerOrdersPage: React.FC = () => {
-  const allOrders = orders; // In a real app, fetch this for the specific seller
+  const { orders } = useAppData(); // In a real app, fetch this for the specific seller
 
   const formatRupiah = (number: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
@@ -32,10 +32,10 @@ const SellerOrdersPage: React.FC = () => {
     <div className="bg-white p-6 rounded-lg shadow-lg">
       <div className="border-b pb-4 mb-6">
         <h1 className="text-2xl font-bold">Daftar Pesanan</h1>
-        <p className="text-neutral-600 mt-1">{allOrders.length} pesanan ditemukan</p>
+        <p className="text-neutral-600 mt-1">{orders.length} pesanan ditemukan</p>
       </div>
 
-      {allOrders.length > 0 ? (
+      {orders.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-neutral-200">
             <thead className="bg-neutral-50">
@@ -51,7 +51,7 @@ const SellerOrdersPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-neutral-200">
-              {allOrders.map((order) => (
+              {orders.map((order) => (
                 <tr key={order.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">{order.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-800">{order.customerName}</td>

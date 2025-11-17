@@ -5,7 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { Seller } from '../types';
 import { XIcon, StarIcon, PhoneIcon, MailIcon, StoreIcon, CheckCircleIcon } from './Icons';
 import Button from './Button';
-import { products } from '../data/dummyData';
+// FIX: Removed import from deprecated dummyData.ts
+import { useAppData } from '../hooks/useAppData';
 
 interface SellerDetailModalProps {
   seller: Seller;
@@ -30,6 +31,8 @@ const StarRating: React.FC<{ rating: number }> = ({ rating }) => {
 
 const SellerDetailModal: React.FC<SellerDetailModalProps> = ({ seller, onClose }) => {
   const navigate = useNavigate();
+  // FIX: Get product data from the AppDataContext
+  const { products } = useAppData();
   
   const handleProductClick = (productId: number) => {
     onClose(); // Close modal before navigating

@@ -8,6 +8,7 @@ import { SellerProvider } from './context/SellerContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { FollowProvider } from './context/FollowContext';
 import { ShareProvider } from './context/ShareContext';
+import { AppDataProvider } from './context/AppDataContext'; // Import the new AppDataProvider
 import { useShare } from './hooks/useShare';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
@@ -15,6 +16,7 @@ import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
+// FIX: Corrected import. The original issue was due to an incomplete LoginPage.tsx file.
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import ArticlesPage from './pages/ArticlesPage';
@@ -98,21 +100,23 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <CartProvider>
-        <NotificationProvider>
-          <SellerProvider>
-            <WishlistProvider>
-              <FollowProvider>
-                <ShareProvider>
-                  <HashRouter>
-                    <AppContent />
-                  </HashRouter>
-                </ShareProvider>
-              </FollowProvider>
-            </WishlistProvider>
-          </SellerProvider>
-        </NotificationProvider>
-      </CartProvider>
+      <AppDataProvider>
+        <CartProvider>
+          <NotificationProvider>
+            <SellerProvider>
+              <WishlistProvider>
+                <FollowProvider>
+                  <ShareProvider>
+                    <HashRouter>
+                      <AppContent />
+                    </HashRouter>
+                  </ShareProvider>
+                </FollowProvider>
+              </WishlistProvider>
+            </SellerProvider>
+          </NotificationProvider>
+        </CartProvider>
+      </AppDataProvider>
     </AuthProvider>
   );
 };
