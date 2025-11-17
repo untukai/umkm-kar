@@ -1,6 +1,6 @@
 
 
-import React, { createContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import React, { createContext, useState, ReactNode, useEffect } from 'react';
 import { Seller } from '../types';
 import { sellers, addMessageToConversation } from '../data/dummyData';
 
@@ -26,22 +26,22 @@ export const SellerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     localStorage.setItem('kodik-unread-chats', JSON.stringify(unreadChatCount));
   }, [unreadChatCount]);
 
-  const showSellerModal = useCallback((sellerId: number) => {
+  const showSellerModal = (sellerId: number) => {
     const sellerToShow = sellers.find(s => s.id === sellerId);
     if (sellerToShow) {
       setSelectedSeller(sellerToShow);
     }
-  }, []);
+  };
 
-  const hideSellerModal = useCallback(() => {
+  const hideSellerModal = () => {
     setSelectedSeller(null);
-  }, []);
+  };
 
-  const markChatsAsRead = useCallback(() => {
+  const markChatsAsRead = () => {
     setUnreadChatCount(0);
-  }, []);
+  };
 
-  const simulateNewMessage = useCallback(() => {
+  const simulateNewMessage = () => {
     const conversationId = 1; // Simulate message in first conversation
     const newMessage = {
       sender: 'pembeli' as const,
@@ -51,7 +51,7 @@ export const SellerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     
     addMessageToConversation(conversationId, newMessage);
     setUnreadChatCount(prev => prev + 1);
-  }, []);
+  };
 
   return (
     <SellerContext.Provider value={{ selectedSeller, showSellerModal, hideSellerModal, unreadChatCount, markChatsAsRead, simulateNewMessage }}>

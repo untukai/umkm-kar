@@ -1,14 +1,20 @@
-# KODIK - Aplikasi Android (Hybrid WebView)
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
 
-Ini adalah versi Android dari marketplace KODIK, yang dibangun menggunakan pendekatan hybrid. Aplikasi native Android (Kotlin, Jetpack Compose) bertindak sebagai "pembungkus" untuk aplikasi web canggih (React) yang berjalan di dalam komponen `WebView`.
+# Run and deploy your AI Studio app
 
-Aplikasi web dimuat dari aset lokal (`app/src/main/assets`), memungkinkannya berfungsi bahkan saat offline.
+This contains everything you need to run your app locally.
 
-## Otomatisasi Build dengan GitHub Actions
+View your app in AI Studio: https://ai.studio/apps/drive/19GRfu7hPwTwsyNmpRMxf-NaGomVbldwg
 
-Proyek ini dikonfigurasi dengan alur kerja GitHub Actions (`.github/workflows/main.yml`). Setiap kali ada perubahan yang di-push ke branch `main`, GitHub akan secara otomatis:
-1. Menyiapkan lingkungan build Android.
-2. Menjalankan proses kompilasi menggunakan Gradle.
-3. Menghasilkan file `app-debug.apk`.
+## Run Locally
 
-File APK yang sudah jadi dapat diunduh dari tab **Actions** di halaman repositori GitHub setelah build berhasil (ditandai dengan centang hijau).
+**Prerequisites:**  Node.js
+
+
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`

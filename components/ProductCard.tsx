@@ -74,7 +74,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     if (isWishlisted) {
       removeFromWishlist(product.id);
     } else {
-      addToWishlist(product);
+      addToWishlist(product as any); // Casting since dummy product might not match new type perfectly
       showNotification(
         'Ditambahkan ke Wishlist',
         `'${product.name}' berhasil disimpan.`,

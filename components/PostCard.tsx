@@ -1,6 +1,6 @@
 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Post, Comment } from '../types';
 // FIX: Import `posts` as `initialPosts` to access the global posts array.
 import { sellers, addComment, posts as initialPosts } from '../data/dummyData';
@@ -24,19 +24,6 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
     const [isLiked, setIsLiked] = useState(false);
     const [showComments, setShowComments] = useState(false);
     const [replyingTo, setReplyingTo] = useState<number | null>(null);
-
-    // FIX: Add effect to revoke blob URLs on unmount to prevent memory leaks.
-    // The blob URL is created in CreatePostForm and its ownership is transferred here.
-    useEffect(() => {
-        const isBlobUrl = post.mediaUrl?.startsWith('blob:');
-
-        // This cleanup function will be called when the component is unmounted.
-        return () => {
-            if (isBlobUrl && post.mediaUrl) {
-                URL.revokeObjectURL(post.mediaUrl);
-            }
-        };
-    }, [post.mediaUrl]); // This effect depends only on the mediaUrl.
 
     const seller = sellers.find(s => s.id === post.sellerId);
 
@@ -146,18 +133,18 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
     const topLevelComments = comments.filter(c => !c.parentId);
 
     return (
-        <div className="bg-white dark:bg-neutral-800 dark:border dark:border-neutral-700 rounded-lg shadow-md overflow-hidden">
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="p-4">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                         <StoreIcon className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                        <p className="font-bold text-neutral-800 dark:text-neutral-100">{seller.name}</p>
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400">{timeAgo(post.timestamp)}</p>
+                        <p className="font-bold text-neutral-800">{seller.name}</p>
+                        <p className="text-xs text-neutral-500">{timeAgo(post.timestamp)}</p>
                     </div>
                 </div>
-                <p className="text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">{post.content}</p>
+                <p className="text-neutral-700 whitespace-pre-wrap">{post.content}</p>
             </div>
             
             {post.mediaUrl && (
@@ -171,21 +158,21 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
             )}
             
             <div className="p-4">
-                <div className="flex justify-between text-sm text-neutral-600 dark:text-neutral-400">
+                <div className="flex justify-between text-sm text-neutral-600">
                     <span>{post.likes} Suka</span>
                     <span>{comments.length} Komentar</span>
                 </div>
-                <div className="border-t dark:border-neutral-700 my-2"></div>
+                <div className="border-t my-2"></div>
                 <div className="grid grid-cols-3 gap-1">
-                    <button onClick={handleLike} className={`flex items-center justify-center gap-2 p-2 rounded-lg transition-colors font-semibold ${isLiked ? 'text-red-500 bg-red-500/10' : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700'}`}>
+                    <button onClick={handleLike} className={`flex items-center justify-center gap-2 p-2 rounded-lg transition-colors font-semibold ${isLiked ? 'text-red-500 bg-red-50' : 'text-neutral-600 hover:bg-neutral-100'}`}>
                         <HeartIcon className="w-5 h-5" fill={isLiked ? 'currentColor' : 'none'} />
                         <span>Suka</span>
                     </button>
-                    <button onClick={handleToggleComments} className="flex items-center justify-center gap-2 p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300 font-semibold">
+                    <button onClick={handleToggleComments} className="flex items-center justify-center gap-2 p-2 rounded-lg hover:bg-neutral-100 text-neutral-600 font-semibold">
                         <ChatBubbleIcon className="w-5 h-5" />
                         <span>Komentar</span>
                     </button>
-                     <button onClick={handleShare} className="flex items-center justify-center gap-2 p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300 font-semibold transition-colors">
+                     <button onClick={handleShare} className="flex items-center justify-center gap-2 p-2 rounded-lg hover:bg-neutral-100 text-neutral-600 font-semibold transition-colors">
                         <ShareIcon className="w-5 h-5" />
                         <span>Bagikan</span>
                     </button>
@@ -193,7 +180,7 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
             </div>
             
             {showComments && (
-                <div className="p-4 border-t dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50 animate-fade-in">
+                <div className="p-4 border-t bg-neutral-50 animate-fade-in">
                     <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
                         {topLevelComments.length > 0 ? (
                             topLevelComments.map(comment => (
@@ -208,7 +195,7 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
                                 />
                             ))
                         ) : (
-                            <p className="text-sm text-neutral-500 dark:text-neutral-400 text-center py-4">Jadilah yang pertama berkomentar.</p>
+                            <p className="text-sm text-neutral-500 text-center py-4">Jadilah yang pertama berkomentar.</p>
                         )}
                     </div>
                     {isAuthenticated && (

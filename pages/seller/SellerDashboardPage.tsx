@@ -11,9 +11,9 @@ import Button from '../../components/Button';
 import StarRating from '../../components/StarRating';
 
 const SalesSummaryItem = ({ title, value }: { title: string; value: string | React.ReactNode }) => (
-    <div className="p-4 bg-neutral-50 dark:bg-neutral-700/50 rounded-lg shadow-sm">
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">{title}</p>
-        <p className="text-lg font-bold text-neutral-800 dark:text-neutral-100 mt-1 truncate">{value}</p>
+    <div className="p-4 bg-neutral-50 rounded-lg shadow-sm">
+        <p className="text-sm text-neutral-500">{title}</p>
+        <p className="text-lg font-bold text-neutral-800 mt-1 truncate">{value}</p>
     </div>
 );
 
@@ -89,7 +89,7 @@ const SellerDashboardPage: React.FC = () => {
         <div className="space-y-8">
             <div>
                 <h1 className="text-2xl font-bold">Dashboard Penjual</h1>
-                <p className="text-neutral-600 dark:text-neutral-300 mt-1">Selamat datang, {user?.email}!</p>
+                <p className="text-neutral-600 mt-1">Selamat datang, {user?.email}!</p>
             </div>
             
             {showChatNotification && unreadChatCount > 0 && (
@@ -109,41 +109,41 @@ const SellerDashboardPage: React.FC = () => {
             
             {/* Quick Action Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white dark:bg-neutral-800 p-5 rounded-lg shadow-md">
+                <div className="bg-white p-5 rounded-lg shadow-md">
                     <div className="flex justify-between items-center">
-                        <h3 className="font-bold text-neutral-700 dark:text-neutral-200">Perlu Perhatian</h3>
+                        <h3 className="font-bold text-neutral-700">Perlu Perhatian</h3>
                         <ClipboardListIcon className="w-6 h-6 text-yellow-500"/>
                     </div>
-                    <p className="text-3xl font-bold mt-2"><span className="text-neutral-800 dark:text-neutral-100">{pendingOrders.length}</span> <span className="text-base font-medium text-neutral-500 dark:text-neutral-400">Pesanan</span></p>
+                    <p className="text-3xl font-bold mt-2">{pendingOrders.length} <span className="text-base font-medium text-neutral-500">Pesanan</span></p>
                     <Link to="orders"><Button variant="outline" className="w-full mt-4 !text-sm !py-1.5">Proses Pesanan</Button></Link>
                 </div>
-                 <div className="bg-white dark:bg-neutral-800 p-5 rounded-lg shadow-md">
+                 <div className="bg-white p-5 rounded-lg shadow-md">
                     <div className="flex justify-between items-center">
-                        <h3 className="font-bold text-neutral-700 dark:text-neutral-200">Stok Segera Habis</h3>
+                        <h3 className="font-bold text-neutral-700">Stok Segera Habis</h3>
                         <BoxIcon className="w-6 h-6 text-red-500"/>
                     </div>
-                    <p className="text-3xl font-bold mt-2"><span className="text-neutral-800 dark:text-neutral-100">{lowStockProducts.length}</span> <span className="text-base font-medium text-neutral-500 dark:text-neutral-400">Produk</span></p>
+                    <p className="text-3xl font-bold mt-2">{lowStockProducts.length} <span className="text-base font-medium text-neutral-500">Produk</span></p>
                     <Link to="products"><Button variant="outline" className="w-full mt-4 !text-sm !py-1.5">Cek Stok</Button></Link>
                 </div>
-                 <div className="bg-white dark:bg-neutral-800 p-5 rounded-lg shadow-md">
+                 <div className="bg-white p-5 rounded-lg shadow-md">
                     <div className="flex justify-between items-center">
-                        <h3 className="font-bold text-neutral-700 dark:text-neutral-200">Ulasan Baru</h3>
+                        <h3 className="font-bold text-neutral-700">Ulasan Baru</h3>
                         <StarIcon className="w-6 h-6 text-blue-500"/>
                     </div>
                      {latestReview ? (
                         <>
                             <div className="flex items-center gap-2 mt-2">
                                 <StarRating rating={latestReview.rating} />
-                                <span className="font-bold text-neutral-800 dark:text-neutral-100">{latestReview.rating.toFixed(1)}</span>
+                                <span className="font-bold">{latestReview.rating.toFixed(1)}</span>
                             </div>
                             <Link to="reviews"><Button variant="outline" className="w-full mt-4 !text-sm !py-1.5">Balas Ulasan</Button></Link>
                         </>
-                    ) : <p className="mt-2 text-neutral-500 dark:text-neutral-400">Belum ada ulasan.</p>}
+                    ) : <p className="mt-2 text-neutral-500">Belum ada ulasan.</p>}
                 </div>
             </div>
 
             {/* Sales Summary Section */}
-            <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-md">
+            <div className="bg-white p-6 rounded-lg shadow-md">
                 <h3 className="text-lg font-bold mb-4">Ringkasan Penjualan</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                     <SalesSummaryItem title="Omzet Hari Ini" value={formatRupiah(omzetHariIni)} />
@@ -155,13 +155,13 @@ const SellerDashboardPage: React.FC = () => {
             </div>
 
             {/* Sales Chart */}
-            <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-md">
+            <div className="bg-white p-6 rounded-lg shadow-md">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-3">
                     <h3 className="text-lg font-bold">Grafik Penjualan</h3>
-                    <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-700 p-1 rounded-lg">
-                        <button onClick={() => setChartView('harian')} className={`px-3 py-1 text-sm font-semibold rounded-md transition-colors ${chartView === 'harian' ? 'bg-white dark:bg-primary dark:text-white shadow-sm' : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600'}`}>Harian</button>
-                        <button onClick={() => setChartView('mingguan')} className={`px-3 py-1 text-sm font-semibold rounded-md transition-colors ${chartView === 'mingguan' ? 'bg-white dark:bg-primary dark:text-white shadow-sm' : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600'}`}>Mingguan</button>
-                        <button onClick={() => setChartView('bulanan')} className={`px-3 py-1 text-sm font-semibold rounded-md transition-colors ${chartView === 'bulanan' ? 'bg-white dark:bg-primary dark:text-white shadow-sm' : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600'}`}>Bulanan</button>
+                    <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-lg">
+                        <button onClick={() => setChartView('harian')} className={`px-3 py-1 text-sm font-semibold rounded-md transition-colors ${chartView === 'harian' ? 'bg-white text-primary shadow-sm' : 'text-neutral-600 hover:bg-neutral-200'}`}>Harian</button>
+                        <button onClick={() => setChartView('mingguan')} className={`px-3 py-1 text-sm font-semibold rounded-md transition-colors ${chartView === 'mingguan' ? 'bg-white text-primary shadow-sm' : 'text-neutral-600 hover:bg-neutral-200'}`}>Mingguan</button>
+                        <button onClick={() => setChartView('bulanan')} className={`px-3 py-1 text-sm font-semibold rounded-md transition-colors ${chartView === 'bulanan' ? 'bg-white text-primary shadow-sm' : 'text-neutral-600 hover:bg-neutral-200'}`}>Bulanan</button>
                     </div>
                 </div>
                 <div className="w-full overflow-x-auto pb-2 scrollbar-hide">

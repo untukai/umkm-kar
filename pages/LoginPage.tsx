@@ -11,8 +11,7 @@ import { useNotification } from '../hooks/useNotification';
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // FIX: Narrowed the role state type to what's available on this page, which fixes the type mismatch with the `login` function.
-  const [role, setRole] = useState<'pembeli' | 'penjual'>('pembeli');
+  const [role, setRole] = useState<User['role']>('pembeli');
   const { login } = useAuth();
   const { showNotification } = useNotification();
   const navigate = useNavigate();

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UserIcon, MailIcon, LinkedInIcon, TwitterIcon } from '../components/Icons';
 
@@ -20,19 +19,19 @@ const founders = [
 const CollaborationPage: React.FC = () => {
   return (
     <div className="space-y-16">
-      <div className="bg-white dark:bg-neutral-800 p-6 md:p-8 rounded-lg shadow-lg">
+      <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg">
         <h1 className="text-3xl font-bold text-center mb-4">Kolaborasi Quintuple Helix</h1>
-        <p className="text-center text-neutral-600 dark:text-neutral-300 mb-10 max-w-3xl mx-auto">
+        <p className="text-center text-neutral-600 mb-10 max-w-3xl mx-auto">
           KODIK dibangun atas dasar sinergi lima pilar utama untuk memajukan ekosistem UMKM di Karawang.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {helixData.map(item => (
-            <div key={item.name} className="border border-primary/20 dark:border-primary/40 p-6 rounded-lg bg-primary/10 dark:bg-primary/20">
-              <h2 className="text-2xl font-bold text-primary-dark dark:text-primary">{item.name}</h2>
-              <p className="text-neutral-700 dark:text-neutral-200 mt-2">{item.role}</p>
+            <div key={item.name} className="border border-primary/20 p-6 rounded-lg bg-primary/10">
+              <h2 className="text-2xl font-bold text-primary-dark">{item.name}</h2>
+              <p className="text-neutral-700 mt-2">{item.role}</p>
               <div className="mt-4">
-                <h3 className="font-semibold text-neutral-800 dark:text-neutral-100">Contoh Mitra:</h3>
-                <ul className="list-disc list-inside text-sm text-neutral-600 dark:text-neutral-300">
+                <h3 className="font-semibold text-neutral-800">Contoh Mitra:</h3>
+                <ul className="list-disc list-inside text-sm text-neutral-600">
                   {item.partners.map(partner => <li key={partner}>{partner}</li>)}
                 </ul>
               </div>
@@ -41,9 +40,9 @@ const CollaborationPage: React.FC = () => {
         </div>
       </div>
 
-       <div className="bg-white dark:bg-neutral-800 p-6 md:p-8 rounded-lg shadow-lg">
+       <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg">
             <h1 className="text-3xl font-bold text-center mb-4">Tentang Kami</h1>
-            <p className="text-center text-neutral-600 dark:text-neutral-300 mb-10 max-w-3xl mx-auto">
+            <p className="text-center text-neutral-600 mb-10 max-w-3xl mx-auto">
               KODIK (Karawang Online Digital Inovasi Karya) adalah inisiatif digital yang lahir dari semangat kolaborasi untuk memberdayakan Usaha Mikro, Kecil, dan Menengah (UMKM) di Karawang. Kami percaya bahwa teknologi adalah jembatan untuk menghubungkan karya lokal dengan pasar yang lebih luas, menciptakan ekosistem ekonomi yang kuat dan mandiri.
             </p>
 
@@ -51,18 +50,18 @@ const CollaborationPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {founders.map(founder => (
                 <div key={founder.name} className="flex flex-col items-center text-center">
-                  <div className="w-32 h-32 rounded-full bg-neutral-200 dark:bg-neutral-700 mb-4 flex items-center justify-center">
-                    <UserIcon className="w-16 h-16 text-neutral-400 dark:text-neutral-500" />
+                  <div className="w-32 h-32 rounded-full bg-neutral-200 mb-4 flex items-center justify-center">
+                    <UserIcon className="w-16 h-16 text-neutral-400" />
                   </div>
-                  <h3 className="text-lg font-bold text-neutral-800 dark:text-neutral-100">{founder.name}</h3>
+                  <h3 className="text-lg font-bold text-neutral-800">{founder.name}</h3>
                   <div className="flex items-center gap-4 mt-3">
-                    <a href={founder.contact.email} className="text-neutral-500 dark:text-neutral-400 hover:text-primary transition-colors" aria-label={`Email ${founder.name}`}>
+                    <a href={founder.contact.email} className="text-neutral-500 hover:text-primary transition-colors" aria-label={`Email ${founder.name}`}>
                       <MailIcon className="w-6 h-6" />
                     </a>
-                    <a href={founder.contact.linkedin} className="text-neutral-500 dark:text-neutral-400 hover:text-primary transition-colors" aria-label={`LinkedIn ${founder.name}`}>
+                    <a href={founder.contact.linkedin} className="text-neutral-500 hover:text-primary transition-colors" aria-label={`LinkedIn ${founder.name}`}>
                       <LinkedInIcon className="w-6 h-6" />
                     </a>
-                    <a href={founder.contact.twitter} className="text-neutral-500 dark:text-neutral-400 hover:text-primary transition-colors" aria-label={`Twitter ${founder.name}`}>
+                    <a href={founder.contact.twitter} className="text-neutral-500 hover:text-primary transition-colors" aria-label={`Twitter ${founder.name}`}>
                       <TwitterIcon className="w-6 h-6" />
                     </a>
                   </div>

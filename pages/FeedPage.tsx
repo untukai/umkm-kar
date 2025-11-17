@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import PostCard from '../components/PostCard';
 import { posts as initialPosts, addPost, sellers } from '../data/dummyData';
@@ -77,15 +78,15 @@ const CreatePostForm: React.FC<{ onAddPost: (post: Omit<Post, 'id' | 'likes' | '
     };
 
     return (
-        <div className="bg-white dark:bg-neutral-800 p-4 rounded-lg shadow-md mb-8">
-            <h2 className="text-lg font-bold mb-3 dark:text-neutral-100">Buat Postingan Baru</h2>
+        <div className="bg-white p-4 rounded-lg shadow-md mb-8">
+            <h2 className="text-lg font-bold mb-3">Buat Postingan Baru</h2>
             <form onSubmit={handleSubmit}>
                 <textarea
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     placeholder={`Apa yang Anda pikirkan, ${currentSeller.name}?`}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-neutral-700 dark:border-neutral-600 dark:text-white dark:placeholder-neutral-400"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 ></textarea>
 
                 {media && (
@@ -114,7 +115,7 @@ const CreatePostForm: React.FC<{ onAddPost: (post: Omit<Post, 'id' | 'likes' | '
                     <button 
                         type="button" 
                         onClick={() => fileInputRef.current?.click()} 
-                        className="flex items-center gap-2 text-neutral-600 dark:text-neutral-300 hover:text-primary dark:hover:text-primary font-semibold p-2 rounded-lg transition-colors"
+                        className="flex items-center gap-2 text-neutral-600 hover:text-primary font-semibold p-2 rounded-lg transition-colors"
                         aria-label="Tambah Foto atau Video"
                     >
                         <PhotoIcon className="w-6 h-6"/>
