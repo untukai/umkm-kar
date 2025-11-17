@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Product } from '../types';
@@ -44,9 +45,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    addToCart(product);
+    addToCart(product.id);
     showNotification(
-      'Berhasil',
+      'Berhasil Ditambahkan',
       `'${product.name}' ditambahkan ke keranjang.`,
       'success',
       { label: 'Lihat Keranjang', path: '/cart' }
@@ -55,7 +56,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const handleBuyNow = (e: React.MouseEvent) => {
     e.preventDefault();
-    addToCart(product);
+    addToCart(product.id);
     showNotification('Berhasil', `'${product.name}' ditambahkan, Anda akan diarahkan ke checkout.`);
     setTimeout(() => {
       navigate('/checkout');
@@ -73,7 +74,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     if (isWishlisted) {
       removeFromWishlist(product.id);
     } else {
-      addToWishlist(product);
+      addToWishlist(product as any); // Casting since dummy product might not match new type perfectly
       showNotification(
         'Ditambahkan ke Wishlist',
         `'${product.name}' berhasil disimpan.`,
@@ -110,7 +111,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const discountedPrice = product.discount ? product.price * (1 - product.discount / 100) : product.price;
 
   return (
-    <div className="bg-white rounded-lg overflow-hidden transition-shadow duration-300 border border-neutral-200 hover:shadow-xl flex flex-col relative h-full">
+    <div className="bg-white rounded-lg overflow-hidden transition-shadow duration-300 border border-neutral-200 hover:shadow-xl flex flex-col relative h-full dark:bg-neutral-800 dark:border-neutral-700">
       {product.discount && (
         <div className="absolute top-2 left-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md">
           -{product.discount}%
@@ -118,38 +119,38 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       )}
       <button 
         onClick={handleWishlistToggle} 
-        className="absolute top-2 right-2 z-10 p-1.5 bg-white/70 rounded-full text-neutral-600 hover:text-red-500 backdrop-blur-sm transition-colors" 
+        className="absolute top-2 right-2 z-10 p-1.5 bg-white/70 dark:bg-neutral-800/70 rounded-full text-neutral-600 dark:text-neutral-300 hover:text-red-500 backdrop-blur-sm transition-colors" 
         aria-label="Tambah ke wishlist"
       >
         <HeartIcon className={`w-6 h-6 ${isWishlisted ? 'text-red-500' : ''}`} fill={isWishlisted ? 'currentColor' : 'none'} />
       </button>
 
       <Link to={`/products/${product.id}`} className="block flex-grow">
-        <div className="w-full aspect-square bg-neutral-200 flex items-center justify-center">
+        <div className="w-full aspect-square bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center">
           {imageUrl ? (
             <img src={imageUrl} alt={product.name} className="w-full h-full object-cover" loading="lazy" />
           ) : (
-            <StoreIcon className="w-12 h-12 text-neutral-400" />
+            <StoreIcon className="w-12 h-12 text-neutral-400 dark:text-neutral-500" />
           )}
         </div>
         <div className="p-3">
-          <h3 className="text-sm font-normal text-neutral-700 h-10 overflow-hidden">{product.name}</h3>
+          <h3 className="text-sm font-normal text-neutral-700 dark:text-neutral-200 h-10 overflow-hidden">{product.name}</h3>
           <div className="mt-2 h-12 flex items-center">
             {product.discount ? (
               <div className="flex items-baseline gap-2 flex-wrap">
                 <p className="text-base sm:text-lg font-bold text-red-600">
                   {formatRupiah(discountedPrice)}
                 </p>
-                <p className="text-sm text-neutral-500 line-through">
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 line-through">
                   {formatRupiah(product.price)}
                 </p>
               </div>
             ) : (
-              <p className="text-base sm:text-lg font-bold text-neutral-900">{formatRupiah(product.price)}</p>
+              <p className="text-base sm:text-lg font-bold text-neutral-900 dark:text-neutral-50">{formatRupiah(product.price)}</p>
             )}
           </div>
           <div className="mt-2 space-y-1">
-            <button onClick={handleSellerClick} className="flex items-center justify-between text-xs text-neutral-500 hover:text-primary transition-colors w-full text-left group">
+            <button onClick={handleSellerClick} className="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400 hover:text-primary transition-colors w-full text-left group">
                 <div className="flex items-center truncate">
                     <StoreIcon className="w-4 h-4 mr-1.5 flex-shrink-0" />
                     <span className="truncate group-hover:underline font-medium">{seller?.name || 'Penjual tidak ditemukan'}</span>
@@ -157,14 +158,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 {seller && (
                     <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                         <StarIcon className="w-4 h-4 text-yellow-400" fill="currentColor" />
-                        <span className="font-semibold text-neutral-600">{seller.rating.toFixed(1)}</span>
+                        <span className="font-semibold text-neutral-600 dark:text-neutral-300">{seller.rating.toFixed(1)}</span>
                     </div>
                 )}
             </button>
             {productReviews.length > 0 && (
                 <div className="flex items-center gap-1">
                     <StarRating rating={avgRating} />
-                    <span className="text-xs text-neutral-500 ml-1">({productReviews.length})</span>
+                    <span className="text-xs text-neutral-500 dark:text-neutral-400 ml-1">({productReviews.length})</span>
                 </div>
             )}
           </div>
@@ -181,7 +182,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </Button>
             <button
               onClick={handleShare}
-              className="p-2 border border-neutral-300 rounded-lg text-neutral-600 hover:bg-neutral-100 hover:text-primary transition-colors flex-shrink-0"
+              className="p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-primary transition-colors flex-shrink-0"
               aria-label="Bagikan produk"
               title="Bagikan Produk"
             >

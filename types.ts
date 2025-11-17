@@ -1,53 +1,87 @@
+// types.ts (Improved for Backend Architecture)
 
+export type UserRole = 'buyer' | 'seller' | 'admin';
+// FIX: Updated ProductStatus to match values used in dummyData and components.
+export type ProductStatus = 'aktif' | 'habis stok' | 'nonaktif' | 'draft' | 'archived';
+// FIX: Updated OrderStatus to match values used in dummyData and components.
+export type OrderStatus = 'menunggu pembayaran' | 'dikemas' | 'dikirim' | 'selesai' | 'dibatalkan';
+export type ProductType = 'Produk Fisik' | 'Produk Digital' | 'Jasa';
 
-export interface Product {
+// --- Core Entities ---
+
+export interface User {
   id: number;
-  name: string;
-  price: number;
-  category: string;
-  description: string;
-  stock: number;
-  sellerId: number; // Changed from seller: string
-  discount?: number; // Percentage off
-  imageUrls: string[];
-  status: 'aktif' | 'nonaktif' | 'habis stok';
+  email: string;
+  role: UserRole;
+  createdAt: string; // ISO 8601
+  coins?: number; // Added for live stream gifts feature
 }
 
 export interface Seller {
   id: number;
+  // FIX: Removed userId and createdAt which were missing from dummy data and not used.
+  // userId: number; // Link to User
   name: string;
   description: string;
   rating: number;
   phone?: string;
   email?: string;
+  // createdAt: string;
 }
 
 export interface Category {
-  id: string;
+  id: string; // e.g., 'kuliner'
   name: string;
+  parentId?: string | null; // For nested categories
 }
 
-export interface Article {
+// FIX: Reverted Product to a flat structure to match the existing application logic, merging variant and image info back in.
+export interface Product {
   id: number;
-  title: string;
-  summary: string;
-  content: string;
-  author: string;
-  publishDate: string; // ISO 8601 format
+  sellerId: number;
+  // categoryId: string;
+  category: string; // Using string name as expected by components
+  name:string;
+  description: string;
+  status: ProductStatus;
+  type: ProductType;
+  // From variants/images
+  price: number;
+  stock: number;
+  discount?: number;
+  imageUrls: string[];
+  // createdAt: string;
+  // updatedAt: string;
 }
+
+// NOTE: ProductVariant and ProductImage have been removed as the app uses a flat Product structure.
+
+// --- Transactional Entities ---
 
 export interface CartItem {
-  product: Product;
+  productId: number;
   quantity: number;
+  // For display, we'll join this data
+  product: Product;
+  // In a real variant system, this would be variant details
+  imageUrls: string[];
+  price: number;
+  discount?: number;
 }
 
+
+// FIX: Reverted Order to match the structure used in dummy data and components.
 export interface Order {
   id: string;
-  customerName: string;
-  items: CartItem[];
-  total: number;
-  date: string;
-  status: 'menunggu pembayaran' | 'dikemas' | 'dikirim' | 'selesai';
+  // userId: number;
+  // orderCode: string; // e.g., KODIK-7892A
+  customerName: string; // Used in dummyData and components
+  items: { product: Product, quantity: number }[]; // Inlined from dummyData structure
+  total: number; // Used instead of grandTotal
+  // grandTotal: number;
+  // shippingCost: number;
+  date: string; // ISO 8601
+  status: OrderStatus;
   shippingAddress: {
     name: string;
     address: string;
@@ -55,47 +89,51 @@ export interface Order {
   };
 }
 
-export interface User {
-  email: string;
-  role: 'pembeli' | 'penjual';
-  coins?: number;
-  balance?: number;
+// NOTE: OrderItem has been removed as the app uses a denormalized items array in Order.
+
+
+// --- Content & Engagement Entities ---
+
+export interface Article {
+  id: number;
+  title: string;
+  summary: string;
+  content: string;
+  author: string;
+  publishDate: string; // ISO 8601
 }
 
+// FIX: Added userEmail to match dummy data and component usage.
 export interface Review {
   id: number;
   productId: number;
-  userName: string;
-  userEmail: string;
+  userId: number; // Kept as it is used when creating new reviews.
+  userName: string; // Denormalized for easy display
+  userEmail: string; // Present in dummy data and used when creating new reviews.
   rating: number; // 1 to 5
   comment: string;
-  date: string; // ISO 8601 format
-}
-
-export interface Comment {
-  id: number;
-  parentId?: number | null;
-  userName: string;
-  userEmail: string;
-  text: string;
+  date: string; // ISO 8601
 }
 
 export interface Post {
   id: number;
   sellerId: number;
   content: string;
-  imageUrl?: string;
-  timestamp: string; // ISO 8601 format
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video';
+  timestamp: string; // ISO 8601
   likes: number;
   comments: Comment[];
 }
 
-export interface LiveChatMessage {
+// FIX: Added userEmail and removed userId to match dummy data and component usage.
+export interface Comment {
   id: number;
+  parentId?: number | null;
+  // userId: number;
   userName: string;
+  userEmail: string; // Present in dummy data and used when creating new comments.
   text: string;
-  isGift?: boolean;
-  giftIcon?: string;
 }
 
 export interface LiveSession {
@@ -109,12 +147,8 @@ export interface LiveSession {
   viewers?: number;
 }
 
-export interface VirtualGift {
-  id: number;
-  name: string;
-  icon: string;
-  price: number; // in coins
-}
+
+// --- Seller Specific & Other ---
 
 export interface ChatMessage {
   sender: 'penjual' | 'pembeli';
@@ -124,7 +158,7 @@ export interface ChatMessage {
 
 export interface Conversation {
   id: number;
-  customerId: number; // Assuming a customer ID exists, can link to a future customer type
+  customerId: number;
   customerName: string;
   lastMessage: string;
   timestamp: string;
@@ -132,21 +166,13 @@ export interface Conversation {
   messages: ChatMessage[];
 }
 
-export interface FinancialTransaction {
-  id: string;
-  date: string;
-  type: 'Penjualan' | 'Pencairan Dana' | 'Refund';
-  description: string;
-  amount: number; // positive for income, negative for outcome
-  status: 'Selesai' | 'Tertunda';
-}
-
 export interface Promotion {
   id: number;
+  sellerId: number;
   type: 'Voucher' | 'Diskon Produk';
-  code?: string; // for vouchers
+  code?: string;
   title: string;
-  discountValue: number; // percentage or fixed amount
+  discountValue: number;
   discountType: 'persen' | 'nominal';
   minPurchase: number;
   startDate: string;
@@ -164,4 +190,28 @@ export interface Influencer {
   };
   bio: string;
   profileImageUrl?: string;
+}
+
+export interface VirtualGift {
+  id: number;
+  name: string;
+  icon: string;
+  price: number; // in coins
+}
+
+export interface LiveChatMessage {
+  id: number;
+  userName: string;
+  text: string;
+  isGift?: boolean;
+  giftIcon?: string;
+}
+
+export interface FinancialTransaction {
+  id: string;
+  date: string;
+  type: 'Penjualan' | 'Pencairan Dana' | 'Refund';
+  description: string;
+  amount: number; // positive for income, negative for outcome
+  status: 'Selesai' | 'Tertunda';
 }

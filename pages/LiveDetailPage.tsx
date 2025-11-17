@@ -197,7 +197,7 @@ const LiveDetailPage: React.FC = () => {
   const handleShare = async () => {
     if (!session || !seller) return;
 
-    const shareUrl = `${window.location.origin}${window.location.pathname}#/live/${session.id}`;
+    const shareUrl = window.location.href;
     const shareData = {
       title: `${seller.name} sedang live di KODIK!`,
       text: `Tonton keseruan live shopping dari ${seller.name} dan dapatkan promo spesial!`,

@@ -5,6 +5,11 @@ import { Promotion } from '../../types';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import { PlusIcon, XIcon, TagIcon } from '../../components/Icons';
+// FIX: Import useAuth to get seller information.
+import { useAuth } from '../../hooks/useAuth';
+import { sellers } from '../../data/dummyData';
+import { useNotification } from '../../hooks/useNotification';
+
 
 const NewPromoModal: React.FC<{ isOpen: boolean; onClose: () => void; onAdd: () => void; }> = ({ isOpen, onClose, onAdd }) => {
   const [formData, setFormData] = useState({
@@ -14,6 +19,10 @@ const NewPromoModal: React.FC<{ isOpen: boolean; onClose: () => void; onAdd: () 
     discountValue: '',
     minPurchase: '',
   });
+  // FIX: Get current user to identify the seller.
+  const { user } = useAuth();
+  const { showNotification } = useNotification();
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -22,7 +31,16 @@ const NewPromoModal: React.FC<{ isOpen: boolean; onClose: () => void; onAdd: () 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // FIX: Find the current seller to get their ID.
+    const currentSeller = sellers.find(s => s.email === user?.email);
+    if (!currentSeller) {
+        showNotification("Error", "Penjual tidak ditemukan. Gagal membuat promo.", "error");
+        return;
+    }
+
     addPromotion({
+      // FIX: Added the missing sellerId.
+      sellerId: currentSeller.id,
       type: 'Voucher',
       title: formData.title,
       code: formData.code.toUpperCase(),

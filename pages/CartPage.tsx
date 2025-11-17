@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../hooks/useCart';
@@ -30,25 +31,25 @@ const CartPage: React.FC = () => {
       <div className="flex flex-col lg:flex-row lg:items-start gap-8">
         <div className="flex-grow bg-white p-4 sm:p-6 rounded-lg shadow-lg space-y-6">
           {cartItems.map(item => {
-            const itemPrice = item.product.discount
-              ? item.product.price * (1 - item.product.discount / 100)
-              : item.product.price;
+            const itemPrice = item.discount
+              ? item.price * (1 - item.discount / 100)
+              : item.price;
               
             return (
-            <div key={item.product.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-6 last:border-b-0">
+            <div key={item.productId} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-6 last:border-b-0">
               
               {/* Item Info */}
               <div className="flex items-center gap-4 flex-grow">
-                <img src={item.product.imageUrls[0]} alt={item.product.name} className="w-20 h-20 bg-neutral-200 rounded-md flex-shrink-0 object-cover" />
+                <img src={item.imageUrls[0]} alt={item.product.name} className="w-20 h-20 bg-neutral-200 rounded-md flex-shrink-0 object-cover" />
                 <div className="flex-grow">
                   <h2 className="font-semibold text-base sm:text-lg text-neutral-800">{item.product.name}</h2>
-                  {item.product.discount ? (
+                  {item.discount ? (
                     <div className="flex items-baseline gap-2 mt-1">
                       <p className="text-primary font-bold">{formatRupiah(itemPrice)}</p>
-                      <p className="text-xs text-neutral-500 line-through">{formatRupiah(item.product.price)}</p>
+                      <p className="text-xs text-neutral-500 line-through">{formatRupiah(item.price)}</p>
                     </div>
                   ) : (
-                    <p className="text-primary font-bold mt-1">{formatRupiah(item.product.price)}</p>
+                    <p className="text-primary font-bold mt-1">{formatRupiah(item.price)}</p>
                   )}
                 </div>
               </div>
@@ -56,18 +57,18 @@ const CartPage: React.FC = () => {
               {/* Controls and Subtotal */}
               <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 w-full sm:w-auto">
                 <div className="flex items-center border border-neutral-300 rounded-md">
-                   <button onClick={() => updateQuantity(item.product.id, item.quantity - 1)} className="p-2 text-neutral-600 hover:bg-neutral-100 disabled:opacity-50" disabled={item.quantity <= 1}>
+                   <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="p-2 text-neutral-600 hover:bg-neutral-100 disabled:opacity-50" disabled={item.quantity <= 1}>
                       <MinusIcon className="w-4 h-4" />
                   </button>
                   <input type="text" value={item.quantity} readOnly className="w-10 text-center border-l border-r border-neutral-300 focus:outline-none h-full"/>
-                  <button onClick={() => updateQuantity(item.product.id, item.quantity + 1)} className="p-2 text-neutral-600 hover:bg-neutral-100">
+                  <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="p-2 text-neutral-600 hover:bg-neutral-100">
                       <PlusIcon className="w-4 h-4" />
                   </button>
                 </div>
                 
                 <p className="font-bold w-24 sm:w-28 text-right text-neutral-800">{formatRupiah(itemPrice * item.quantity)}</p>
                 
-                <button onClick={() => removeFromCart(item.product.id)} className="text-neutral-500 hover:text-red-500 p-1">
+                <button onClick={() => removeFromCart(item.productId)} className="text-neutral-500 hover:text-red-500 p-1">
                   <TrashIcon className="w-5 h-5"/>
                 </button>
               </div>

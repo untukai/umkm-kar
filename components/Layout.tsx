@@ -13,7 +13,7 @@ const Layout: React.FC = () => {
   const { selectedSeller, hideSellerModal } = useSeller();
 
   return (
-    <div className="flex flex-col min-h-screen bg-neutral-50">
+    <div className="flex flex-col min-h-screen bg-neutral-50 dark:bg-neutral-900">
       <Header />
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* FIX: Replaced {children} with <Outlet /> for React Router v6 compatibility. */}

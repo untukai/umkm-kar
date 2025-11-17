@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 
 interface ToastProps {
@@ -19,7 +18,7 @@ const Toast: React.FC<ToastProps> = ({ message, onClose, duration = 3000 }) => {
   }, [onClose, duration]);
 
   return (
-    <div className="fixed bottom-5 right-5 bg-gray-800 text-white py-3 px-6 rounded-lg shadow-lg animate-fade-in-up">
+    <div className="fixed bottom-5 right-5 bg-neutral-800 text-white dark:bg-neutral-100 dark:text-neutral-800 py-3 px-6 rounded-lg shadow-lg animate-fade-in-up font-semibold">
       {message}
     </div>
   );

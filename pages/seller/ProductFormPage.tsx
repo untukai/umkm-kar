@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotification } from '../../hooks/useNotification';
@@ -7,6 +7,7 @@ import { Product } from '../../types';
 import { products, sellers, categories, addProduct } from '../../data/dummyData';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
+import { PhotoIcon } from '../../components/Icons';
 
 const ProductFormPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +16,7 @@ const ProductFormPage: React.FC = () => {
   const { showNotification } = useNotification();
   
   const isEditing = Boolean(id);
+  const imageUrlRef = useRef<string | null>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -22,8 +24,18 @@ const ProductFormPage: React.FC = () => {
     category: categories[0]?.name || '',
     description: '',
     stock: '',
-    imageUrls: 'https://images.unsplash.com/photo-1578996953843-2272a2753338?w=600&h=600&fit=crop', // Placeholder
+    imageUrls: '',
+    type: 'Produk Fisik' as Product['type'],
   });
+
+  // Efek untuk membersihkan object URL saat komponen dilepas untuk mencegah kebocoran memori
+  useEffect(() => {
+    return () => {
+      if (imageUrlRef.current) {
+        URL.revokeObjectURL(imageUrlRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (isEditing) {
@@ -36,6 +48,7 @@ const ProductFormPage: React.FC = () => {
             description: productToEdit.description,
             stock: String(productToEdit.stock),
             imageUrls: productToEdit.imageUrls[0],
+            type: productToEdit.type,
         });
       } else {
         showNotification("Error", "Produk tidak ditemukan.", "error");
@@ -46,11 +59,30 @@ const ProductFormPage: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value as Product['type'] }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Hapus object URL lama jika ada
+      if (imageUrlRef.current) {
+        URL.revokeObjectURL(imageUrlRef.current);
+      }
+      // Buat object URL baru untuk pratinjau
+      const newImageUrl = URL.createObjectURL(file);
+      imageUrlRef.current = newImageUrl;
+      setFormData(prev => ({ ...prev, imageUrls: newImageUrl }));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.imageUrls) {
+      showNotification("Error", "Harap unggah gambar produk.", "error");
+      return;
+    }
 
     const currentSeller = sellers.find(s => s.email === user?.email);
     if (!currentSeller) {
@@ -58,23 +90,33 @@ const ProductFormPage: React.FC = () => {
         return;
     }
 
-    const newProductData = {
+    const submittedProductData = {
         name: formData.name,
         price: parseFloat(formData.price),
         category: formData.category,
         description: formData.description,
         stock: parseInt(formData.stock, 10),
         sellerId: currentSeller.id,
-        imageUrls: [formData.imageUrls], // For now, just one URL as string
+        imageUrls: [formData.imageUrls],
+        type: formData.type,
     };
     
-    // In a real app, you'd have separate add/update API calls.
     if (isEditing) {
-      // Logic for updating would go here. For now, we'll just notify.
-      showNotification("Berhasil", `'${newProductData.name}' berhasil diperbarui.`);
+      const productIndex = products.findIndex(p => p.id === parseInt(id!));
+      if (productIndex !== -1) {
+          const originalProduct = products[productIndex];
+          // Gabungkan data asli dengan data baru, tetapi pastikan ID tetap
+          products[productIndex] = { ...originalProduct, ...submittedProductData, id: parseInt(id!) };
+      }
+      showNotification("Berhasil", `'${submittedProductData.name}' berhasil diperbarui.`);
     } else {
-      addProduct(newProductData);
-      showNotification("Berhasil", `'${newProductData.name}' berhasil ditambahkan.`);
+      addProduct(submittedProductData);
+      showNotification("Berhasil", `'${submittedProductData.name}' berhasil ditambahkan.`);
+    }
+
+    // Lepaskan object URL dari manajemen komponen ini agar tidak dihapus saat unmount
+    if (formData.imageUrls.startsWith('blob:')) {
+      imageUrlRef.current = null;
     }
 
     navigate('/seller/products');
@@ -102,11 +144,21 @@ const ProductFormPage: React.FC = () => {
             </div>
         </div>
 
-        <div>
-          <label htmlFor="category" className="block text-sm font-medium text-neutral-700">Kategori</label>
-          <select id="category" name="category" value={formData.category} onChange={handleChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
-            {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
-          </select>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label htmlFor="category" className="block text-sm font-medium text-neutral-700">Kategori</label>
+                <select id="category" name="category" value={formData.category} onChange={handleChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                    {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
+                </select>
+            </div>
+            <div>
+                <label htmlFor="type" className="block text-sm font-medium text-neutral-700">Tipe Produk</label>
+                <select id="type" name="type" value={formData.type} onChange={handleChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                    <option value="Produk Fisik">Produk Fisik</option>
+                    <option value="Produk Digital">Produk Digital</option>
+                    <option value="Jasa">Jasa</option>
+                </select>
+            </div>
         </div>
 
         <div>
@@ -115,10 +167,33 @@ const ProductFormPage: React.FC = () => {
         </div>
         
          <div>
-          <label htmlFor="imageUrls" className="block text-sm font-medium text-neutral-700">URL Gambar Utama</label>
-          <Input type="text" id="imageUrls" name="imageUrls" value={formData.imageUrls} onChange={handleChange} required className="mt-1" />
-           <p className="text-xs text-neutral-500 mt-1">Untuk saat ini, silakan masukkan URL gambar dari Unsplash atau sumber lain.</p>
+            <label className="block text-sm font-medium text-neutral-700">Gambar Utama Produk</label>
+            <div className="mt-2 flex items-center gap-5">
+              <div className="w-24 h-24 rounded-lg bg-neutral-100 flex items-center justify-center overflow-hidden border">
+                {formData.imageUrls ? (
+                  <img src={formData.imageUrls} alt="Pratinjau Produk" className="w-full h-full object-cover" />
+                ) : (
+                  <PhotoIcon className="w-12 h-12 text-neutral-400" />
+                )}
+              </div>
+              <div>
+                <input
+                  type="file"
+                  id="image-upload"
+                  className="hidden"
+                  onChange={handleFileChange}
+                  accept="image/png, image/jpeg, image/gif"
+                />
+                <label htmlFor="image-upload" className="cursor-pointer">
+                  <span className="inline-block px-4 py-2 rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-transparent border border-primary text-primary hover:bg-primary hover:text-white focus:ring-primary dark:text-primary dark:border-primary dark:hover:bg-primary dark:hover:text-white">
+                    Unggah Gambar
+                  </span>
+                </label>
+                <p className="text-xs text-neutral-500 mt-2">Pilih gambar untuk produk Anda.</p>
+              </div>
+            </div>
         </div>
+
 
         <div className="flex justify-end gap-4 pt-4 border-t">
           <Button type="button" variant="outline" onClick={() => navigate('/seller/products')}>

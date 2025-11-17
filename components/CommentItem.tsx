@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Comment } from '../types';
 import { UserIcon } from './Icons';
@@ -23,48 +24,48 @@ const CommentItem: React.FC<CommentItemProps> = ({
   const replies = allComments.filter(c => c.parentId === comment.id);
   const isReplying = activeReplyId === comment.id;
 
-  const handleReplySubmit = (text: string) => {
-    onSubmitReply(text, comment.id);
-  };
-
   return (
-    <div className="flex gap-3 items-start">
-      <div className="w-8 h-8 rounded-full bg-neutral-200 flex items-center justify-center flex-shrink-0">
+    <div className="flex items-start gap-2">
+      <div className="w-8 h-8 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center flex-shrink-0 mt-1">
         <UserIcon className="w-5 h-5 text-neutral-500" />
       </div>
       <div className="flex-1">
-        <div className="bg-neutral-100 p-2 rounded-lg">
-          <p className="font-semibold text-sm text-neutral-800">{comment.userName}</p>
-          <p className="text-sm text-neutral-700">{comment.text}</p>
+        <div className="bg-neutral-100 dark:bg-neutral-700 rounded-lg p-2">
+          <p className="font-bold text-sm text-neutral-800 dark:text-neutral-100">{comment.userName}</p>
+          <p className="text-sm text-neutral-700 dark:text-neutral-300">{comment.text}</p>
         </div>
-        <div className="flex items-center gap-3 text-xs text-neutral-500 mt-1">
-          <button onClick={() => onReply(comment.id)} className="font-semibold hover:underline">Balas</button>
+        <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 flex gap-2">
+          <button onClick={() => onReply(comment.id)} className="font-semibold hover:underline">
+            Balas
+          </button>
         </div>
-        
+
         {isReplying && (
-          <div>
+          <div className="mt-2">
             <CommentForm
-              onSubmit={handleReplySubmit}
-              placeholder={`Membalas ${comment.userName}...`}
+              onSubmit={(text) => onSubmitReply(text, comment.id)}
+              placeholder={`Balas kepada ${comment.userName}...`}
               buttonLabel="Balas"
               autoFocus
             />
-            <button onClick={onCancelReply} className="text-xs text-neutral-500 hover:underline mt-1 ml-12">Batal</button>
+            <button onClick={onCancelReply} className="text-xs text-neutral-500 hover:underline mt-1">
+              Batal
+            </button>
           </div>
         )}
-        
+
         {replies.length > 0 && (
           <div className="mt-3 space-y-3">
             {replies.map(reply => (
-              <CommentItem
-                key={reply.id}
-                comment={reply}
-                allComments={allComments}
-                onReply={onReply}
-                activeReplyId={activeReplyId}
-                onSubmitReply={onSubmitReply}
-                onCancelReply={onCancelReply}
-              />
+              <div key={reply.id} className="flex items-start gap-2">
+                <div className="w-8 h-8 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center flex-shrink-0 mt-1">
+                  <UserIcon className="w-5 h-5 text-neutral-500" />
+                </div>
+                <div className="flex-1 bg-neutral-100 dark:bg-neutral-700 rounded-lg p-2">
+                  <p className="font-bold text-sm text-neutral-800 dark:text-neutral-100">{reply.userName}</p>
+                  <p className="text-sm text-neutral-700 dark:text-neutral-300">{reply.text}</p>
+                </div>
+              </div>
             ))}
           </div>
         )}

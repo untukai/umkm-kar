@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Article } from '../types';
 import { articles as initialArticles } from '../data/dummyData';
@@ -40,18 +41,18 @@ const ArticlesPage: React.FC = () => {
   
   return (
     <div className="space-y-10">
-      <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg">
+      <div className="bg-white dark:bg-neutral-800 p-6 md:p-8 rounded-lg shadow-lg">
         <h1 className="text-3xl font-bold text-center">Inspirasi Lokal Karawang</h1>
-        <p className="text-center text-neutral-600 mt-2 max-w-2xl mx-auto">
+        <p className="text-center text-neutral-600 dark:text-neutral-300 mt-2 max-w-2xl mx-auto">
           Temukan cerita, inovasi, dan potensi UMKM di Karawang melalui artikel-artikel pilihan kami.
         </p>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-lg border border-primary/20">
+      <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-lg border border-primary/20 dark:border-primary/40">
         <h2 className="text-xl font-bold mb-4">Buat Artikel Baru dengan Bantuan AI</h2>
         <form onSubmit={handleGenerateArticle} className="space-y-4">
           <div>
-            <label htmlFor="topic" className="block text-sm font-medium text-neutral-700 mb-1">
+            <label htmlFor="topic" className="block text-sm font-medium text-neutral-700 dark:text-neutral-200 mb-1">
               Masukkan Topik Artikel
             </label>
             <Input 

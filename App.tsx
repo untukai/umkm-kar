@@ -1,4 +1,6 @@
 
+
+
 import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -8,7 +10,10 @@ import { SellerProvider } from './context/SellerContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { FollowProvider } from './context/FollowContext';
 import { ShareProvider } from './context/ShareContext';
+import { ToastProvider } from './context/ToastContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { useShare } from './hooks/useShare';
+import { useToast } from './hooks/useToast';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import ProductsPage from './pages/ProductsPage';
@@ -41,9 +46,11 @@ import SellerAnalyticsPage from './pages/seller/SellerAnalyticsPage';
 import SellerSettingsPage from './pages/seller/SellerSettingsPage';
 import SellerCollaborationPage from './pages/seller/SellerCollaborationPage';
 import ShareModal from './components/ShareModal';
+import Toast from './components/Toast';
 
 const AppContent: React.FC = () => {
   const { shareData } = useShare();
+  const { toastMessage, hideToast } = useToast();
 
   return (
     <>
@@ -90,6 +97,7 @@ const AppContent: React.FC = () => {
         <Route path="live/:id" element={<LiveDetailPage />} />
       </Routes>
       {shareData && <ShareModal />}
+      {toastMessage && <Toast message={toastMessage} onClose={hideToast} />}
     </>
   );
 };
@@ -97,23 +105,27 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <NotificationProvider>
-          <SellerProvider>
-            <WishlistProvider>
-              <FollowProvider>
-                <ShareProvider>
-                  <HashRouter>
-                    <AppContent />
-                  </HashRouter>
-                </ShareProvider>
-              </FollowProvider>
-            </WishlistProvider>
-          </SellerProvider>
-        </NotificationProvider>
-      </CartProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <CartProvider>
+          <NotificationProvider>
+            <SellerProvider>
+              <WishlistProvider>
+                <FollowProvider>
+                  <ShareProvider>
+                    <ToastProvider>
+                      <HashRouter>
+                        <AppContent />
+                      </HashRouter>
+                    </ToastProvider>
+                  </ShareProvider>
+                </FollowProvider>
+              </WishlistProvider>
+            </SellerProvider>
+          </NotificationProvider>
+        </CartProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 };
 

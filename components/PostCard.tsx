@@ -9,6 +9,7 @@ import { HeartIcon, ChatBubbleIcon, StoreIcon, ShareIcon } from './Icons';
 import CommentItem from './CommentItem';
 import CommentForm from './CommentForm';
 import { useNotification } from '../hooks/useNotification';
+import { useShare } from '../hooks/useShare';
 
 interface PostCardProps {
     post: Post;
@@ -17,6 +18,7 @@ interface PostCardProps {
 const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
     const { user, isAuthenticated } = useAuth();
     const { showNotification } = useNotification();
+    const { showShareModal } = useShare();
     const [post, setPost] = useState(initialPost);
     const [comments, setComments] = useState<Comment[]>(initialPost.comments);
     const [isLiked, setIsLiked] = useState(false);
@@ -80,14 +82,26 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
         setReplyingTo(commentId);
     };
 
-    const handleShare = () => {
+    const handleShare = async () => {
+        if (!seller) return;
         const postUrl = `${window.location.origin}${window.location.pathname}#/feed`;
-        if (navigator.clipboard) {
-            navigator.clipboard.writeText(postUrl).then(() => {
-                showNotification('Berhasil Disalin', 'Tautan ke Feed berhasil disalin!');
-            });
+        const shareData = {
+          title: `Postingan dari ${seller.name} di KODIK`,
+          text: `Cek postingan menarik dari ${seller.name} di KODIK Feed!`,
+          url: postUrl,
+        };
+    
+        if (navigator.share) {
+          try {
+            await navigator.share(shareData);
+          } catch (error) {
+            if (error instanceof DOMException && error.name !== 'AbortError') {
+              console.error('Error sharing natively:', error);
+              showShareModal(shareData);
+            }
+          }
         } else {
-            showNotification('Gagal', 'Gagal menyalin tautan.', 'error');
+          showShareModal(shareData);
         }
     };
     
@@ -119,42 +133,46 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
     const topLevelComments = comments.filter(c => !c.parentId);
 
     return (
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="bg-white dark:bg-neutral-800 dark:border dark:border-neutral-700 rounded-lg shadow-md overflow-hidden">
             <div className="p-4">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center">
                         <StoreIcon className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                        <p className="font-bold text-neutral-800">{seller.name}</p>
-                        <p className="text-xs text-neutral-500">{timeAgo(post.timestamp)}</p>
+                        <p className="font-bold text-neutral-800 dark:text-neutral-100">{seller.name}</p>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400">{timeAgo(post.timestamp)}</p>
                     </div>
                 </div>
-                <p className="text-neutral-700 whitespace-pre-wrap">{post.content}</p>
+                <p className="text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">{post.content}</p>
             </div>
             
-            {post.imageUrl && (
-                <div className="w-full bg-neutral-100">
-                    <img src={post.imageUrl} alt="Post content" className="w-full h-auto max-h-96 object-contain" />
+            {post.mediaUrl && (
+                <div className="w-full bg-black flex items-center justify-center">
+                    {post.mediaType === 'video' ? (
+                        <video src={post.mediaUrl} controls className="w-full max-h-96" />
+                    ) : (
+                        <img src={post.mediaUrl} alt="Post content" className="w-full h-auto max-h-96 object-contain" />
+                    )}
                 </div>
             )}
             
             <div className="p-4">
-                <div className="flex justify-between text-sm text-neutral-600">
+                <div className="flex justify-between text-sm text-neutral-600 dark:text-neutral-400">
                     <span>{post.likes} Suka</span>
                     <span>{comments.length} Komentar</span>
                 </div>
-                <div className="border-t my-2"></div>
+                <div className="border-t dark:border-neutral-700 my-2"></div>
                 <div className="grid grid-cols-3 gap-1">
-                    <button onClick={handleLike} className={`flex items-center justify-center gap-2 p-2 rounded-lg transition-colors font-semibold ${isLiked ? 'text-red-500 bg-red-50' : 'text-neutral-600 hover:bg-neutral-100'}`}>
+                    <button onClick={handleLike} className={`flex items-center justify-center gap-2 p-2 rounded-lg transition-colors font-semibold ${isLiked ? 'text-red-500 bg-red-500/10' : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700'}`}>
                         <HeartIcon className="w-5 h-5" fill={isLiked ? 'currentColor' : 'none'} />
                         <span>Suka</span>
                     </button>
-                    <button onClick={handleToggleComments} className="flex items-center justify-center gap-2 p-2 rounded-lg hover:bg-neutral-100 text-neutral-600 font-semibold">
+                    <button onClick={handleToggleComments} className="flex items-center justify-center gap-2 p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300 font-semibold">
                         <ChatBubbleIcon className="w-5 h-5" />
                         <span>Komentar</span>
                     </button>
-                     <button onClick={handleShare} className="flex items-center justify-center gap-2 p-2 rounded-lg hover:bg-neutral-100 text-neutral-600 font-semibold transition-colors">
+                     <button onClick={handleShare} className="flex items-center justify-center gap-2 p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300 font-semibold transition-colors">
                         <ShareIcon className="w-5 h-5" />
                         <span>Bagikan</span>
                     </button>
@@ -162,7 +180,7 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
             </div>
             
             {showComments && (
-                <div className="p-4 border-t bg-neutral-50 animate-fade-in">
+                <div className="p-4 border-t dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50 animate-fade-in">
                     <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
                         {topLevelComments.length > 0 ? (
                             topLevelComments.map(comment => (
@@ -177,7 +195,7 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
                                 />
                             ))
                         ) : (
-                            <p className="text-sm text-neutral-500 text-center py-4">Jadilah yang pertama berkomentar.</p>
+                            <p className="text-sm text-neutral-500 dark:text-neutral-400 text-center py-4">Jadilah yang pertama berkomentar.</p>
                         )}
                     </div>
                     {isAuthenticated && (
