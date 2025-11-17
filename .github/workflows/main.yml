@@ -14,9 +14,8 @@
     # Perintah ini akan membuat APK debug di lokasi standar
     run: ./gradlew assembleDebug
 
-  # --- Langkah Tambahan untuk Memastikan Path Benar ---
-  # Cek apakah file APK ada di lokasi yang diharapkan dengan pencarian fleksibel.
-  # Ini mengatasi error "No files were found..."
+  # --- Langkah Fleksibel untuk Mengatasi Artifact Hilang ---
+  # Mencari path APK yang benar, mengatasi error "No files were found..." sebelumnya.
   - name: Find generated APK
     id: find_apk
     run: |
@@ -25,18 +24,16 @@
       
       if [ -z "$APK_PATH" ]; then
         echo "::error::APK file not found! Check your build logs. No APK was generated."
-        # Exit dengan error agar job gagal jika APK tidak ditemukan
         exit 1 
       fi
       
       echo "Ditemukan APK pada jalur: $APK_PATH"
       echo "APK_FILE_PATH=$APK_PATH" >> $GITHUB_OUTPUT
-  # -----------------------------------------------------
 
   - name: Upload APK as artifact
     uses: actions/upload-artifact@v4
     with:
       name: KODIK-Android-APK
-      # Menggunakan output dari step sebelumnya untuk memastikan path benar
+      # Menggunakan output dari step sebelumnya
       path: ${{ steps.find_apk.outputs.APK_FILE_PATH }}
       retention-days: 7
