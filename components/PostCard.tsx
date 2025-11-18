@@ -136,8 +136,12 @@ const PostCard: React.FC<PostCardProps> = ({ post: initialPost }) => {
         <div className="bg-white dark:bg-neutral-800 dark:border dark:border-neutral-700 rounded-lg shadow-md overflow-hidden">
             <div className="p-4">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center overflow-hidden">
+                      {seller.imageUrl ? (
+                        <img src={seller.imageUrl} alt={seller.name} className="w-full h-full object-cover" />
+                      ) : (
                         <StoreIcon className="w-6 h-6 text-primary" />
+                      )}
                     </div>
                     <div>
                         <p className="font-bold text-neutral-800 dark:text-neutral-100">{seller.name}</p>

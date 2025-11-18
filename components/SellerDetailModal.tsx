@@ -66,8 +66,12 @@ const SellerDetailModal: React.FC<SellerDetailModalProps> = ({ seller, onClose }
           </button>
           
           <div className="flex flex-col items-center text-center">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <StoreIcon className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary/10 flex items-center justify-center mb-4 overflow-hidden">
+              {seller.imageUrl ? (
+                <img src={seller.imageUrl} alt={seller.name} className="w-full h-full object-cover" />
+              ) : (
+                <StoreIcon className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
+              )}
             </div>
             <h2 id="seller-modal-title" className="text-xl sm:text-2xl font-bold text-neutral-800 dark:text-neutral-100">{seller.name}</h2>
             <div className="flex items-center gap-4 mt-3">

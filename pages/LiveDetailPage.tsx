@@ -300,7 +300,13 @@ const LiveDetailPage: React.FC = () => {
         </div>
         <header className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 bg-neutral-900/60 backdrop-blur-sm p-1.5 pr-3 rounded-full">
-            <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center flex-shrink-0"><StoreIcon className="w-5 h-5 text-white" /></div>
+            <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center flex-shrink-0 overflow-hidden">
+                {seller.imageUrl ? (
+                    <img src={seller.imageUrl} alt={seller.name} className="w-full h-full object-cover" />
+                ) : (
+                    <StoreIcon className="w-5 h-5 text-white" />
+                )}
+            </div>
             <div>
               <div className="flex items-center gap-2"><p className="font-bold text-sm truncate">{seller.name}</p>{!isHost && (<button onClick={handleFollowToggle} className={`text-xs font-bold px-3 py-1 rounded-full transition-colors ${following ? 'bg-white/20 text-white' : 'bg-primary text-white'}`}>{following ? 'Diikuti' : 'Ikuti'}</button>)}</div>
               <div className="flex items-center gap-3 text-xs text-white/80 mt-1"><div className="flex items-center gap-1"><EyeIcon className="w-4 h-4" /><span>{formatNumber(viewers)}</span></div><div className="flex items-center gap-1"><HeartIcon className="w-3 h-3" /><span>{formatNumber(likes)}</span></div></div>

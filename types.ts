@@ -26,6 +26,7 @@ export interface Seller {
   rating: number;
   phone?: string;
   email?: string;
+  imageUrl?: string;
   // createdAt: string;
 }
 
@@ -101,6 +102,7 @@ export interface Article {
   content: string;
   author: string;
   publishDate: string; // ISO 8601
+  imageUrl: string;
 }
 
 // FIX: Added userEmail to match dummy data and component usage.

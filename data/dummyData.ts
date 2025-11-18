@@ -11,16 +11,16 @@ export const categories: Category[] = [
 ];
 
 export let sellers: Seller[] = [
-  { id: 1, name: 'UMKM Serabi Maknyus', description: 'Pelopor serabi hijau dengan resep warisan keluarga. Selalu menggunakan bahan-bahan alami dan berkualitas tinggi.', rating: 4.8, phone: '081234567890', email: 'penjual@example.com' },
-  { id: 2, name: 'Batik Jaya', description: 'Pengrajin batik tulis asli Karawang dengan motif yang terinspirasi dari kekayaan alam lokal. Setiap kain adalah karya seni.', rating: 4.9, email: 'info@batikjaya.id' },
-  { id: 3, name: 'Kreasi Bambu', description: 'Mengubah bambu menjadi karya seni fungsional. Produk kami ramah lingkungan dan dibuat dengan tangan terampil.', rating: 4.7 },
-  { id: 4, name: 'Tani Sejahtera', description: 'Kelompok tani yang berkomitmen pada pertanian organik dan berkelanjutan untuk menghasilkan produk pangan terbaik.', rating: 4.9, phone: '085678901234' },
-  { id: 5, name: 'Inovasi Digital Tani', description: 'Startup teknologi yang berfokus pada modernisasi pertanian melalui solusi IoT yang mudah digunakan.', rating: 5.0, email: 'support@inovasitani.tech' },
-  { id: 6, name: 'Lensa Kreatif', description: 'Menyediakan jasa profesional untuk membantu UMKM tampil lebih menarik di dunia digital.', rating: 4.8, phone: '089876543210' },
-  { id: 7, name: 'Akademi Karawang', description: 'Pusat pelatihan untuk meningkatkan skill dan pengetahuan para pelaku UMKM di Karawang.', rating: 4.7 },
-  { id: 8, name: 'Dodol Ibu Entin', description: 'Meneruskan tradisi dodol Karawang yang legit dan lezat sejak tahun 1980.', rating: 4.9, email: 'pesan@dodolibuentin.com' },
-  { id: 9, name: 'Distro Karawang', description: 'Merek fashion lokal yang mengangkat kebanggaan dan identitas Karawang melalui desain yang modern.', rating: 4.6 },
-  { id: 10, name: 'Seni Tanah Liat', description: 'Studio gerabah yang memadukan teknik tradisional dengan desain kontemporer.', rating: 4.8, phone: '081122334455' },
+  { id: 1, name: 'UMKM Serabi Maknyus', description: 'Pelopor serabi hijau dengan resep warisan keluarga. Selalu menggunakan bahan-bahan alami dan berkualitas tinggi.', rating: 4.8, phone: '081234567890', email: 'penjual@example.com', imageUrl: 'https://images.unsplash.com/photo-1598103366923-3cec45511c34?w=200&h=200&fit=crop' },
+  { id: 2, name: 'Batik Jaya', description: 'Pengrajin batik tulis asli Karawang dengan motif yang terinspirasi dari kekayaan alam lokal. Setiap kain adalah karya seni.', rating: 4.9, email: 'info@batikjaya.id', imageUrl: 'https://images.unsplash.com/photo-1551954228-636442b51253?w=200&h=200&fit=crop' },
+  { id: 3, name: 'Kreasi Bambu', description: 'Mengubah bambu menjadi karya seni fungsional. Produk kami ramah lingkungan dan dibuat dengan tangan terampil.', rating: 4.7, imageUrl: 'https://images.unsplash.com/photo-1511497584788-876760111969?w=200&h=200&fit=crop' },
+  { id: 4, name: 'Tani Sejahtera', description: 'Kelompok tani yang berkomitmen pada pertanian organik dan berkelanjutan untuk menghasilkan produk pangan terbaik.', rating: 4.9, phone: '085678901234', imageUrl: 'https://images.unsplash.com/photo-1492496913945-4b95394244d8?w=200&h=200&fit=crop' },
+  { id: 5, name: 'Inovasi Digital Tani', description: 'Startup teknologi yang berfokus pada modernisasi pertanian melalui solusi IoT yang mudah digunakan.', rating: 5.0, email: 'support@inovasitani.tech', imageUrl: 'https://images.unsplash.com/photo-1579567761406-461487c3c188?w=200&h=200&fit=crop' },
+  { id: 6, name: 'Lensa Kreatif', description: 'Menyediakan jasa profesional untuk membantu UMKM tampil lebih menarik di dunia digital.', rating: 4.8, phone: '089876543210', imageUrl: 'https://images.unsplash.com/photo-1522204523234-8729aa6e3d5f?w=200&h=200&fit=crop' },
+  { id: 7, name: 'Akademi Karawang', description: 'Pusat pelatihan untuk meningkatkan skill dan pengetahuan para pelaku UMKM di Karawang.', rating: 4.7, imageUrl: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=200&h=200&fit=crop' },
+  { id: 8, name: 'Dodol Ibu Entin', description: 'Meneruskan tradisi dodol Karawang yang legit dan lezat sejak tahun 1980.', rating: 4.9, email: 'pesan@dodolibuentin.com', imageUrl: 'https://images.unsplash.com/photo-1567197991922-35805f42040d?w=200&h=200&fit=crop' },
+  { id: 9, name: 'Distro Karawang', description: 'Merek fashion lokal yang mengangkat kebanggaan dan identitas Karawang melalui desain yang modern.', rating: 4.6, imageUrl: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=200&h=200&fit=crop' },
+  { id: 10, name: 'Seni Tanah Liat', description: 'Studio gerabah yang memadukan teknik tradisional dengan desain kontemporer.', rating: 4.8, phone: '081122334455', imageUrl: 'https://images.unsplash.com/photo-1565015926312-a161a455a303?w=200&h=200&fit=crop' },
 ];
 
 export const updateSellerDetails = (sellerId: number, newDetails: Partial<Seller>): boolean => {
@@ -33,17 +33,17 @@ export const updateSellerDetails = (sellerId: number, newDetails: Partial<Seller
 };
 
 export let products: Product[] = [
-  { id: 1, name: 'Serabi Hijau Khas Karawang', price: 15000, category: 'Kuliner', description: 'Serabi hijau otentik dengan saus kinca durian.', stock: 50, sellerId: 1, discount: 10, imageUrls: ['https://images.unsplash.com/photo-1563889958723-5a507119999a?w=600&h=600&fit=crop', 'https://images.unsplash.com/photo-1598103366923-3cec45511c34?w=600&h=600&fit=crop'], status: 'aktif', type: 'Produk Fisik' },
-  { id: 2, name: 'Batik Karawang Motif Padi', price: 250000, category: 'Fashion', description: 'Kain batik tulis dengan motif padi khas lumbung padi Jawa Barat.', stock: 20, sellerId: 2, imageUrls: ['https://images.unsplash.com/photo-1622542910436-15772a153257?w=600&h=600&fit=crop', 'https://images.unsplash.com/photo-1583311833017-11202e2e935b?w=600&h=600&fit=crop'], status: 'aktif', type: 'Produk Fisik' },
-  { id: 3, name: 'Anyaman Bambu Hias', price: 75000, category: 'Kerajinan', description: 'Hiasan dinding dari anyaman bambu asli Karawang.', stock: 0, sellerId: 3, discount: 25, imageUrls: ['https://images.unsplash.com/photo-1618221628462-b75b0a373523?w=600&h=600&fit=crop'], status: 'habis stok', type: 'Produk Fisik' },
-  { id: 4, name: 'Beras Pandan Wangi Organik', price: 80000, category: 'Pertanian', description: 'Beras organik 5kg, pulen dan wangi alami.', stock: 100, sellerId: 4, imageUrls: ['https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a7?w=600&h=600&fit=crop', 'https://images.unsplash.com/photo-1586201375823-3cec45511c34?w=600&h=600&fit=crop'], status: 'aktif', type: 'Produk Fisik' },
-  { id: 5, name: 'IoT Sawah Pintar Kit', price: 1500000, category: 'Teknologi', description: 'Kit sensor untuk memantau kondisi sawah secara real-time.', stock: 10, sellerId: 5, imageUrls: ['https://images.unsplash.com/photo-1586798273330-3363d6505a49?w=600&h=600&fit=crop'], status: 'aktif', type: 'Produk Digital' },
-  { id: 6, name: 'Jasa Foto Produk UMKM', price: 500000, category: 'Jasa', description: 'Paket jasa foto produk profesional untuk 20 item.', stock: 99, sellerId: 6, imageUrls: ['https://images.unsplash.com/photo-1599423524326-559d33230d7b?w=600&h=600&fit=crop'], status: 'aktif', type: 'Jasa' },
-  { id: 7, name: 'Pelatihan UMKM Go Digital', price: 300000, category: 'Edukasi', description: 'Workshop 2 hari tentang pemasaran digital untuk UMKM.', stock: 99, sellerId: 7, imageUrls: ['https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=600&fit=crop'], status: 'nonaktif', type: 'Jasa' },
-  { id: 8, name: 'Dodol Karawang Premium', price: 45000, category: 'Kuliner', description: 'Dodol legit dengan bahan pilihan dan resep turun-temurun.', stock: 80, sellerId: 1, discount: 15, imageUrls: ['https://images.unsplash.com/photo-1629233231398-922055652538?w=600&h=600&fit=crop'], status: 'aktif', type: 'Produk Fisik' },
-  { id: 9, name: 'Kaos Lokal "Karawang Pride"', price: 120000, category: 'Fashion', description: 'Kaos katun combed 30s dengan sablon desain lokal.', stock: 6, sellerId: 9, imageUrls: ['https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&h=600&fit=crop'], status: 'aktif', type: 'Produk Fisik' },
-  { id: 10, name: 'Gerabah Artistik', price: 150000, category: 'Kerajinan', description: 'Vas gerabah dengan ukiran tangan yang unik.', stock: 25, sellerId: 10, imageUrls: ['https://images.unsplash.com/photo-1554228498-84752c288924?w=600&h=600&fit=crop', 'https://images.unsplash.com/photo-1565015926312-a161a455a303?w=600&h=600&fit=crop'], status: 'aktif', type: 'Produk Fisik' },
-  { id: 11, name: 'Pupuk Cair Organik Super', price: 50000, category: 'Pertanian', description: 'Pupuk cair organik 1 liter untuk kesuburan tanaman.', stock: 200, sellerId: 4, discount: 5, imageUrls: ['https://images.unsplash.com/photo-1615755718244-99385b73d7be?w=600&h=600&fit=crop'], status: 'aktif', type: 'Produk Fisik' },
+  { id: 1, name: 'Serabi Hijau Khas Karawang', price: 15000, category: 'Kuliner', description: 'Serabi hijau otentik dengan saus kinca durian.', stock: 50, sellerId: 1, discount: 10, imageUrls: ['https://images.unsplash.com/photo-1631214081273-55a693b38153?w=600&h=600&fit=crop'], status: 'aktif', type: 'Produk Fisik' },
+  { id: 2, name: 'Batik Karawang Motif Padi', price: 250000, category: 'Fashion', description: 'Kain batik tulis dengan motif padi khas lumbung padi Jawa Barat.', stock: 20, sellerId: 2, imageUrls: ['https://images.unsplash.com/photo-1551954228-636442b51253?w=600&h=600&fit=crop'], status: 'aktif', type: 'Produk Fisik' },
+  { id: 3, name: 'Anyaman Bambu Hias', price: 75000, category: 'Kerajinan', description: 'Hiasan dinding dari anyaman bambu asli Karawang.', stock: 0, sellerId: 3, discount: 25, imageUrls: ['https://images.unsplash.com/photo-1618218701019-a1b40c749b73?w=600&h=600&fit=crop'], status: 'habis stok', type: 'Produk Fisik' },
+  { id: 4, name: 'Beras Pandan Wangi Organik', price: 80000, category: 'Pertanian', description: 'Beras organik 5kg, pulen dan wangi alami.', stock: 100, sellerId: 4, imageUrls: ['https://images.unsplash.com/photo-1586201375765-c12251368925?w=600&h=600&fit=crop'], status: 'aktif', type: 'Produk Fisik' },
+  { id: 5, name: 'IoT Sawah Pintar Kit', price: 1500000, category: 'Teknologi', description: 'Kit sensor untuk memantau kondisi sawah secara real-time.', stock: 10, sellerId: 5, imageUrls: ['https://images.unsplash.com/photo-1579567761406-461487c3c188?w=600&h=600&fit=crop'], status: 'aktif', type: 'Produk Digital' },
+  { id: 6, name: 'Jasa Foto Produk UMKM', price: 500000, category: 'Jasa', description: 'Paket jasa foto produk profesional untuk 20 item.', stock: 99, sellerId: 6, imageUrls: ['https://images.unsplash.com/photo-1572949645841-094f3a9c4c94?w=600&h=600&fit=crop'], status: 'aktif', type: 'Jasa' },
+  { id: 7, name: 'Pelatihan UMKM Go Digital', price: 300000, category: 'Edukasi', description: 'Workshop 2 hari tentang pemasaran digital untuk UMKM.', stock: 99, sellerId: 7, imageUrls: ['https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&h=600&fit=crop'], status: 'nonaktif', type: 'Jasa' },
+  { id: 8, name: 'Dodol Karawang Premium', price: 45000, category: 'Kuliner', description: 'Dodol legit dengan bahan pilihan dan resep turun-temurun.', stock: 80, sellerId: 1, discount: 15, imageUrls: ['https://images.unsplash.com/photo-1622337742254-0a3a79779264?w=600&h=600&fit=crop'], status: 'aktif', type: 'Produk Fisik' },
+  { id: 9, name: 'Kaos Lokal "Karawang Pride"', price: 120000, category: 'Fashion', description: 'Kaos katun combed 30s dengan sablon desain lokal.', stock: 6, sellerId: 9, imageUrls: ['https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&h=600&fit=crop'], status: 'aktif', type: 'Produk Fisik' },
+  { id: 10, name: 'Gerabah Artistik', price: 150000, category: 'Kerajinan', description: 'Vas gerabah dengan ukiran tangan yang unik.', stock: 25, sellerId: 10, imageUrls: ['https://images.unsplash.com/photo-1610732840420-d99672e811f0?w=600&h=600&fit=crop'], status: 'aktif', type: 'Produk Fisik' },
+  { id: 11, name: 'Pupuk Cair Organik Super', price: 50000, category: 'Pertanian', description: 'Pupuk cair organik 1 liter untuk kesuburan tanaman.', stock: 200, sellerId: 4, discount: 5, imageUrls: ['https://images.unsplash.com/photo-1593751282939-f2596481a1a6?w=600&h=600&fit=crop'], status: 'aktif', type: 'Produk Fisik' },
   { id: 12, name: 'Jasa Desain Logo UMKM', price: 400000, category: 'Jasa', description: 'Jasa desain logo profesional termasuk 3 revisi.', stock: 0, sellerId: 6, imageUrls: ['https://images.unsplash.com/photo-1558655146-d09347e92766?w=600&h=600&fit=crop'], status: 'habis stok', type: 'Jasa' }
 ];
 
@@ -60,6 +60,7 @@ export const articles: Article[] = [
     summary: 'Di tengah gempuran persaingan global, UMKM Karawang menunjukkan taringnya dengan adopsi teknologi digital yang kreatif dan efektif.', 
     author: 'Tim KODIK News',
     publishDate: '2024-07-25T10:00:00Z',
+    imageUrl: 'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?w=600&h=400&fit=crop',
     content: `Karawang, yang dikenal sebagai lumbung padi nasional dan kota industri, kini menyaksikan gelombang baru transformasi ekonomi di tingkat akar rumput. Para pelaku Usaha Mikro, Kecil, dan Menengah (UMKM) tidak lagi hanya mengandalkan etalase fisik. Mereka kini merambah dunia digital untuk menjangkau pasar yang lebih luas dan meningkatkan efisiensi operasional.\n\nSalah satu contohnya adalah Ibu Entin, pemilik 'Dodol Ibu Entin' yang legendaris. Jika dulu pemasarannya hanya dari mulut ke mulut dan terbatas di sekitar toko, kini produknya bisa dipesan oleh pelanggan di seluruh Indonesia melalui platform KODIK. "Awalnya saya gaptek, tapi setelah dibantu anak saya dan tim KODIK, ternyata jualan online itu membuka pintu rezeki yang tidak terduga. Omzet saya naik hampir 80%," ujarnya sambil tersenyum.\n\nKisah sukses tidak hanya datang dari sektor kuliner. 'Batik Jaya', pengrajin batik tulis khas Karawang, juga merasakan dampak positif digitalisasi. Melalui sesi live shopping di KODIK, mereka dapat menceritakan filosofi di balik setiap motif batik, menciptakan koneksi emosional dengan pembeli. "Live shopping itu seperti membuka workshop kami untuk semua orang. Pembeli jadi lebih menghargai proses dan nilai dari sehelai kain batik," tutur Bapak Agus, sang pemilik.\n\nTransformasi ini bukan tanpa tantangan. Keterbatasan literasi digital, modal untuk perangkat, dan persaingan di pasar online yang ketat menjadi beberapa kendala utama. Namun, dengan semangat kolaborasi antara pemerintah daerah, komunitas, dan platform seperti KODIK, para pelaku UMKM Karawang perlahan tapi pasti berhasil mengatasi rintangan tersebut, membuktikan bahwa inovasi adalah kunci untuk tidak hanya bertahan, tetapi juga berkembang di era digital.` 
   },
   { 
@@ -68,6 +69,7 @@ export const articles: Article[] = [
     summary: 'Lebih dari sekadar kain, setiap motif batik Karawang menyimpan cerita tentang kekayaan alam, budaya, dan kearifan lokal.', 
     author: 'Budaya Karawang',
     publishDate: '2024-07-22T14:30:00Z',
+    imageUrl: 'https://images.unsplash.com/photo-1583311833017-11202e2e935b?w=600&h=400&fit=crop',
     content: `Ketika berbicara tentang batik, banyak yang langsung teringat pada kota-kota seperti Pekalongan, Solo, atau Yogyakarta. Namun, Karawang juga memiliki warisan budaya batik yang tak kalah kaya dan unik. Batik Karawang, atau yang sering disebut Batik Tarawang, memiliki ciri khas pada motif-motifnya yang terinspirasi dari lingkungan agraris dan maritim.\n\nSalah satu motif yang paling ikonik adalah motif 'padi'. Sebagai lumbung padi nasional, motif ini merepresentasikan kemakmuran, kesuburan, dan rasa syukur masyarakat Karawang. Goresan bulir-bulir padi yang merunduk menjadi pengingat akan filosofi hidup untuk tetap rendah hati meskipun memiliki banyak kelebihan.\n\nSelain motif padi, ada pula motif 'Citarum' yang menggambarkan aliran sungai terbesar di Jawa Barat yang melintasi Karawang. Motif ini melambangkan kehidupan yang terus mengalir, dinamis, dan memberikan manfaat bagi sekitarnya. Palet warna batik Karawang juga cenderung lebih berani, seringkali menggunakan warna-warna cerah seperti hijau, kuning, dan merah, yang mencerminkan semangat masyarakatnya yang ekspresif.\n\nProses pembuatannya pun masih banyak yang mempertahankan teknik batik tulis tradisional. Para pengrajin dengan telaten menggoreskan canting berisi malam panas di atas kain, sebuah proses yang membutuhkan kesabaran, ketelitian, dan jiwa seni yang tinggi. Dengan membeli sehelai batik Karawang, kita tidak hanya mendapatkan produk fashion, tetapi juga turut serta melestarikan sebuah mahakarya budaya yang sarat akan nilai dan sejarah.` 
   },
   { 
@@ -76,6 +78,7 @@ export const articles: Article[] = [
     summary: 'Beralih dari pertanian konvensional, para petani muda di Karawang mulai melirik pertanian organik sebagai solusi untuk keberlanjutan dan peningkatan nilai jual produk.', 
     author: 'Agro Inspirasi',
     publishDate: '2024-07-20T09:00:00Z',
+    imageUrl: 'https://images.unsplash.com/photo-1560493676-04071c5f467b?w=600&h=400&fit=crop',
     content: `Sebagai salah satu sentra produksi beras terbesar di Indonesia, Karawang memiliki potensi luar biasa dalam pengembangan sektor pertanian. Kini, sebuah tren positif mulai berkembang di kalangan petani, khususnya generasi muda: peralihan ke sistem pertanian organik.\n\nPertanian organik menawarkan berbagai keuntungan jangka panjang, baik bagi lingkungan maupun bagi petani itu sendiri. Dengan tidak menggunakan pestisida dan pupuk kimia, kesuburan tanah dapat terjaga secara alami, menghasilkan ekosistem yang lebih seimbang. Dari sisi ekonomi, produk organik memiliki nilai jual yang lebih tinggi di pasaran karena permintaan dari konsumen sadar kesehatan yang terus meningkat.\n\n'Tani Sejahtera', salah satu kelompok tani di Karawang yang menjadi pelopor pertanian organik, telah membuktikannya. "Awalnya banyak yang ragu, karena masa transisi ke organik itu butuh waktu dan hasil panen sempat sedikit menurun. Tapi setelah tanahnya pulih, hasilnya luar biasa. Beras kami lebih pulen, lebih wangi, dan harganya bisa dua kali lipat dari beras biasa," ungkap Kang Asep, ketua kelompok tani.\n\nPlatform digital seperti KODIK memainkan peran penting dalam menghubungkan petani organik dengan konsumen akhir. Melalui KODIK, 'Tani Sejahtera' dapat menjual produk mereka langsung ke konsumen di perkotaan, memotong rantai pasok yang panjang dan memastikan petani mendapatkan harga yang lebih adil. Ini adalah langkah strategis untuk menjadikan Karawang tidak hanya sebagai lumbung padi nasional, tetapi juga sebagai pusat pertanian organik modern yang berkelanjutan.` 
   }
 ];
@@ -164,7 +167,7 @@ export let posts: Post[] = [
     id: 1,
     sellerId: 1, // UMKM Serabi Maknyus
     content: 'Pagi KODIKers! Serabi hijau siap menemani sarapanmu. Baru matang, anget-anget, saus kincanya lumer banget di mulut. Yuk, diorder!',
-    mediaUrl: 'https://images.unsplash.com/photo-1563889958723-5a507119999a?w=600&h=600&fit=crop',
+    mediaUrl: 'https://images.unsplash.com/photo-1631214081273-55a693b38153?w=600&h=600&fit=crop',
     mediaType: 'image',
     timestamp: '2024-07-29T08:00:00Z',
     likes: 125,
@@ -190,7 +193,7 @@ export let posts: Post[] = [
     id: 3,
     sellerId: 9, // Distro Karawang
     content: 'Stok kaos "Karawang Pride" ready lagi! Bahan katun combed 30s, adem dan nyaman. Desain simpel tapi ngena. Sikat sebelum kehabisan!',
-    mediaUrl: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&h=600&fit=crop',
+    mediaUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&h=600&fit=crop',
     mediaType: 'image',
     timestamp: '2024-07-28T11:00:00Z',
     likes: 88,
@@ -221,10 +224,10 @@ export const addComment = (postId: number, comment: Omit<Comment, 'id'>) => {
 };
 
 export let liveSessions: LiveSession[] = [
-  { id: 1, sellerId: 1, title: 'Promo Serabi Kinca Durian!', status: 'live', thumbnailUrl: 'https://images.unsplash.com/photo-1563889958723-5a507119999a?w=600&h=600&fit=crop', productIds: [1, 8], likes: 7200, viewers: 226 },
-  { id: 2, sellerId: 9, title: 'Unboxing Kaos Karawang Pride Edisi Baru', status: 'live', thumbnailUrl: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&h=600&fit=crop', productIds: [9], likes: 5100, viewers: 189 },
-  { id: 3, sellerId: 2, title: 'Proses Membatik Langsung dari Studio', status: 'replay', thumbnailUrl: 'https://images.unsplash.com/photo-1622542910436-15772a153257?w=600&h=600&fit=crop', productIds: [2], likes: 12000, viewers: 450 },
-  { id: 4, sellerId: 10, title: 'Workshop Membuat Gerabah Unik', status: 'replay', thumbnailUrl: 'https://images.unsplash.com/photo-1554228498-84752c288924?w=600&h=600&fit=crop', productIds: [10], likes: 3400, viewers: 150 },
+  { id: 1, sellerId: 1, title: 'Promo Serabi Kinca Durian!', status: 'live', thumbnailUrl: 'https://images.unsplash.com/photo-1631214081273-55a693b38153?w=600&h=600&fit=crop', productIds: [1, 8], likes: 7200, viewers: 226 },
+  { id: 2, sellerId: 9, title: 'Unboxing Kaos Karawang Pride Edisi Baru', status: 'live', thumbnailUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&h=600&fit=crop', productIds: [9], likes: 5100, viewers: 189 },
+  { id: 3, sellerId: 2, title: 'Proses Membatik Langsung dari Studio', status: 'replay', thumbnailUrl: 'https://images.unsplash.com/photo-1551954228-636442b51253?w=600&h=600&fit=crop', productIds: [2], likes: 12000, viewers: 450 },
+  { id: 4, sellerId: 10, title: 'Workshop Membuat Gerabah Unik', status: 'replay', thumbnailUrl: 'https://images.unsplash.com/photo-1610732840420-d99672e811f0?w=600&h=600&fit=crop', productIds: [10], likes: 3400, viewers: 150 },
 ];
 
 export const addLiveSession = (session: Omit<LiveSession, 'id' | 'status'>): LiveSession => {
@@ -344,12 +347,12 @@ export const addPromotion = (promo: Omit<Promotion, 'id' | 'status'>) => {
 };
 
 export const influencers: Influencer[] = [
-  { id: 1, name: 'Karawang Foodie', category: 'Kuliner', followers: { instagram: 25400, tiktok: 55100 }, bio: 'Menjelajahi semua rasa otentik Karawang!' },
-  { id: 2, name: 'Gaya Lokal KRW', category: 'Fashion', followers: { instagram: 12100, tiktok: 8200 }, bio: 'Tampil gaya dengan brand lokal Karawang.' },
-  { id: 3, name: 'Crafty Hands ID', category: 'Kerajinan', followers: { instagram: 8500, tiktok: 15600 }, bio: 'DIY & review kerajinan tangan unik dan estetik.' },
-  { id: 4, name: 'Tani Muda Digital', category: 'Pertanian', followers: { instagram: 18000, tiktok: 32000 }, bio: 'Inovasi pertanian dari lahan Karawang.' },
-  { id: 5, name: 'Dapur Neng Cici', category: 'Kuliner', followers: { instagram: 48000, tiktok: 120000 }, bio: 'Resep masakan rumahan khas Karawang yang bikin nagih.' },
-  { id: 6, name: 'OOTD Karawang', category: 'Fashion', followers: { instagram: 5200, tiktok: 9800 }, bio: 'Inspirasi outfit harian dari sudut kota Karawang.' },
-  { id: 7, name: 'Karawang Tech', category: 'Teknologi', followers: { instagram: 2200, tiktok: 3100 }, bio: 'Review gadget dan inovasi teknologi lokal.' },
-  { id: 8, name: 'Jelajah Jasa KRW', category: 'Jasa', followers: { instagram: 6100, tiktok: 4500 }, bio: 'Rekomendasi jasa terbaik di sekitar Karawang.' },
+  { id: 1, name: 'Karawang Foodie', category: 'Kuliner', followers: { instagram: 25400, tiktok: 55100 }, bio: 'Menjelajahi semua rasa otentik Karawang!', profileImageUrl: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=200&h=200&fit=crop' },
+  { id: 2, name: 'Gaya Lokal KRW', category: 'Fashion', followers: { instagram: 12100, tiktok: 8200 }, bio: 'Tampil gaya dengan brand lokal Karawang.', profileImageUrl: 'https://images.unsplash.com/photo-1488161628813-04466f872d24?w=200&h=200&fit=crop' },
+  { id: 3, name: 'Crafty Hands ID', category: 'Kerajinan', followers: { instagram: 8500, tiktok: 15600 }, bio: 'DIY & review kerajinan tangan unik dan estetik.', profileImageUrl: 'https://images.unsplash.com/photo-1596496181848-30175b228f4c?w=200&h=200&fit=crop' },
+  { id: 4, name: 'Tani Muda Digital', category: 'Pertanian', followers: { instagram: 18000, tiktok: 32000 }, bio: 'Inovasi pertanian dari lahan Karawang.', profileImageUrl: 'https://images.unsplash.com/photo-1627913382333-a6b13a70768e?w=200&h=200&fit=crop' },
+  { id: 5, name: 'Dapur Neng Cici', category: 'Kuliner', followers: { instagram: 48000, tiktok: 120000 }, bio: 'Resep masakan rumahan khas Karawang yang bikin nagih.', profileImageUrl: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=200&h=200&fit=crop' },
+  { id: 6, name: 'OOTD Karawang', category: 'Fashion', followers: { instagram: 5200, tiktok: 9800 }, bio: 'Inspirasi outfit harian dari sudut kota Karawang.', profileImageUrl: 'https://images.unsplash.com/photo-1581044777550-4cfa6ce67c43?w=200&h=200&fit=crop' },
+  { id: 7, name: 'Karawang Tech', category: 'Teknologi', followers: { instagram: 2200, tiktok: 3100 }, bio: 'Review gadget dan inovasi teknologi lokal.', profileImageUrl: 'https://images.unsplash.com/photo-1591012982992-1205a9689f18?w=200&h=200&fit=crop' },
+  { id: 8, name: 'Jelajah Jasa KRW', category: 'Jasa', followers: { instagram: 6100, tiktok: 4500 }, bio: 'Rekomendasi jasa terbaik di sekitar Karawang.', profileImageUrl: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=200&h=200&fit=crop' },
 ];

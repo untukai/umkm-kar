@@ -56,8 +56,8 @@ const ArticleDetailPage: React.FC = () => {
 
   return (
     <div className="bg-white dark:bg-neutral-800 p-6 md:p-8 rounded-lg shadow-lg max-w-4xl mx-auto">
-      <div className="w-full h-64 md:h-80 bg-neutral-200 dark:bg-neutral-700 rounded-lg mb-6 flex items-center justify-center">
-        <span className="text-neutral-500 dark:text-neutral-400">Gambar Artikel</span>
+      <div className="w-full h-64 md:h-80 bg-neutral-200 dark:bg-neutral-700 rounded-lg mb-6 overflow-hidden">
+        <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover" />
       </div>
       
       <div className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">

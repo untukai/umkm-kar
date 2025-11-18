@@ -11,9 +11,9 @@ const helixData = [
 ];
 
 const founders = [
-    { name: 'Surya Agung Perkasa', image: null, contact: { email: '#', linkedin: '#', twitter: '#' } },
-    { name: 'Gemini', image: null, contact: { email: '#', linkedin: '#', twitter: '#' } },
-    { name: 'Chat GPT', image: null, contact: { email: '#', linkedin: '#', twitter: '#' } }
+    { name: 'Surya Agung Perkasa', image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&h=200&fit=crop', contact: { email: '#', linkedin: '#', twitter: '#' } },
+    { name: 'Gemini', image: 'https://images.unsplash.com/photo-1678384432426-8804a99131a4?w=200&h=200&fit=crop', contact: { email: '#', linkedin: '#', twitter: '#' } },
+    { name: 'Chat GPT', image: 'https://images.unsplash.com/photo-1677756119517-756a188d2d94?w=200&h=200&fit=crop', contact: { email: '#', linkedin: '#', twitter: '#' } }
 ];
 
 
@@ -51,8 +51,12 @@ const CollaborationPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {founders.map(founder => (
                 <div key={founder.name} className="flex flex-col items-center text-center">
-                  <div className="w-32 h-32 rounded-full bg-neutral-200 dark:bg-neutral-700 mb-4 flex items-center justify-center">
-                    <UserIcon className="w-16 h-16 text-neutral-400 dark:text-neutral-500" />
+                  <div className="w-32 h-32 rounded-full bg-neutral-200 dark:bg-neutral-700 mb-4 flex items-center justify-center overflow-hidden">
+                    {founder.image ? (
+                        <img src={founder.image} alt={founder.name} className="w-full h-full object-cover" />
+                    ) : (
+                        <UserIcon className="w-16 h-16 text-neutral-400 dark:text-neutral-500" />
+                    )}
                   </div>
                   <h3 className="text-lg font-bold text-neutral-800 dark:text-neutral-100">{founder.name}</h3>
                   <div className="flex items-center gap-4 mt-3">
