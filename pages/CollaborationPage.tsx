@@ -21,13 +21,13 @@ const CollaborationPage: React.FC = () => {
   return (
     <div className="space-y-16">
       <div className="bg-white dark:bg-neutral-800 p-6 md:p-8 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold text-center mb-4">Kolaborasi Quintuple Helix</h1>
+        <h1 className="text-3xl font-bold text-center mb-4 text-neutral-800 dark:text-neutral-100">Kolaborasi Quintuple Helix</h1>
         <p className="text-center text-neutral-600 dark:text-neutral-300 mb-10 max-w-3xl mx-auto">
           KODIK dibangun atas dasar sinergi lima pilar utama untuk memajukan ekosistem UMKM di Karawang.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {helixData.map(item => (
-            <div key={item.name} className="border border-primary/20 dark:border-primary/40 p-6 rounded-lg bg-primary/10 dark:bg-primary/20">
+            <div key={item.name} className="border border-primary/20 dark:border-primary/40 p-6 rounded-lg bg-primary/5 dark:bg-primary/10">
               <h2 className="text-2xl font-bold text-primary-dark dark:text-primary">{item.name}</h2>
               <p className="text-neutral-700 dark:text-neutral-200 mt-2">{item.role}</p>
               <div className="mt-4">
@@ -42,12 +42,12 @@ const CollaborationPage: React.FC = () => {
       </div>
 
        <div className="bg-white dark:bg-neutral-800 p-6 md:p-8 rounded-lg shadow-lg">
-            <h1 className="text-3xl font-bold text-center mb-4">Tentang Kami</h1>
+            <h1 className="text-3xl font-bold text-center mb-4 text-neutral-800 dark:text-neutral-100">Tentang Kami</h1>
             <p className="text-center text-neutral-600 dark:text-neutral-300 mb-10 max-w-3xl mx-auto">
               KODIK (Karawang Online Digital Inovasi Karya) adalah inisiatif digital yang lahir dari semangat kolaborasi untuk memberdayakan Usaha Mikro, Kecil, dan Menengah (UMKM) di Karawang. Kami percaya bahwa teknologi adalah jembatan untuk menghubungkan karya lokal dengan pasar yang lebih luas, menciptakan ekosistem ekonomi yang kuat dan mandiri.
             </p>
 
-            <h2 className="text-2xl font-bold text-center mb-8">Tim Pendiri</h2>
+            <h2 className="text-2xl font-bold text-center mb-8 text-neutral-800 dark:text-neutral-100">Tim Pendiri</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {founders.map(founder => (
                 <div key={founder.name} className="flex flex-col items-center text-center">

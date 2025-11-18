@@ -123,37 +123,37 @@ const ProductFormPage: React.FC = () => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-lg max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 border-b pb-4">
+    <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-lg max-w-2xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6 border-b dark:border-neutral-700 pb-4 text-neutral-800 dark:text-neutral-100">
         {isEditing ? 'Edit Produk' : 'Tambah Produk Baru'}
       </h1>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-neutral-700">Nama Produk</label>
+          <label htmlFor="name" className="block text-sm font-medium text-neutral-700 dark:text-neutral-200">Nama Produk</label>
           <Input type="text" id="name" name="name" value={formData.name} onChange={handleChange} required className="mt-1" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <label htmlFor="price" className="block text-sm font-medium text-neutral-700">Harga</label>
+                <label htmlFor="price" className="block text-sm font-medium text-neutral-700 dark:text-neutral-200">Harga</label>
                 <Input type="number" id="price" name="price" value={formData.price} onChange={handleChange} required className="mt-1" placeholder="Contoh: 50000" />
             </div>
             <div>
-                <label htmlFor="stock" className="block text-sm font-medium text-neutral-700">Stok</label>
+                <label htmlFor="stock" className="block text-sm font-medium text-neutral-700 dark:text-neutral-200">Stok</label>
                 <Input type="number" id="stock" name="stock" value={formData.stock} onChange={handleChange} required className="mt-1" placeholder="Contoh: 100" />
             </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <label htmlFor="category" className="block text-sm font-medium text-neutral-700">Kategori</label>
-                <select id="category" name="category" value={formData.category} onChange={handleChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                <label htmlFor="category" className="block text-sm font-medium text-neutral-700 dark:text-neutral-200">Kategori</label>
+                <select id="category" name="category" value={formData.category} onChange={handleChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md dark:bg-neutral-700 dark:border-neutral-600 dark:text-white">
                     {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
                 </select>
             </div>
             <div>
-                <label htmlFor="type" className="block text-sm font-medium text-neutral-700">Tipe Produk</label>
-                <select id="type" name="type" value={formData.type} onChange={handleChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                <label htmlFor="type" className="block text-sm font-medium text-neutral-700 dark:text-neutral-200">Tipe Produk</label>
+                <select id="type" name="type" value={formData.type} onChange={handleChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md dark:bg-neutral-700 dark:border-neutral-600 dark:text-white">
                     <option value="Produk Fisik">Produk Fisik</option>
                     <option value="Produk Digital">Produk Digital</option>
                     <option value="Jasa">Jasa</option>
@@ -162,14 +162,14 @@ const ProductFormPage: React.FC = () => {
         </div>
 
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-neutral-700">Deskripsi</label>
-          <textarea id="description" name="description" value={formData.description} onChange={handleChange} rows={4} required className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+          <label htmlFor="description" className="block text-sm font-medium text-neutral-700 dark:text-neutral-200">Deskripsi</label>
+          <textarea id="description" name="description" value={formData.description} onChange={handleChange} rows={4} required className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"></textarea>
         </div>
         
          <div>
-            <label className="block text-sm font-medium text-neutral-700">Gambar Utama Produk</label>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-200">Gambar Utama Produk</label>
             <div className="mt-2 flex items-center gap-5">
-              <div className="w-24 h-24 rounded-lg bg-neutral-100 flex items-center justify-center overflow-hidden border">
+              <div className="w-24 h-24 rounded-lg bg-neutral-100 dark:bg-neutral-700 flex items-center justify-center overflow-hidden border dark:border-neutral-600">
                 {formData.imageUrls ? (
                   <img src={formData.imageUrls} alt="Pratinjau Produk" className="w-full h-full object-cover" />
                 ) : (
@@ -189,13 +189,13 @@ const ProductFormPage: React.FC = () => {
                     Unggah Gambar
                   </span>
                 </label>
-                <p className="text-xs text-neutral-500 mt-2">Pilih gambar untuk produk Anda.</p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-2">Pilih gambar untuk produk Anda.</p>
               </div>
             </div>
         </div>
 
 
-        <div className="flex justify-end gap-4 pt-4 border-t">
+        <div className="flex justify-end gap-4 pt-4 border-t dark:border-neutral-700">
           <Button type="button" variant="outline" onClick={() => navigate('/seller/products')}>
             Batal
           </Button>
