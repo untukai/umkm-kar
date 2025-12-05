@@ -1,5 +1,4 @@
 
-
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -11,7 +10,7 @@ import { useNotification } from '../hooks/useNotification';
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<User['role']>('pembeli');
+  const [role, setRole] = useState<'pembeli' | 'penjual'>('pembeli');
   const { login } = useAuth();
   const { showNotification } = useNotification();
   const navigate = useNavigate();

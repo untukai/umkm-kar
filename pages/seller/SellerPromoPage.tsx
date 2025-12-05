@@ -49,6 +49,7 @@ const NewPromoModal: React.FC<{ isOpen: boolean; onClose: () => void; onAdd: () 
       minPurchase: parseInt(formData.minPurchase),
       startDate: new Date().toISOString(),
       endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(),
+      status: 'Aktif', // FIX: Added missing status property
     });
     onAdd();
     onClose();
