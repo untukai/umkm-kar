@@ -1,13 +1,11 @@
 
-
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 import { useWishlist } from '../hooks/useWishlist';
 import { useTheme } from '../hooks/useTheme';
-import { SearchIcon, ShoppingCartIcon, UserIcon, MenuIcon, XIcon, HeartIcon, SunIcon, MoonIcon } from './Icons';
+import { SearchIcon, ShoppingCartIcon, UserIcon, MenuIcon, XIcon, HeartIcon, SunIcon, MoonIcon, ArrowLeftIcon } from './Icons';
 import { kodikLogo } from '../assets/logo';
 
 const Header: React.FC = () => {
@@ -18,6 +16,8 @@ const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const isHome = location.pathname === '/';
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -138,12 +138,23 @@ const Header: React.FC = () => {
       <header className="bg-white shadow-sm sticky top-0 z-30 dark:bg-neutral-800 dark:border-b dark:border-neutral-700">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Left: Logo + Desktop Nav */}
-            <div className="flex items-center gap-x-8">
+            {/* Left: Back Button + Logo + Desktop Nav */}
+            <div className="flex items-center gap-x-4">
+              {/* Back Button for non-home pages */}
+              {!isHome && (
+                <button 
+                  onClick={() => navigate(-1)} 
+                  className="p-2 -ml-2 rounded-full text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors lg:hidden"
+                  aria-label="Kembali"
+                >
+                  <ArrowLeftIcon className="h-6 w-6" />
+                </button>
+              )}
+
               <Link to="/" className="flex-shrink-0 flex items-center">
                 <img src={kodikLogo} alt="KODIK Logo" className="h-12 w-12 rounded-full object-contain border-2 border-neutral-100 dark:border-neutral-700 p-1" />
               </Link>
-              <nav className="hidden lg:flex items-center space-x-6">
+              <nav className="hidden lg:flex items-center space-x-6 ml-4">
                 {navLinks.map((link) => (
                   <Link key={link.name} to={link.path} className="text-neutral-600 dark:text-neutral-300 hover:text-primary transition-colors text-sm font-medium">
                     {link.name}
